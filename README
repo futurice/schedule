@@ -1,3 +1,18 @@
 Automate setting calendar invites for new employees
 
 This is currently a prototype, any part may be rewritten or thrown away.
+
+Setup:
+=====
+The project uses Python3 and Django.
+
+Make a Python3 virtual environment and install Django, e.g.:
+virtualenv-3.4 my-env
+. my-env/bin/activate
+pip install Django
+
+TODO: put the pip dependencies in requirements.txt or such (pip install -r …)
+but leave the virtualenv setup up to personal preference.
+
+cd introsite
+python manage.py syncdb
