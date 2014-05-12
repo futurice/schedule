@@ -4,10 +4,5 @@ This is currently a prototype, any part may be rewritten or thrown away.
 
 Setup:
 =====
-The project uses Python3.
-
-Make a Python3 virtual environment however you prefer, e.g.:
-virtualenv-3.4 my-env
-. my-env/bin/activate
-
+Make a Python virtual environment however you prefer, then:
 pip install -r req.txt
