@@ -21,6 +21,9 @@ def ensureOAuthCredentials():
                 scope='https://www.googleapis.com/auth/calendar',
                 redirect_uri='https://localhost:8000/oauth2callback',
                 )
+        # Try to get refresh token in response. Taken from:
+        # https://developers.google.com/glass/develop/mirror/authorization
+        flow.params['approval_prompt'] = 'force'
         auth_uri = flow.step1_get_authorize_url()
         print auth_uri
         code = raw_input("Auth token: ")
