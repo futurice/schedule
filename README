@@ -13,3 +13,7 @@ The first time the code needs Google OAuth, it looks for client-secrets.json
 in your current directory, prints a URL for you to authorize the app and get
 an access token.
 Credentials are stored in ‘a_credentials_file’ in your current dir.
+
+Populate your DB with FUM users:
+Get a JSON dump of FUM users
+go run dump-fum-users.go -o users.json «AccessToken»
