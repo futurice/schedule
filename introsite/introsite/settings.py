@@ -49,6 +49,8 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 )
 
+AUTH_USER_MODEL = 'futuintro.FutuUser'
+
 AUTHENTICATION_BACKENDS = (
     'django.contrib.auth.backends.RemoteUserBackend',
 )

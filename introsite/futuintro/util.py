@@ -3,8 +3,7 @@ from oauth2client.client import flow_from_clientsecrets
 from oauth2client.client import OAuth2WebServerFlow
 from oauth2client.file import Storage
 
-from django.contrib.auth.models import User
-from futuintro.models import FutuUser
+from django.contrib.auth import get_user_model
 
 import httplib2
 import json
@@ -49,22 +48,28 @@ def createUsers(jsonDumpFile):
     This is a helper for DEV.
     The users we create will have different IDs than the json dump.
     """
+    UM = get_user_model()
     with open(jsonDumpFile, 'r') as f:
         dump = json.load(f)
     # de-duplicate first (the dump has a duplicate)
     userById = {u['id']: u for u in dump}
+
     for u in userById.values():
         userById[u['id']] = u
-        newUser = User.objects.create_user(u['username'], u['email'])
-        if u['first_name']:
-            newUser.first_name = u['first_name']
-        if u['last_name']:
-            newUser.last_name = u['last_name']
+        if not (u['username'] and u['email'] and u['first_name'] and u['last_name']):
+            print('Skipping', u['username'], 'because of invalid fields')
+            del userById[u['id']]
+            continue
+        newUser = UM.objects.create_user(u['username'], u['email'],
+                u['first_name'], u['last_name'])
+        # TODO: make HC and IT admins
+        if u['username'] == 'mbor':
+            newUser.is_admin = True
         newUser.save()
+
     for u in userById.values():
-        fu = FutuUser()
-        fu.user = User.objects.get(username=u['username'])
         if u['supervisor']:
-            fu.supervisor = User.objects.get(
+            a = UM.objects.get(username=u['username'])
+            a.supervisor = UM.objects.get(
                     username=userById[u['supervisor']]['username'])
-        fu.save()
+            a.save()
