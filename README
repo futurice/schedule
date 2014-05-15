@@ -20,14 +20,12 @@ manage.py syncdb
 Populate your DB with FUM users:
 ― Get a JSON dump of FUM users
 go run dump-fum-users.go -o users.json «AccessToken»
-― TODO: add a python function which reads the JSON and creates the users
-So far, in ‘manage.py shell’ we can type:
-from django.contrib.auth.models import User
-from futuintro import FutuUser
-fu = FutuUser()
-fu.user = User.objects.all()[0]
-fu.save()
-User.objects.all()[0].futuuser
+― Create Django users from this dump:
+import futuintro.util
+futuintro.util.createUsers('users.json')
 
-User.objects.all()[0].supervisor_of.count()
-User.objects.all()[0].supervisor_of.all()
+Now you can type in the shell:
+from django.contrib.auth.models import User
+u = User.objects.get(username='mbor')
+s = u.futuuser.supervisor
+s.supervisor_of.count()
