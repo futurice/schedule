@@ -25,7 +25,8 @@ import futuintro.util
 futuintro.util.createUsers('users.json')
 
 Now you can type in the shell:
-from django.contrib.auth.models import User
-u = User.objects.get(username='mbor')
-s = u.futuuser.supervisor
+from django.contrib.auth import get_user_model
+UM = get_user_model()
+u = UM.objects.get(username='mbor')
+s = u.supervisor
 s.supervisor_of.count()

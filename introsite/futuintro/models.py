@@ -27,6 +27,8 @@ class FutuUser(AbstractBaseUser):
     last_name = models.CharField(max_length=100)
     is_active = models.BooleanField(default=True)
     is_admin = models.BooleanField(default=False)
+    supervisor = models.ForeignKey(settings.AUTH_USER_MODEL, null=True,
+            related_name='supervisor_of')
 
     objects = FutuUserManager()
 
