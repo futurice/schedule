@@ -43,4 +43,4 @@ class DummyTest(TestCase):
         self.assertTrue({x for x in attendingEmails}
                 == {x['email'] for x in ev['attendees']})
 
-        #calendar.deleteEvent(calId, ev['id'])
+        calendar.deleteEvent(calId, ev['id'])
