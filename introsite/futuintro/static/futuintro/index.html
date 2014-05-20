@@ -1,0 +1,26 @@
+<!doctype html>
+<!-- view this file at http://localhost:8000/static/futuintro/index.html -->
+<html>
+  <head>
+    <title>Hello Ajax</title>
+  </head>
+
+  <body>
+    <h1>Hello Ajax!</h1>
+    <button type="button" onclick="f()">Click me</button>
+
+    <script type="text/javascript">
+      function f() {
+        r = new XMLHttpRequest();
+        r.onload = function() {
+          console.log(JSON.parse(this.responseText));
+        };
+        r.open('post', '/futuintro/ajax/');
+        r.send(JSON.stringify({
+              'hello': 'W°rld',
+              3: [99, 'jim'],
+              }));
+      }
+    </script>
+  </body>
+</html>
