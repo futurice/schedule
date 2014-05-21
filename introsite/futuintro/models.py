@@ -57,41 +57,24 @@ class FutuUser(AbstractBaseUser):
         return self.username
 
 
-class ScheduledEventGroup(models.Model):
+class Schedule(models.Model):
     """
-    A set of ScheduledEvents which were created together.
+    A set of Events which were created together, for one user.
 
-    E.g. they represent the onboarding program for one employee.
+    E.g. the onboarding program for one employee.
     """
+    forUser = models.ForeignKey(settings.AUTH_USER_MODEL)
     createdAt = models.DateTimeField(auto_now_add=True)
     updatedAt = models.DateTimeField(auto_now=True)
 
-class ScheduledEvent(models.Model):
+class Event(models.Model):
     """
     An event which exists in Google Calendar.
 
-    Has 'Scheduled' in the name so we don't confuse it with an event template.
+    It may belong to several Schedules (e.g. a collective event).
     """
     jsonData = models.BinaryField()
-    eventGroup = models.ForeignKey(ScheduledEventGroup)
-
-
-class EventTemplate(models.Model):
-    summary = models.CharField(max_length=200)
-    description = models.CharField(max_length=200)
-    location = models.CharField(max_length=100)
-    # which calendar day the event is on. 1 is the employee's starting day.
-    dayNumber = models.PositiveSmallIntegerField()
-    startTime = models.TimeField()
-    endTime = models.TimeField()
-    timezone = models.CharField(max_length=100)
-
-    inviteEmployee = models.BooleanField()
-    inviteEmployee.default = True
-
-    inviteSupervisor = models.BooleanField()
-    inviteSupervisor.default = False
-    otherInvitees = models.ManyToManyField(settings.AUTH_USER_MODEL)
+    schedules = models.ManyToManyField(Schedule)
 
 
 class CalendarResource(models.Model):
@@ -103,3 +86,40 @@ class CalendarResource(models.Model):
     resourceType = models.CharField(max_length=200)
     name = models.CharField(max_length=200)
     description = models.CharField(max_length=200)
+
+
+class TimeZone(models.Model):
+    name = models.CharField(max_length=100, primary_key=True)
+
+
+class ScheduleTemplate(models.Model):
+    """
+    A set of event templates, e.g. 'New Employee Onboarding in Berlin'.
+    """
+    timezone = models.ForeignKey(TimeZone)
+
+
+class EventTemplate(models.Model):
+    summary = models.CharField(max_length=200)
+    description = models.TextField()
+    location = models.ForeignKey(CalendarResource, null=True)
+    # which calendar day the event is on. 1 is the employee's starting day.
+    dayNumber = models.PositiveSmallIntegerField()
+    startTime = models.TimeField()
+    endTime = models.TimeField()
+
+    # Allow events where the employee(s) aren't invited, e.g. 'gather peer
+    # feedback' or 'prepare welcome package (brand book, print health insurance
+    # info)'.
+    inviteEmployees = models.BooleanField(default=True)
+
+    inviteSupervisors = models.BooleanField(default=False)
+    otherInvitees = models.ManyToManyField(settings.AUTH_USER_MODEL)
+
+    # When making a schedule for multiple employees, a collective template
+    # (e.g. Welcome Breakfast) creates a single event.
+    # A non-collective (i.e. individual) template creates one event for each
+    # employee.
+    isCollective = models.BooleanField(default=True)
+
+    schedule = models.ForeignKey(ScheduleTemplate)
