@@ -22,8 +22,8 @@ class FutuUserManager(BaseUserManager):
 
 class FutuUser(AbstractBaseUser):
     username = models.CharField(max_length=40, unique=True, db_index=True)
-    email = models.CharField(max_length=40, unique=True, null=True)
-    first_name = models.CharField(max_length=100, null=True)
+    email = models.CharField(max_length=40, unique=True)
+    first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
     is_active = models.BooleanField(default=True)
     is_admin = models.BooleanField(default=False)
@@ -92,3 +92,14 @@ class EventTemplate(models.Model):
     inviteSupervisor = models.BooleanField()
     inviteSupervisor.default = False
     otherInvitees = models.ManyToManyField(settings.AUTH_USER_MODEL)
+
+
+class CalendarResource(models.Model):
+    """
+    A meeting room.
+    """
+    resourceId = models.CharField(max_length=200, primary_key=True)
+    email = models.EmailField(max_length=200)
+    resourceType = models.CharField(max_length=200)
+    name = models.CharField(max_length=200)
+    description = models.CharField(max_length=200)

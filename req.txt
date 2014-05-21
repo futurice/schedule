@@ -1,4 +1,5 @@
 python-dateutil
 Django
 google-api-python-client
+gdata
 pytz

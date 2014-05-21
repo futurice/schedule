@@ -11,16 +11,19 @@ Download ‘client-secrets.json’ from Google Dev Console (currently a test app
 
 The first time the code needs Google OAuth, it looks for client-secrets.json
 in your current directory, prints a URL for you to authorize the app and get
-an access token.
+an access token in the URL fragment at the end.
 Credentials are stored in ‘a_credentials_file’ in your current dir.
+Trigger this e.g. with:
+./introsite/manage.py test futuintro
 
 Create all db tables (and optionally add an admin user):
-manage.py syncdb
+./introsite/manage.py syncdb
 
 Populate your DB with FUM users:
-― Get a JSON dump of FUM users
+― Get a JSON dump of FUM users (you need an API token for FUM)
 go run dump-fum-users.go -o users.json «AccessToken»
 ― Create Django users from this dump:
+./introsite/manage.py shell
 import futuintro.util
 futuintro.util.createUsers('users.json')
 
@@ -30,3 +33,8 @@ UM = get_user_model()
 u = UM.objects.get(username='mbor')
 s = u.supervisor
 s.supervisor_of.count()
+
+Populate your DB with Meeting Rooms (it asks the password for Google Admin):
+./introsite/manage.py shell
+import futuintro.util
+futuintro.util.createMeetingRooms()

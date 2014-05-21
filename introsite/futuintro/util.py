@@ -1,10 +1,13 @@
 from apiclient.discovery import build
+from gdata.calendar_resource.client import CalendarResourceClient
 from oauth2client.client import flow_from_clientsecrets
 from oauth2client.client import OAuth2WebServerFlow
 from oauth2client.file import Storage
 
 from django.contrib.auth import get_user_model
+from futuintro.models import CalendarResource
 
+import getpass
 import httplib2
 import json
 
@@ -73,3 +76,22 @@ def createUsers(jsonDumpFile):
             a.supervisor = UM.objects.get(
                     username=userById[u['supervisor']]['username'])
             a.save()
+
+def createMeetingRooms():
+    username = 'google.admin@futurice.com'
+    psw = getpass.getpass('Password for ' + username + ': ')
+    client = CalendarResourceClient(domain='futurice.com')
+    client.ClientLogin(email=username, password=psw, source='test-futuintro')
+    # TODO: pagination
+    # In May 2014 only getting a single page of results and can't figure out
+    # how to request few (e.g. 5) results per page to test pagination.
+    calendar_resources = client.GetResourceFeed()
+    for r in calendar_resources.get_elements():
+        if r.tag == 'entry':
+            CalendarResource(
+                    resourceId=r.GetResourceId(),
+                    email=r.GetResourceEmail(),
+                    resourceType=r.GetResourceType() or '',
+                    name=r.GetResourceCommonName(),
+                    description=r.GetResourceDescription() or '',
+            ).save()
