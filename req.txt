@@ -1,5 +1,6 @@
-python-dateutil
 Django
+djangorestframework
 google-api-python-client
 gdata
+python-dateutil
 pytz

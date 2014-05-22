@@ -1,7 +1,8 @@
-from django.conf.urls import patterns, url
+from django.conf.urls import include, patterns, url
+from futuintro import views, apiviews
 
-from futuintro import views
 
 urlpatterns = patterns('',
-    url(r'^ajax/$', views.ajax, name='ajax')
+    url(r'^ajax/$', views.ajax, name='ajax'),
+    url(r'^api/', include(apiviews.router.urls)),
 )

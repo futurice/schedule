@@ -64,7 +64,7 @@ class CalendarResource(models.Model):
     """
     A meeting room.
     """
-    resourceId = models.CharField(max_length=200, primary_key=True)
+    resourceId = models.CharField(max_length=200, unique=True)
     email = models.EmailField(max_length=200)
     resourceType = models.CharField(max_length=200)
     name = models.CharField(max_length=200)
@@ -78,7 +78,7 @@ class CalendarResource(models.Model):
 
 
 class TimeZone(models.Model):
-    name = models.CharField(max_length=100, primary_key=True)
+    name = models.CharField(max_length=100, unique=True)
 
     def __unicode__(self):
         return self.name
