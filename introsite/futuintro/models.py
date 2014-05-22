@@ -54,27 +54,10 @@ class FutuUser(AbstractBaseUser):
         return True
 
     def __unicode__(self):
-        return self.username
+        return self.get_full_name() + ' (' + self.username + ')'
 
-
-class Schedule(models.Model):
-    """
-    A set of Events which were created together, for one user.
-
-    E.g. the onboarding program for one employee.
-    """
-    forUser = models.ForeignKey(settings.AUTH_USER_MODEL)
-    createdAt = models.DateTimeField(auto_now_add=True)
-    updatedAt = models.DateTimeField(auto_now=True)
-
-class Event(models.Model):
-    """
-    An event which exists in Google Calendar.
-
-    It may belong to several Schedules (e.g. a collective event).
-    """
-    jsonData = models.BinaryField()
-    schedules = models.ManyToManyField(Schedule)
+    class Meta:
+        ordering = ('first_name', 'last_name')
 
 
 class CalendarResource(models.Model):
@@ -87,24 +70,45 @@ class CalendarResource(models.Model):
     name = models.CharField(max_length=200)
     description = models.CharField(max_length=200)
 
+    def __unicode__(self):
+        return self.name
+
+    class Meta:
+        ordering = ('name',)
+
 
 class TimeZone(models.Model):
     name = models.CharField(max_length=100, primary_key=True)
+
+    def __unicode__(self):
+        return self.name
+
+    class Meta:
+        ordering = ('name',)
 
 
 class ScheduleTemplate(models.Model):
     """
     A set of event templates, e.g. 'New Employee Onboarding in Berlin'.
     """
+    name = models.CharField(max_length=200)
     timezone = models.ForeignKey(TimeZone)
+
+    def __unicode__(self):
+        return self.name + ' (' + self.timezone.name + ')'
+
+    class Meta:
+        ordering = ('name',)
 
 
 class EventTemplate(models.Model):
     summary = models.CharField(max_length=200)
     description = models.TextField()
-    location = models.ForeignKey(CalendarResource, null=True)
-    # which calendar day the event is on. 1 is the employee's starting day.
-    dayNumber = models.PositiveSmallIntegerField()
+    location = models.ForeignKey(CalendarResource, null=True, blank=True)
+
+    # which calendar day the event is on. 0 is the employee's starting day,
+    # 1 is her second day, -7 is 1 week before the starting day.
+    dayOffset = models.SmallIntegerField()
     startTime = models.TimeField()
     endTime = models.TimeField()
 
@@ -114,7 +118,8 @@ class EventTemplate(models.Model):
     inviteEmployees = models.BooleanField(default=True)
 
     inviteSupervisors = models.BooleanField(default=False)
-    otherInvitees = models.ManyToManyField(settings.AUTH_USER_MODEL)
+    otherInvitees = models.ManyToManyField(settings.AUTH_USER_MODEL,
+            null=True, blank=True)
 
     # When making a schedule for multiple employees, a collective template
     # (e.g. Welcome Breakfast) creates a single event.
@@ -122,4 +127,38 @@ class EventTemplate(models.Model):
     # employee.
     isCollective = models.BooleanField(default=True)
 
-    schedule = models.ForeignKey(ScheduleTemplate)
+    scheduleTemplate = models.ForeignKey(ScheduleTemplate)
+
+    def __unicode__(self):
+        return self.summary
+
+    class Meta:
+        ordering = ('dayOffset', 'startTime')
+
+
+class Schedule(models.Model):
+    """
+    A set of Events which were created together, for one user.
+
+    E.g. the onboarding program for one employee.
+    """
+    forUser = models.ForeignKey(settings.AUTH_USER_MODEL)
+    template = models.ForeignKey(ScheduleTemplate)
+    createdAt = models.DateTimeField(auto_now_add=True)
+    updatedAt = models.DateTimeField(auto_now=True)
+
+    def __unicode__(self):
+        return 'Schedule TODO' + ' (' + self.forUser.get_full_name() + ')'
+
+class Event(models.Model):
+    """
+    An event which exists in Google Calendar.
+
+    It may belong to several Schedules (e.g. a collective event).
+    """
+    # TODO: use JsonField when we start putting data here
+    jsonData = models.BinaryField()
+    schedules = models.ManyToManyField(Schedule)
+
+    def __unicode__(self):
+        return 'Event (on ' + str(self.schedules.count()) + ' schedule(s))'

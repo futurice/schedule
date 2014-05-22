@@ -1,4 +1,7 @@
 from django.contrib import admin
-from futuintro.models import EventTemplate
+from futuintro.models import (Schedule, Event, CalendarResource, TimeZone,
+        ScheduleTemplate, EventTemplate)
 
-admin.site.register(EventTemplate)
+for cls in (Schedule, Event, CalendarResource, TimeZone, ScheduleTemplate,
+        EventTemplate):
+    admin.site.register(cls)
