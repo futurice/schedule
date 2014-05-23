@@ -1,0 +1,16 @@
+{% load staticfiles %}
+<!doctype html5>
+<html>
+<head>
+  <title>{% block title %}{% endblock %}</title>
+  <script src="https://code.jquery.com/jquery-1.11.0.min.js"></script>
+  <script src="{% static 'futuintro/js/lib/jquery.cookie.js' %}"></script>
+  <script src="http://fb.me/react-0.10.0.js"></script>
+  <script src="http://fb.me/JSXTransformer-0.10.0.js"></script>
+  <script src="{% static 'futuintro/js/script.js' %}" type="text/jsx"></script>
+</head>
+<body>
+  {% block body %}
+  {% endblock %}
+</body>
+</html>
