@@ -10,7 +10,13 @@
   <script src="{% static 'futuintro/js/script.js' %}" type="text/jsx"></script>
 </head>
 <body>
-  {% block body %}
-  {% endblock %}
+  <nav id="main-nav">
+    <a href="{% url 'timezones' %}">TimeZones</a>
+  </nav>
+
+  <div id="main-content">
+    {% block body %}
+    {% endblock %}
+  </div>
 </body>
 </html>

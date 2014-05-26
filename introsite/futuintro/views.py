@@ -17,3 +17,9 @@ def ajax(request):
 
 def scheduleTemplates(request):
     return render(request, 'futuintro/schedule-templates.html')
+
+def root(request):
+    return render(request, 'futuintro/base.html')
+
+def timezones(request):
+    return render(request, 'futuintro/timezones.html')
