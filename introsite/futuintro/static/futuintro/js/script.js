@@ -60,17 +60,19 @@ var ScheduleTemplateComp = React.createClass({
 
 
 /*
- * Fetches the data when initially created.
+ * Fetches the data when initially created. Could be better named.
  */
 var FetchingTimeZoneList = React.createClass({
     getInitialState: function() {
         return {
             doneFetching: false,
             hasErr: false,
-            items: []
+            items: [],
+            // whether a new item to create is shown at the end
+            newBlankItem: false
         };
     },
-    componentDidMount: function() {
+    fetchData: function() {
         var self = this, items = [], nextUrl = '/futuintro/api/timezones/';
         function fetch() {
             if (nextUrl) {
@@ -101,6 +103,9 @@ var FetchingTimeZoneList = React.createClass({
         // while we're still processing requests.
         this.timerId = setTimeout(fetch, 0);
     },
+    componentDidMount: function() {
+        this.fetchData();
+    },
     componentWillUnmount: function() {
         clearTimeout(this.timerId);
     },
@@ -113,6 +118,24 @@ var FetchingTimeZoneList = React.createClass({
             items: itemsLeft
         });
     },
+    onNewItemCreated: function() {
+        this.setState(this.getInitialState());
+        this.fetchData();
+    },
+    toggleNewItem: function() {
+        var newItems;
+        if (this.state.newBlankItem) {
+            newItems = this.state.items.slice(0, -1);
+        } else {
+            // convention (also for bottom-level view&edit component):
+            // null ID and no other fields means create.
+            newItems = this.state.items.concat({id: null});
+        }
+        this.setState({
+            newBlankItem: !this.state.newBlankItem,
+            items: newItems
+        });
+    },
     render: function() {
         if (!this.state.doneFetching) {
             return <div>Getting data…</div>;
@@ -120,8 +143,17 @@ var FetchingTimeZoneList = React.createClass({
         if (this.state.hasErr) {
             return <div>There was an error getting data</div>;
         }
-        return <TimeZoneListComp timezones={this.state.items}
-                onDelete={this.onDelete} />;
+        return <div>
+                <TimeZoneListComp
+                    timezones={this.state.items}
+                    onDelete={this.onDelete}
+                    onNewItemCreated={this.onNewItemCreated}
+                    onNewItemCanceled={this.toggleNewItem}
+                />
+                <button type="button"
+                    onClick={this.toggleNewItem}
+                    hidden={this.state.newBlankItem}>+ Add another</button>
+            </div>
     }
 });
 
@@ -131,13 +163,16 @@ var FetchingTimeZoneList = React.createClass({
 var TimeZoneListComp = React.createClass({
     propTypes: {
         timezones: React.PropTypes.array.isRequired,
-        onDelete: React.PropTypes.func
+        onDelete: React.PropTypes.func,
+        onNewItemCreated: React.PropTypes.func,
+        onNewItemCanceled: React.PropTypes.func
     },
     getDefaultProps: function() {
         return {
             timezones: [],
-            onDelete: function() {
-            }
+            onDelete: function() {},
+            onNewItemCreated: function() {},
+            onNewItemCanceled: function() {}
         };
     },
     render: function() {
@@ -145,10 +180,12 @@ var TimeZoneListComp = React.createClass({
             return <li>
                     <TimeZoneComp
                         // if you omit the key, weird things happen on Delete
-                        // probably because of how ‘reconciliation’ works.
+                        // probably because ‘reconciliation’ keeps state.
                         key={tz.id}
                         tz={tz}
                         onDelete={this.props.onDelete}
+                        onNewItemCreated={this.props.onNewItemCreated}
+                        onNewItemCanceled={this.props.onNewItemCanceled}
                     />
                 </li>;
         }
@@ -164,17 +201,26 @@ var TimeZoneListComp = React.createClass({
 var TimeZoneComp = React.createClass({
     propTypes: {
         tz: React.PropTypes.object.isRequired,
-        onDelete: React.PropTypes.func
+        onDelete: React.PropTypes.func,
+        onNewItemCreated: React.PropTypes.func,
+        onNewItemCanceled: React.PropTypes.func
     },
     getDefaultProps: function() {
         return {
-            onDelete: function() {
-            }
+            onDelete: function() {},
+            onNewItemCreated: function() {},
+            onNewItemCanceled: function() {}
         };
+    },
+    getId: function() {
+        return this.props.tz.id;
+    },
+    // we're editing a new item that's to be created
+    isNewItem: function() {
+        return this.getId() == null;
     },
     getInitialState: function() {
         return {
-            id: this.props.tz.id,
             name: this.props.tz.name,
 
             // If non-empty, an AJAX request is in flight and this is its
@@ -184,7 +230,7 @@ var TimeZoneComp = React.createClass({
             // text to show the user.
             reqErr: '',
 
-            editing: false,
+            editing: this.isNewItem(),
             deleted: false
         };
     },
@@ -201,6 +247,15 @@ var TimeZoneComp = React.createClass({
         });
     },
     cancelEdit: function() {
+        if (this.isNewItem()) {
+            // Game-over
+            this.props.onNewItemCanceled();
+            this.setState({
+                newItemCanceled: true
+            });
+            return;
+        }
+
         this.setState({
             editing: false,
             reqErr: ''
@@ -209,14 +264,21 @@ var TimeZoneComp = React.createClass({
     save: function(evt) {
         evt.preventDefault();
         this.setState({
-            reqInFlight: 'Saving…'
+            reqInFlight: this.isNewItem() ? 'Creating…' : 'Saving…'
         });
+
+        var url;
+        if (this.isNewItem()) {
+            url = '/futuintro/api/timezones/';
+        } else {
+            url = '/futuintro/api/timezones/' + this.getId() + '/';
+        }
 
         // TODO: remove the setTimeout (tests delays in DEV).
         setTimeout((function() {
         $.ajax({
-            url: '/futuintro/api/timezones/' + this.state.id + '/',
-            type: 'PUT',
+            url: url,
+            type: this.isNewItem() ? 'POST' : 'PUT',
             contentType: 'application/json; charset=UTF-8',
             headers: {
                 'X-CSRFToken': $.cookie('csrftoken')
@@ -230,6 +292,14 @@ var TimeZoneComp = React.createClass({
                 });
             }).bind(this),
             success: (function(data) {
+                if (this.isNewItem()) {
+                    // Game-over. Parent must handle from here.
+                    this.setState({
+                        newItemCreated: true
+                    });
+                    this.props.onNewItemCreated();
+                    return;
+                }
                 this.setState({
                     name: this.state.newName,
                     reqErr: '',
@@ -266,13 +336,13 @@ var TimeZoneComp = React.createClass({
         // TODO: remove the setTimeout (tests delays in DEV).
         setTimeout((function() {
         $.ajax({
-            url: '/futuintro/api/timezones/' + this.state.id + '/',
+            url: '/futuintro/api/timezones/' + this.getId() + '/',
             type: 'DELETE',
             headers: {
                 'X-CSRFToken': $.cookie('csrftoken')
             },
             complete: (function(data) {
-                this.setState({
+                this.isMounted() && this.setState({
                     reqInFlight: ''
                 });
             }).bind(this),
@@ -283,7 +353,7 @@ var TimeZoneComp = React.createClass({
                     reqErr: ''
                 });
                 this.props.onDelete({
-                    id: this.state.id
+                    id: this.getId()
                 });
             }).bind(this),
             error: (function(xhr, txtStatus, delErr) {
@@ -310,6 +380,15 @@ var TimeZoneComp = React.createClass({
 
         if (this.state.deleted) {
             return <div>This TimeZone has been deleted.
+                You should not be seeing this.</div>;
+        }
+
+        if (this.state.newItemCanceled) {
+            return <div>Creating new TimeZone canceled.
+                You should not be seeing this.</div>;
+        }
+        if (this.state.newItemCreated) {
+            return <div>New TimeZone created.
                 You should not be seeing this.</div>;
         }
 
