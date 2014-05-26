@@ -4,6 +4,11 @@ from futuintro import models
 
 class UserViewSet(viewsets.ModelViewSet):
     model = get_user_model()
+    filter_fields = ('username',)   # ?username=jim
+    search_fields = ('username', 'first_name', 'last_name') # ?search=jim
+    ordering_fields = ('username', 'first_name', 'last_name')
+    # or ordering_fields = '__all__'
+    # ?ordering=last_name ?ordering=-last_name ?ordering=first_name,-last_name
 
 class TimeZoneViewSet(viewsets.ModelViewSet):
     model = models.TimeZone

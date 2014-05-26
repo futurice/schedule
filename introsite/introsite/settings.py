@@ -89,3 +89,16 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.6/howto/static-files/
 
 STATIC_URL = '/static/'
+
+
+REST_FRAMEWORK = {
+    # http://www.django-rest-framework.org/api-guide/pagination
+    # TODO: set a higher value for the page size
+    'PAGINATE_BY': 3,
+    # http://www.django-rest-framework.org/api-guide/filtering
+    'DEFAULT_FILTER_BACKENDS': (
+        'rest_framework.filters.DjangoFilterBackend',
+        'rest_framework.filters.SearchFilter',
+        'rest_framework.filters.OrderingFilter',
+        ),
+}

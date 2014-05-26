@@ -1,5 +1,6 @@
 Django
 djangorestframework
+django-filter
 google-api-python-client
 gdata
 python-dateutil
