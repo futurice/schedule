@@ -118,11 +118,9 @@ var TimeZoneListComp = React.createClass({
     },
     render: function() {
         function createTimezoneComp(tz) {
-            return <li>
+            // support the null id
+            return <li key={'' + tz.id}>
                     <TimeZoneComp
-                        // if you omit the key, weird things happen on Delete
-                        // probably because ‘reconciliation’ keeps state.
-                        key={tz.id}
                         tz={tz}
                         onDelete={this.props.onDelete}
                         onNewItemCreated={this.props.onNewItemCreated}
@@ -228,7 +226,7 @@ var TimeZoneComp = React.createClass({
                 name: this.state.newName
             }),
             complete: (function(data) {
-                this.setState({
+                this.isMounted() && this.setState({
                     reqInFlight: ''
                 });
             }).bind(this),
