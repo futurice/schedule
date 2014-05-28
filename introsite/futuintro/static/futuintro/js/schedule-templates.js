@@ -9,10 +9,7 @@ var ScheduleTemplatesList = React.createClass({
 
             timezones: [],
             tzLoaded: false,
-            tzErr: '',
-
-            // currently adding a new item
-            addNew: false
+            tzErr: ''
         };
     },
     fetchData: function() {
@@ -29,23 +26,25 @@ var ScheduleTemplatesList = React.createClass({
     componentDidMount: function() {
         this.fetchData();
     },
-    toggleAddNew: function() {
-        var addNew = !this.state.addNew;
-        var schedTempl;
-        if (addNew) {
-            schedTempl = this.state.schedTempl.concat({id: null});
-        } else {
-            schedTempl = this.state.schedTempl.slice(0, -1);
-        }
-        this.setState({
-            addNew: addNew,
-            schedTempl: schedTempl
-        });
-    },
-    onDelete: function(obj) {
+    onDelete: function(deletedObj) {
         this.setState({
             schedTempl: this.state.schedTempl.filter(function(st) {
-                return st.id != obj.id;
+                return st.id != deletedObj.id;
+            })
+        });
+    },
+    onCreate: function(createdObj) {
+        this.setState({
+            schedTempl: this.state.schedTempl.concat(createdObj)
+        });
+    },
+    onUpdate: function(newObj) {
+        this.setState({
+            schedTempl: this.state.schedTempl.map(function(st) {
+                if (st.id == newObj.id) {
+                    return newObj;
+                }
+                return st;
             })
         });
     },
@@ -62,44 +61,66 @@ var ScheduleTemplatesList = React.createClass({
 
         return <div>
             <ul>
-            {this.state.schedTempl.map((function(st) {
-                return <li key={'' + st.id}>
+                {this.state.schedTempl.map((function(st) {
+                    return <li key={st.id || 'add-new-st-item'}>
+                        <ScheduleTemplateSummary
+                            model={st}
+                            allTimezones={this.state.timezones}
+                            onDelete={this.onDelete}
+                            onUpdate={this.onUpdate}
+                            />
+                    </li>;
+                }).bind(this))}
+                <li>
                     <ScheduleTemplateSummary
-                        data={st}
+                        model={null}
                         allTimezones={this.state.timezones}
-                        onCancelNew={this.toggleAddNew}
-                        onCreateNew={this.refresh}
-                        onDelete={this.onDelete}
+                        onCreate={this.onCreate}
                         />
-                </li>;
-            }).bind(this))}
+                </li>
             </ul>
-            <button type="button" onClick={this.toggleAddNew}
-                hidden={this.state.addNew}>+ Add</button>
         </div>;
     }
 });
 
+/*
+ * Display, edit and delete a ScheduleTemplate, or create a new one.
+ *
+ * The model is either a plain JS object to display, edit or delete an item
+ * or null to show a form for creating a new one.
+ */
 var ScheduleTemplateSummary = React.createClass({
+    mixins: [
+        getPropModelClonerMixin({
+            id: null,
+            name: '',
+            timezone: 0
+        }),
+    ],
     propTypes: {
-        // the json for a ‘schedule template’ object.
-        // Our hacky convention: if .id is null, we're creating a new object.
-        data: React.PropTypes.object.isRequired,
+        model: React.PropTypes.object,
         allTimezones: React.PropTypes.array.isRequired,
 
-        onCancelNew: React.PropTypes.func.isRequired,
-        onCreateNew: React.PropTypes.func.isRequired,
-        // onDelete({id: item_id})
-        onDelete: React.PropTypes.func.isRequired
+        onCreate: React.PropTypes.func,
+        onUpdate: React.PropTypes.func,
+        onDelete: React.PropTypes.func
     },
     getInitialState: function() {
-        return {
+        var state = {
+            // for existing items: nothing to display anymore
             deleted: false,
-            canceled: false,
-            newItemCreated: false,
+
             ajaxInFlight: '',
-            ajaxErr: ''
+            ajaxErr: '',
+
+            editing: this.isNewItem()
         };
+        if (state.editing) {
+            // mutable model used only in edit mode
+            // and reset every time we enter edit mode.
+            state.editModel = this.copyInitialModel();
+        }
+        return state;
     },
     getTimezoneName: function(tzId) {
         for (var i = 0; i < this.props.allTimezones.length; i++) {
@@ -110,6 +131,73 @@ var ScheduleTemplateSummary = React.createClass({
         }
         console.log('Unknown timezone ID', tzId);
         return 'UNKONWN!';
+    },
+    edit: function() {
+        this.setState({
+            editing: true,
+            // reset the editModel every time we enter edit mode
+            editModel: this.copyInitialModel(),
+            ajaxErr: '',
+        });
+    },
+    cancelEdit: function() {
+        this.setState({
+            editing: false,
+            ajaxErr: ''
+        });
+    },
+    handleChange: function(modelFieldName, event) {
+        var m = clone(this.state.editModel);
+        m[modelFieldName] = event.target.value;
+        this.setState({
+            editModel: m
+        });
+    },
+    saveOrCreate: function(evt) {
+        evt.preventDefault();
+        this.setState({
+            ajaxInFlight: this.isNewItem() ? 'Creating…' : 'Saving…'
+        });
+
+        var url;
+        if (this.isNewItem()) {
+            url = '/futuintro/api/scheduletemplates/';
+        } else {
+            url = '/futuintro/api/scheduletemplates/' + this.props.model.id + '/';
+        }
+
+        // TODO: remove the setTimeout (tests delays in DEV).
+        setTimeout((function() {
+        $.ajax({
+            url: url,
+            type: this.isNewItem() ? 'POST' : 'PUT',
+            contentType: 'application/json; charset=UTF-8',
+            headers: {
+                'X-CSRFToken': $.cookie('csrftoken')
+            },
+            data: JSON.stringify(this.state.editModel),
+            complete: (function(data) {
+                this.isMounted() && this.setState({
+                    ajaxInFlight: ''
+                });
+            }).bind(this),
+            success: (function(data) {
+                if (this.isNewItem()) {
+                    this.props.onCreate(data);
+                    this.setState(this.getInitialState());
+                    return;
+                }
+                this.props.onUpdate(data);
+                this.setState({
+                    ajaxErr: '',
+                    editing: false
+                });
+            }).bind(this),
+            error: (function(xhr, txtStatus, saveErr) {
+                this.setState({ajaxErr: getAjaxErr.apply(this, arguments)});
+            }).bind(this)
+        });
+        }).bind(this), 3000);
     },
     delete: function() {
         if (!confirm('Delete this Schedule Template ' +
@@ -124,7 +212,7 @@ var ScheduleTemplateSummary = React.createClass({
         // TODO: remove the setTimeout (tests delays in DEV).
         setTimeout((function() {
         $.ajax({
-            url: '/futuintro/api/scheduletemplates/' + this.props.data.id + '/',
+            url: '/futuintro/api/scheduletemplates/' + this.props.model.id + '/',
             type: 'DELETE',
             headers: {
                 'X-CSRFToken': $.cookie('csrftoken')
@@ -135,91 +223,25 @@ var ScheduleTemplateSummary = React.createClass({
                 });
             }).bind(this),
             success: (function(data) {
+                this.props.onDelete(this.props.model);
                 // Game-over. We don't care about any other state fields.
-                this.setState({
-                    deleted: true
-                });
-                this.props.onDelete({
-                    id: this.props.data.id
+                this.isMounted() && this.setState({
+                    deleted: true,
                 });
             }).bind(this),
             error: (function(xhr, txtStatus, delErr) {
-                console.log('error', xhr, txtStatus, delErr);
-                var errTxt = 'Error';
-                if (xhr.responseText) {
-                    try {
-                        errTxt += ': ' + JSON.stringify(
-                            JSON.parse(xhr.responseText));
-                    } catch (exc) {
-                        // json parsing error
-                    }
-                }
-
-                this.setState({
-                    ajaxErr: errTxt
-                });
+                this.setState({ajaxErr: getAjaxErr.apply(this, arguments)});
             }).bind(this)
         });
-        }).bind(this), 2000);
+        }).bind(this), 3000);
     },
-    cancel: function() {
-        this.setState({
-            canceled: true
-        });
-        this.props.onCancelNew();
-    },
-    submit: function(evt) {
-        evt.preventDefault();
-        this.setState({
-            ajaxInFlight: 'Saving…'
-        });
 
-        // TODO: remove the setTimeout (tests delays in DEV).
-        setTimeout((function() {
-        $.ajax({
-            url: '/futuintro/api/scheduletemplates/',
-            type: 'POST',
-            contentType: 'application/json; charset=UTF-8',
-            headers: {
-                'X-CSRFToken': $.cookie('csrftoken')
-            },
-            data: JSON.stringify({
-                name: this.refs.name.getDOMNode().value.trim(),
-                timezone: this.refs.tz.getDOMNode().value
-            }),
-            complete: (function(data) {
-                this.isMounted() && this.setState({
-                    ajaxInFlight: ''
-                });
-            }).bind(this),
-            success: (function(data) {
-                // Game-over. Parent must handle from here.
-                this.setState({
-                    newItemCreated: true
-                });
-                this.props.onCreateNew();
-            }).bind(this),
-            error: (function(xhr, txtStatus, saveErr) {
-                console.log('error', xhr, txtStatus, saveErr);
-                var errTxt = 'Error';
-                if (xhr.responseText) {
-                    try {
-                        errTxt += ': ' + JSON.stringify(
-                            JSON.parse(xhr.responseText));
-                    } catch (exc) {
-                        // json parsing error
-                    }
-                }
-
-                this.setState({
-                    ajaxErr: errTxt
-                });
-            }).bind(this)
-        });
-        }).bind(this), 2000);
-    },
     render: function() {
         var statusBox;
+
+        if (this.state.deleted) {
+            return <div>Deleted.</div>;
+        }
         if (this.state.ajaxInFlight || this.state.ajaxErr) {
             statusBox = <span
                 className={'status-' +
@@ -228,15 +250,15 @@ var ScheduleTemplateSummary = React.createClass({
             </span>;
         }
 
-        // existing item
-        if (this.props.data.id != null) {
-            if (this.state.deleted) {
-                return <span>Deleted. Parent component should remove us.</span>;
-            }
-
+        if (!this.state.editing) {
             return <div>
-                {this.props.data.name} {' '}
-                ({this.getTimezoneName(this.props.data.timezone)})
+                {this.props.model.name} {' '}
+                ({this.getTimezoneName(this.props.model.timezone)})
+                <button type="button"
+                    onClick={this.edit}
+                    disabled={this.state.ajaxInFlight}>
+                    Edit
+                </button>
                 <button type="button"
                     onClick={this.delete}
                     disabled={this.state.ajaxInFlight}>
@@ -246,32 +268,39 @@ var ScheduleTemplateSummary = React.createClass({
             </div>;
         }
 
-        // adding a new item
-        if (this.state.canceled) {
-            return <span>Canceled. Parent component should remove us.</span>;
-        }
-        if (this.state.newItemCreated) {
-            return <span>New Item Created.
-                Parent component should take over.</span>;
-        }
-
-        return <form onSubmit={this.submit}>
-            <input type="text" ref="name"
+        return <form onSubmit={this.saveOrCreate}>
+            <input type="text"
                 placeholder="Name of this Schedule Template…"
-                disabled={this.state.ajaxInFlight} />
-            <select ref="tz" disabled={this.state.ajaxInFlight}>
+                value={this.state.editModel.name}
+                onChange={this.handleChange.bind(this, 'name')}
+                disabled={this.state.ajaxInFlight}
+                />
+            <select
+                value={this.state.editModel.timezone}
+                onChange={this.handleChange.bind(this, 'timezone')}
+                disabled={this.state.ajaxInFlight}
+                >
+                <option value={0}>–</option>
                 {this.props.allTimezones.map(function(tz) {
                     // Don't need the key here, just silencing React warning
                     return <option key={tz.id} value={tz.id}>{tz.name}</option>;
                 })}
             </select>
             <button type="submit" disabled={this.state.ajaxInFlight}>
-                Save
+                {this.isNewItem() ? 'Create' : 'Save'}
             </button>
             <button type="button"
-                onClick={this.cancel}
-                disabled={this.state.ajaxInFlight}>
+                onClick={this.cancelEdit}
+                disabled={this.state.ajaxInFlight}
+                hidden={this.isNewItem()}
+                >
                 Cancel
+            </button>
+            <button type="reset"
+                disabled={this.state.ajaxInFlight}
+                hidden={!this.isNewItem()}
+                >
+                Clear
             </button>
 
             {statusBox}

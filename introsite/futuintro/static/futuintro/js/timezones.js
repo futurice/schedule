@@ -29,7 +29,7 @@ var TimeZoneListComp = React.createClass({
             timezones: this.state.timezones.concat(obj)
         });
     },
-    onSave: function(obj) {
+    onUpdate: function(obj) {
         this.setState({
             timezones: this.state.timezones.map(function(tz) {
                 if (tz.id == obj.id) {
@@ -40,21 +40,21 @@ var TimeZoneListComp = React.createClass({
         });
     },
     render: function() {
-        if (!this.state.tzLoaded) {
-            return <div>Getting data…</div>;
-        }
         if (this.state.tzErr) {
             return <div>{this.state.tzErr}</div>;
+        }
+        if (!this.state.tzLoaded) {
+            return <div>Getting data…</div>;
         }
 
         // tz is either an object or null (for the "add new" form).
         function createTimezoneComp(tz) {
-            return <li key={tz ? tz.id : 'add-new-item'}>
+            return <li key={tz ? tz.id : 'add-new-tz-item'}>
                     <TimeZoneComp
-                        tz={tz}
+                        model={tz}
                         onDelete={this.onDelete}
                         onCreate={this.onCreate}
-                        onSave={this.onSave}
+                        onUpdate={this.onUpdate}
                     />
                 </li>;
         }
@@ -68,29 +68,20 @@ var TimeZoneListComp = React.createClass({
 /*
  * Display, edit and delete a TimeZone, or create a new one.
  *
- * tz is either a timezone object {…} or null, which means show form to create
- * a new timezone.
+ * model is either a timezone object {…} or null, which means show a form to
+ * create a new timezone.
  */
 var TimeZoneComp = React.createClass({
-    propTypes: {
-        tz: React.PropTypes.object,
-        onDelete: React.PropTypes.func.isRequired,
-        onCreate: React.PropTypes.func.isRequired
-    },
-    // show form to create a new item
-    isNewItem: function() {
-        return this.props.tz == null;
-    },
-    copyInitialModel: function() {
-        // Get a copy of the initial, read-only model.
-        var model = {
+    mixins: [
+        getPropModelClonerMixin({
             id: null,
             name: ''
-        };
-        if (!this.isNewItem()) {
-            model = clone(this.props.tz);
-        }
-        return model;
+        }),
+    ],
+    propTypes: {
+        model: React.PropTypes.object,
+        onDelete: React.PropTypes.func.isRequired,
+        onCreate: React.PropTypes.func.isRequired
     },
     getInitialState: function() {
         var state = {
@@ -144,7 +135,7 @@ var TimeZoneComp = React.createClass({
         if (this.isNewItem()) {
             url = '/futuintro/api/timezones/';
         } else {
-            url = '/futuintro/api/timezones/' + this.props.tz.id + '/';
+            url = '/futuintro/api/timezones/' + this.props.model.id + '/';
         }
 
         // TODO: remove the setTimeout (tests delays in DEV).
@@ -168,7 +159,7 @@ var TimeZoneComp = React.createClass({
                     this.setState(this.getInitialState());
                     return;
                 }
-                this.props.onSave(data);
+                this.props.onUpdate(data);
                 this.setState({
                     reqErr: '',
                     editing: false
@@ -188,7 +179,7 @@ var TimeZoneComp = React.createClass({
         // TODO: remove the setTimeout (tests delays in DEV).
         setTimeout((function() {
         $.ajax({
-            url: '/futuintro/api/timezones/' + this.props.tz.id + '/',
+            url: '/futuintro/api/timezones/' + this.props.model.id + '/',
             type: 'DELETE',
             headers: {
                 'X-CSRFToken': $.cookie('csrftoken')
@@ -199,7 +190,7 @@ var TimeZoneComp = React.createClass({
                 });
             }).bind(this),
             success: (function(data) {
-                this.props.onDelete(this.props.tz);
+                this.props.onDelete(this.props.model);
                 // Game-over. We don't care about any other state fields.
                 this.isMounted() && this.setState({
                     deleted: true,
@@ -230,7 +221,7 @@ var TimeZoneComp = React.createClass({
 
         if (!this.state.editing) {
             return <div>
-                    {this.props.tz.name}
+                    {this.props.model.name}
                     <button type="button"
                         onClick={this.edit}
                         disabled={this.state.reqInFlight}>Edit</button>

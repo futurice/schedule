@@ -51,22 +51,8 @@ function compFetchRest(url, dataFieldName, successFieldName, errorFieldName) {
                 fetch.bind(this)();
             }).bind(this),
             error: (function(xhr, txtStatus, saveErr) {
-                console.log('error', xhr, txtStatus, saveErr);
-                var errTxt = 'Error';
-                if (xhr.responseText) {
-                    try {
-                        // JSON response is an explanation of the problem.
-                        // Anything else is probably a huge html page
-                        // describing server misconfiguration.
-                        errTxt += ': ' + JSON.stringify(
-                            JSON.parse(xhr.responseText));
-                    } catch (exc) {
-                        // json parsing error
-                    }
-                }
-
                 var newState = {};
-                newState[errorFieldName] = errTxt;
+                newState[errorFieldName] = getAjaxErr.apply(this, arguments);
                 this.setState(newState);
             }).bind(this)
         });
@@ -75,14 +61,27 @@ function compFetchRest(url, dataFieldName, successFieldName, errorFieldName) {
 }
 
 /*
- * Shallow clone a plain JS object.
+ * Recursively clone a plain JS object, array, number, boolean or string.
  */
 function clone(obj) {
-    var result = {};
-    for (var k in obj) {
-        result[k] = obj[k];
+    if (Array.isArray(obj)) {
+        return obj.map(function(x) {
+            return clone(x);
+        });
     }
-    return result;
+
+    switch (typeof(obj)) {
+        case 'number':
+        case 'string':
+        case 'boolean':
+            return obj;
+        default:
+            var result = {};
+            for (var k in obj) {
+                result[k] = clone(obj[k]);
+            }
+            return result;
+    }
 }
 
 /*
@@ -104,3 +103,29 @@ function getAjaxErr(xhr, txtStatus, saveErr) {
     }
     return errTxt;
 }
+
+/*
+ * A React mixin helping with a few data model conventions.
+ *
+ * The model=… property is either a plain JS object (your model) or null,
+ * indicating your component must show a form for creating a new item.
+ *
+ * blankModel must be a plain JS object to use as a blank model.
+ */
+function getPropModelClonerMixin(blankModel) {
+    return {
+        isNewItem: function() {
+            return this.props.model == null;
+        },
+
+        // Get a copy of the initial read-only model, e.g. to use as a
+        // mutable model for editing.
+        copyInitialModel: function() {
+            if (this.isNewItem()) {
+                return clone(blankModel);
+            } else {
+                return clone(this.props.model);
+            }
+        }
+    };
+};
