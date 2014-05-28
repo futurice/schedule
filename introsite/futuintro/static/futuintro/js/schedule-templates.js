@@ -1,12 +1,6 @@
 /** @jsx React.DOM */
 
 var ScheduleTemplatesList = React.createClass({
-    mixins: [
-        getRestLoaderMixin('/futuintro/api/scheduletemplates/', 'schedTempl',
-            'schedTemplLoaded', 'schedTemplErr'),
-        getRestLoaderMixin('/futuintro/api/timezones/', 'timezones',
-            'tzLoaded', 'tzErr'),
-    ],
     getInitialState: function() {
         return {
             schedTempl: [],
@@ -30,6 +24,9 @@ var ScheduleTemplatesList = React.createClass({
     },
     refresh: function() {
         this.setState(this.getInitialState());
+        this.fetchData();
+    },
+    componentDidMount: function() {
         this.fetchData();
     },
     toggleAddNew: function() {

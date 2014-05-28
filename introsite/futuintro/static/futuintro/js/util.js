@@ -73,3 +73,34 @@ function compFetchRest(url, dataFieldName, successFieldName, errorFieldName) {
     }
     fetch.bind(this)();
 }
+
+/*
+ * Shallow clone a plain JS object.
+ */
+function clone(obj) {
+    var result = {};
+    for (var k in obj) {
+        result[k] = obj[k];
+    }
+    return result;
+}
+
+/*
+ * Return a string describing the error, from the args of jQuery's ajax.error
+ * function.
+ */
+function getAjaxErr(xhr, txtStatus, saveErr) {
+    console.log('error', xhr, txtStatus, saveErr);
+    var errTxt = 'Error';
+    if (xhr.responseText) {
+        try {
+            // JSON response is an explanation of the problem.
+            // Anything else is probably a huge html page
+            // describing server misconfiguration.
+            errTxt += ': ' + JSON.stringify(JSON.parse(xhr.responseText));
+        } catch (exc) {
+            // json parsing error
+        }
+    }
+    return errTxt;
+}

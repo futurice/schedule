@@ -1,167 +1,99 @@
 /** @jsx React.DOM */
 
 /*
- * Fetches the data when initially created. Could be better named.
- */
-var FetchingTimeZoneList = React.createClass({
-    getInitialState: function() {
-        return {
-            doneFetching: false,
-            hasErr: false,
-            items: [],
-            // whether a new item to create is shown at the end
-            newBlankItem: false
-        };
-    },
-    fetchData: function() {
-        var self = this, items = [], nextUrl = '/futuintro/api/timezones/';
-        function fetch() {
-            if (nextUrl) {
-                $.ajax({
-                    url: nextUrl,
-                    success: (function(data) {
-                        items = items.concat(data.results);
-                        nextUrl = data.next;
-                        self.timerId = setTimeout(fetch, 0);
-                    }),
-                    error: function(req, txtStatus, txtErr) {
-                        console.error('Failed:', req, txtStatus, txtErr);
-                        self.setState({
-                            doneFetching: true,
-                            hasErr: true
-                        });
-                    }
-                });
-            } else {
-                self.setState({
-                    doneFetching: true,
-                    items: items
-                });
-            }
-        }
-
-        // so we can cancel the timer if the component is unmounted
-        // while we're still processing requests.
-        this.timerId = setTimeout(fetch, 0);
-    },
-    componentDidMount: function() {
-        this.fetchData();
-    },
-    componentWillUnmount: function() {
-        clearTimeout(this.timerId);
-    },
-    onDelete: function(deletedItem) {
-        // non-optimal O(n) operation
-        var itemsLeft = this.state.items.filter(function(item) {
-            return item.id != deletedItem.id;
-        });
-        this.setState({
-            items: itemsLeft
-        });
-    },
-    onNewItemCreated: function() {
-        this.setState(this.getInitialState());
-        this.fetchData();
-    },
-    toggleNewItem: function() {
-        var newItems;
-        if (this.state.newBlankItem) {
-            newItems = this.state.items.slice(0, -1);
-        } else {
-            // convention (also for bottom-level view&edit component):
-            // null ID and no other fields means create.
-            newItems = this.state.items.concat({id: null});
-        }
-        this.setState({
-            newBlankItem: !this.state.newBlankItem,
-            items: newItems
-        });
-    },
-    render: function() {
-        if (!this.state.doneFetching) {
-            return <div>Getting data…</div>;
-        }
-        if (this.state.hasErr) {
-            return <div>There was an error getting data</div>;
-        }
-        return <div>
-                <TimeZoneListComp
-                    timezones={this.state.items}
-                    onDelete={this.onDelete}
-                    onNewItemCreated={this.onNewItemCreated}
-                    onNewItemCanceled={this.toggleNewItem}
-                />
-                <button type="button"
-                    onClick={this.toggleNewItem}
-                    hidden={this.state.newBlankItem}>+ Add another</button>
-            </div>
-    }
-});
-
-/*
- * Requires you to pass the data in an attribute.
+ * Fetches the timezones when created then displays them.
  */
 var TimeZoneListComp = React.createClass({
-    propTypes: {
-        timezones: React.PropTypes.array.isRequired,
-        onDelete: React.PropTypes.func,
-        onNewItemCreated: React.PropTypes.func,
-        onNewItemCanceled: React.PropTypes.func
-    },
-    getDefaultProps: function() {
+    mixins: [
+        getRestLoaderMixin('/futuintro/api/timezones/', 'timezones',
+            'tzLoaded', 'tzErr'),
+    ],
+    getInitialState: function() {
         return {
             timezones: [],
-            onDelete: function() {},
-            onNewItemCreated: function() {},
-            onNewItemCanceled: function() {}
+            tzLoaded: false,
+            tzErr: ''
         };
     },
+    onDelete: function(deletedTz) {
+        // non-optimal O(n) operation
+        var timezones = this.state.timezones.filter(function(tz) {
+            return tz.id != deletedTz.id;
+        });
+        this.setState({
+            timezones: timezones
+        });
+    },
+    onCreate: function(obj) {
+        this.setState({
+            timezones: this.state.timezones.concat(obj)
+        });
+    },
+    onSave: function(obj) {
+        this.setState({
+            timezones: this.state.timezones.map(function(tz) {
+                if (tz.id == obj.id) {
+                    return obj;
+                }
+                return tz;
+            })
+        });
+    },
     render: function() {
+        if (!this.state.tzLoaded) {
+            return <div>Getting data…</div>;
+        }
+        if (this.state.tzErr) {
+            return <div>{this.state.tzErr}</div>;
+        }
+
+        // tz is either an object or null (for the "add new" form).
         function createTimezoneComp(tz) {
-            // support the null id
-            return <li key={'' + tz.id}>
+            return <li key={tz ? tz.id : 'add-new-item'}>
                     <TimeZoneComp
                         tz={tz}
-                        onDelete={this.props.onDelete}
-                        onNewItemCreated={this.props.onNewItemCreated}
-                        onNewItemCanceled={this.props.onNewItemCanceled}
+                        onDelete={this.onDelete}
+                        onCreate={this.onCreate}
+                        onSave={this.onSave}
                     />
                 </li>;
         }
-        return <ul>{this.props.timezones.map(createTimezoneComp, this)}</ul>;
+        return <ul>
+            {this.state.timezones.map(createTimezoneComp, this)}
+            {createTimezoneComp.bind(this)(null)}
+        </ul>;
     }
 });
 
 /*
- * Display, edit and delete a TimeZone.
+ * Display, edit and delete a TimeZone, or create a new one.
  *
- * After deleting, onDelete({id: the_id}) is called.
+ * tz is either a timezone object {…} or null, which means show form to create
+ * a new timezone.
  */
 var TimeZoneComp = React.createClass({
     propTypes: {
-        tz: React.PropTypes.object.isRequired,
-        onDelete: React.PropTypes.func,
-        onNewItemCreated: React.PropTypes.func,
-        onNewItemCanceled: React.PropTypes.func
+        tz: React.PropTypes.object,
+        onDelete: React.PropTypes.func.isRequired,
+        onCreate: React.PropTypes.func.isRequired
     },
-    getDefaultProps: function() {
-        return {
-            onDelete: function() {},
-            onNewItemCreated: function() {},
-            onNewItemCanceled: function() {}
-        };
-    },
-    getId: function() {
-        return this.props.tz.id;
-    },
-    // we're editing a new item that's to be created
+    // show form to create a new item
     isNewItem: function() {
-        return this.getId() == null;
+        return this.props.tz == null;
+    },
+    copyInitialModel: function() {
+        // Get a copy of the initial, read-only model.
+        var model = {
+            id: null,
+            name: ''
+        };
+        if (!this.isNewItem()) {
+            model = clone(this.props.tz);
+        }
+        return model;
     },
     getInitialState: function() {
-        return {
-            name: this.props.tz.name,
-
+        var state = {
             // If non-empty, an AJAX request is in flight and this is its
             // description, e.g. ‘Saving…’.
             reqInFlight: '',
@@ -170,37 +102,39 @@ var TimeZoneComp = React.createClass({
             reqErr: '',
 
             editing: this.isNewItem(),
+            // the existing item has been deleted
             deleted: false
         };
+
+        if (state.editing) {
+            // this is a mutable model, used only in edit mode
+            state.editModel = this.copyInitialModel();
+        }
+
+        return state;
     },
     edit: function() {
         this.setState({
             editing: true,
-            newName: this.state.name,
+            // reset the editModel every time we enter edit mode
+            editModel: this.copyInitialModel(),
             reqErr: '',
         });
     },
-    handleChange: function(event) {
-        this.setState({
-            newName: event.target.value
-        });
-    },
     cancelEdit: function() {
-        if (this.isNewItem()) {
-            // Game-over
-            this.props.onNewItemCanceled();
-            this.setState({
-                newItemCanceled: true
-            });
-            return;
-        }
-
         this.setState({
             editing: false,
             reqErr: ''
         });
     },
-    save: function(evt) {
+    handleChange: function(modelFieldName, event) {
+        var m = clone(this.state.editModel);
+        m[modelFieldName] = event.target.value;
+        this.setState({
+            editModel: m
+        });
+    },
+    saveOrCreate: function(evt) {
         evt.preventDefault();
         this.setState({
             reqInFlight: this.isNewItem() ? 'Creating…' : 'Saving…'
@@ -210,7 +144,7 @@ var TimeZoneComp = React.createClass({
         if (this.isNewItem()) {
             url = '/futuintro/api/timezones/';
         } else {
-            url = '/futuintro/api/timezones/' + this.getId() + '/';
+            url = '/futuintro/api/timezones/' + this.props.tz.id + '/';
         }
 
         // TODO: remove the setTimeout (tests delays in DEV).
@@ -222,9 +156,7 @@ var TimeZoneComp = React.createClass({
             headers: {
                 'X-CSRFToken': $.cookie('csrftoken')
             },
-            data: JSON.stringify({
-                name: this.state.newName
-            }),
+            data: JSON.stringify(this.state.editModel),
             complete: (function(data) {
                 this.isMounted() && this.setState({
                     reqInFlight: ''
@@ -232,37 +164,18 @@ var TimeZoneComp = React.createClass({
             }).bind(this),
             success: (function(data) {
                 if (this.isNewItem()) {
-                    // Game-over. Parent must handle from here.
-                    this.setState({
-                        newItemCreated: true
-                    });
-                    this.props.onNewItemCreated();
+                    this.props.onCreate(data);
+                    this.setState(this.getInitialState());
                     return;
                 }
+                this.props.onSave(data);
                 this.setState({
-                    name: this.state.newName,
                     reqErr: '',
                     editing: false
                 });
             }).bind(this),
             error: (function(xhr, txtStatus, saveErr) {
-                console.log('error', xhr, txtStatus, saveErr);
-                var errTxt = 'Error';
-                if (xhr.responseText) {
-                    try {
-                        // JSON response is an explanation of the problem.
-                        // Anything else is probably a huge html page
-                        // describing server misconfiguration.
-                        errTxt += ': ' + JSON.stringify(
-                            JSON.parse(xhr.responseText));
-                    } catch (exc) {
-                        // json parsing
-                    }
-                }
-
-                this.setState({
-                    reqErr: errTxt
-                });
+                this.setState({reqErr: getAjaxErr.apply(this, arguments)});
             }).bind(this)
         });
         }).bind(this), 3000);
@@ -275,7 +188,7 @@ var TimeZoneComp = React.createClass({
         // TODO: remove the setTimeout (tests delays in DEV).
         setTimeout((function() {
         $.ajax({
-            url: '/futuintro/api/timezones/' + this.getId() + '/',
+            url: '/futuintro/api/timezones/' + this.props.tz.id + '/',
             type: 'DELETE',
             headers: {
                 'X-CSRFToken': $.cookie('csrftoken')
@@ -286,61 +199,38 @@ var TimeZoneComp = React.createClass({
                 });
             }).bind(this),
             success: (function(data) {
+                this.props.onDelete(this.props.tz);
                 // Game-over. We don't care about any other state fields.
-                this.setState({
+                this.isMounted() && this.setState({
                     deleted: true,
-                    reqErr: ''
-                });
-                this.props.onDelete({
-                    id: this.getId()
                 });
             }).bind(this),
             error: (function(xhr, txtStatus, delErr) {
-                console.log('error', xhr, txtStatus, delErr);
-                var errTxt = 'Error';
-                if (xhr.responseText) {
-                    try {
-                        errTxt += ': ' + JSON.stringify(
-                            JSON.parse(xhr.responseText));
-                    } catch (exc) {
-                        // json parsing
-                    }
-                }
-
-                this.setState({
-                    reqErr: errTxt
-                });
+                this.setState({reqErr: getAjaxErr.apply(this, arguments)});
             }).bind(this)
         });
         }).bind(this), 3000);
     },
+
     render: function() {
         var statusBox;
 
         if (this.state.deleted) {
-            return <div>This TimeZone has been deleted.
-                You should not be seeing this.</div>;
-        }
-
-        if (this.state.newItemCanceled) {
-            return <div>Creating new TimeZone canceled.
-                You should not be seeing this.</div>;
-        }
-        if (this.state.newItemCreated) {
-            return <div>New TimeZone created.
-                You should not be seeing this.</div>;
+            return <div>Deleted.</div>;
         }
 
         if (this.state.reqInFlight || this.state.reqErr) {
             statusBox = <span
-                    className={'status-' + (this.state.reqInFlight ? 'info' : 'error')}>
-                    {this.state.reqInFlight ? this.state.reqInFlight : this.state.reqErr }
+                    className={'status-' +
+                        (this.state.reqInFlight ? 'info' : 'error')}>
+                    {this.state.reqInFlight ?
+                        this.state.reqInFlight : this.state.reqErr }
                 </span>;
         }
 
         if (!this.state.editing) {
             return <div>
-                    {this.state.name}
+                    {this.props.tz.name}
                     <button type="button"
                         onClick={this.edit}
                         disabled={this.state.reqInFlight}>Edit</button>
@@ -351,16 +241,19 @@ var TimeZoneComp = React.createClass({
                 </div>;
         }
 
-        return <form onSubmit={this.save}>
+        return <form onSubmit={this.saveOrCreate}>
                 <input type="text"
-                    value={this.state.newName}
-                    onChange={this.handleChange}
+                    value={this.state.editModel.name}
+                    onChange={this.handleChange.bind(this, 'name')}
                     disabled={this.state.reqInFlight} />
                 <button type="button"
                     onClick={this.cancelEdit}
-                    disabled={this.state.reqInFlight}>Cancel</button>
+                    disabled={this.state.reqInFlight}
+                    hidden={this.isNewItem()}>Cancel</button>
                 <button type="submit"
-                    disabled={this.state.reqInFlight}>Save</button>
+                    disabled={this.state.reqInFlight}>
+                    {this.isNewItem() ? 'Add new' : 'Save'}
+                </button>
                 {statusBox}
             </form>;
     }
