@@ -252,8 +252,10 @@ var ScheduleTemplateSummary = React.createClass({
 
         if (!this.state.editing) {
             return <div>
-                {this.props.model.name} {' '}
-                ({this.getTimezoneName(this.props.model.timezone)})
+                <a href={'../schedule-template/' + this.props.model.id}>
+                    {this.props.model.name} {' '}
+                    ({this.getTimezoneName(this.props.model.timezone)})
+                </a>
                 <button type="button"
                     onClick={this.edit}
                     disabled={this.state.ajaxInFlight}>
@@ -287,7 +289,7 @@ var ScheduleTemplateSummary = React.createClass({
                 })}
             </select>
             <button type="submit" disabled={this.state.ajaxInFlight}>
-                {this.isNewItem() ? 'Create' : 'Save'}
+                {this.isNewItem() ? 'Add new' : 'Save'}
             </button>
             <button type="button"
                 onClick={this.cancelEdit}

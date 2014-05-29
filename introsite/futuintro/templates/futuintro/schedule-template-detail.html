@@ -1,0 +1,12 @@
+{% extends "futuintro/base.html" %}
+
+{% block title %}Schedule Template{% endblock %}
+
+{% block body %}
+<script type="text/jsx">
+/** @jsx React.DOM */
+// pass the ‘id’ attr as a number, not as a string
+React.renderComponent(<ScheduleTemplateDetail id={ {{st_id}} } />,
+  document.getElementById('main-content'));
+</script>
+{% endblock %}

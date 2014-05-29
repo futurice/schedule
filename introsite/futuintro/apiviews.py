@@ -18,6 +18,8 @@ class ScheduleTemplateViewSet(viewsets.ModelViewSet):
 
 class EventTemplateViewSet(viewsets.ModelViewSet):
     model = models.EventTemplate
+    filter_fields = ('scheduleTemplate',)
+    ordering_fields = ('dayOffset', 'startTime')
 
 class CalendarResourcesViewSet(viewsets.ModelViewSet):
     model = models.CalendarResource

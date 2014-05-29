@@ -103,7 +103,7 @@ class ScheduleTemplate(models.Model):
 
 class EventTemplate(models.Model):
     summary = models.CharField(max_length=200)
-    description = models.TextField()
+    description = models.TextField(blank=True)
     location = models.ForeignKey(CalendarResource, null=True, blank=True)
 
     # which calendar day the event is on. 0 is the employee's starting day,

@@ -1,5 +1,8 @@
 /** @jsx React.DOM */
 
+function noop() {
+}
+
 /*
  * Create and return a React mixin which fetches data from url, getting all
  * .next pages. If successful, calls setState() with the .dataFieldName set to
@@ -32,14 +35,15 @@ function getRestLoaderMixin(url, dataFieldName,
  * Similar to getRestLoaderMixin(), but you can call this repeatedly.
  * Could be better named.
  */
-function compFetchRest(url, dataFieldName, successFieldName, errorFieldName) {
+function compFetchRest(url, dataFieldName, successFieldName, errorFieldName,
+        successCallback) {
     var data = [];
     function fetch() {
         if (!url) {
             var newState = {};
             newState[dataFieldName] = data;
             newState[successFieldName] = true;
-            this.setState(newState);
+            this.setState(newState, (successCallback || noop).bind(this));
             return;
         }
 
@@ -50,7 +54,7 @@ function compFetchRest(url, dataFieldName, successFieldName, errorFieldName) {
                 url = newData.next;
                 fetch.bind(this)();
             }).bind(this),
-            error: (function(xhr, txtStatus, saveErr) {
+            error: (function() {
                 var newState = {};
                 newState[errorFieldName] = getAjaxErr.apply(this, arguments);
                 this.setState(newState);
@@ -59,6 +63,31 @@ function compFetchRest(url, dataFieldName, successFieldName, errorFieldName) {
     }
     fetch.bind(this)();
 }
+
+
+/*
+ * Similar to compFetchRest() but fetches a single item not an array.
+ *
+ * This simple function is just mean to reduce boilerplate code in components
+ * that make such an ajax call.
+ */
+function compFetchItemRest(url, dataFieldName, errorFieldName,
+        successCallback) {
+    $.ajax({
+        url: url,
+        success: (function(data) {
+            var newState = {};
+            newState[dataFieldName] = data;
+            this.setState(newState, (successCallback || noop).bind(this));
+        }).bind(this),
+        error: (function() {
+            var newState = {};
+            newState[errorFieldName] = getAjaxErr.apply(this, arguments);
+            this.setState(newState);
+        }).bind(this)
+    });
+}
+
 
 /*
  * Recursively clone a plain JS object, array, number, boolean or string.
@@ -88,8 +117,8 @@ function clone(obj) {
  * Return a string describing the error, from the args of jQuery's ajax.error
  * function.
  */
-function getAjaxErr(xhr, txtStatus, saveErr) {
-    console.log('error', xhr, txtStatus, saveErr);
+function getAjaxErr(xhr, txtStatus, errThrown) {
+    console.log('error', xhr, txtStatus, errThrown);
     var errTxt = 'Error';
     if (xhr.responseText) {
         try {
