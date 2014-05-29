@@ -99,6 +99,10 @@ function clone(obj) {
         });
     }
 
+    if (obj === null || obj === undefined) {
+        return obj;
+    }
+
     switch (typeof(obj)) {
         case 'number':
         case 'string':
@@ -108,6 +112,57 @@ function clone(obj) {
             var result = {};
             for (var k in obj) {
                 result[k] = clone(obj[k]);
+            }
+            return result;
+    }
+}
+
+
+/*
+ * Recursively compare plain JS objects, arrays, numbers, booleans or strings.
+ *
+ * Keep this similar to clone().
+ */
+function sameModels(a, b) {
+    // TODO: unittest sameModels() and clone()
+    var result = true, i;
+
+    if (Array.isArray(a)) {
+        if (!Array.isArray(b)) {
+            return false;
+        }
+        if (a.length != b.length) {
+            return false;
+        }
+
+        for (i = 0; i < a.length; i++) {
+            result = result && sameModels(a[i], b[i]);
+        }
+        return result;
+    }
+
+    if (typeof(a) != typeof(b)) {
+        return false;
+    }
+
+    if (a == null || b == null) {
+        return a == b;
+    }
+
+    switch (typeof(a)) {
+        case 'undefined':
+        case 'number':
+        case 'string':
+        case 'boolean':
+            return a == b;
+
+        default:
+            var aKeys = Object.keys(a).sort(), bKeys = Object.keys(b).sort();
+            if (!sameModels(aKeys, bKeys)) {
+                return false;
+            }
+            for (i = 0; i < aKeys.length; i++) {
+                result = result && sameModels(a[aKeys[i]], b[bKeys[i]]);
             }
             return result;
     }

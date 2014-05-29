@@ -72,6 +72,10 @@ var ScheduleTemplateDetail = React.createClass({
             newEventSummary: ''
         };
     },
+    // returns boolean telling if we have unsaved edits in the page
+    hasUnsavedChanges: function() {
+        return !sameModels(this.state.evTempl, this.state.editEvTempl);
+    },
     createEventTemplate: function(ev) {
         ev.preventDefault();
         this.setState({
@@ -114,14 +118,18 @@ var ScheduleTemplateDetail = React.createClass({
         });
         }).bind(this), 1000);
     },
-    deleteEventTemplate: function(model) {
+    getEditModelIdx: function(model) {
         var i, v = this.state.editEvTempl;
         for (i = 0; i < v.length; i++) {
             if (v[i] == model) {
-                break;
+                return i;
             }
         }
-        if (i == v.length) {
+        return -1;
+    },
+    deleteEventTemplate: function(model) {
+        var i = this.getEditModelIdx(model);
+        if (i == -1) {
             console.error('Model to delete not found', model);
             return;
         }
@@ -169,6 +177,19 @@ var ScheduleTemplateDetail = React.createClass({
         });
         }).bind(this), 1000);
     },
+    evTemplFieldEdit: function(model, fieldName, newValue) {
+        var i = this.getEditModelIdx(model);
+        if (i == -1) {
+            console.error('Model not found', model);
+            return;
+        }
+
+        var editEvTempl = clone(this.state.editEvTempl);
+        editEvTempl[i][fieldName] = newValue;
+        this.setState({
+            editEvTempl: editEvTempl
+        });
+    },
     handleChangeNewEvent: function(ev) {
         this.setState({
             newEventSummary: ev.target.value
@@ -213,12 +234,14 @@ var ScheduleTemplateDetail = React.createClass({
             <div>
                 <ul>
                 {this.state.editEvTempl.map((function(et, i) {
-                    return <li>
+                    return <li key={et.id}>
                         <EventTemplate
                             model={et}
+                            rooms={this.state.rooms}
                             disabled={Boolean(this.state.ajaxInFlight)}
                             errTxt={this.state.evTemplAjaxErrors[i]}
                             onDelete={this.deleteEventTemplate}
+                            onFieldEdit={this.evTemplFieldEdit}
                         />
                     </li>;
                 }).bind(this))}
@@ -234,6 +257,20 @@ var ScheduleTemplateDetail = React.createClass({
                     <button type="submit" disabled={this.state.ajaxInFlight}>+ Add</button>
                 </form>
 
+                <div>
+                    <button type="button"
+                        disabled={this.state.ajaxInFlight ||
+                            !this.hasUnsavedChanges()}
+                        >
+                        Save all changes
+                    </button>
+                    <span>
+                        {this.hasUnsavedChanges() ?
+                            'There are unsaved changes' :
+                            'You haven\'t made any changes'}
+                    </span>
+                </div>
+
                 {statusBox}
             </div>
         );
@@ -241,34 +278,157 @@ var ScheduleTemplateDetail = React.createClass({
 });
 
 
-var EventTemplate = React.createClass({
-    propTypes: {
-        model: React.PropTypes.object.isRequired,
-        // disable all input fields and buttons, e.g. during the parent's
-        // ajax requests
-        disabled: React.PropTypes.bool.isRequired,
-        errTxt: React.PropTypes.string.isRequired,
-        onDelete: React.PropTypes.func.isRequired
-    },
-    handleDelete: function() {
-        this.props.onDelete(this.props.model);
-    },
-    render: function() {
-        var errBox;
-        if (this.props.errTxt) {
-            errBox = <div>
-                <span className="status-error">{this.props.errTxt}</span>
+var EventTemplate = (function() {
+    return React.createClass({
+        propTypes: {
+            model: React.PropTypes.object.isRequired,
+            rooms: React.PropTypes.array.isRequired,
+            // disable all input fields and buttons, e.g. during the parent's
+            // ajax requests
+            disabled: React.PropTypes.bool.isRequired,
+            errTxt: React.PropTypes.string.isRequired,
+            // onDelete(model)
+            onDelete: React.PropTypes.func.isRequired,
+            // onFieldEdit(model, fieldName, newValue)
+            onFieldEdit: React.PropTypes.func.isRequired
+        },
+        handleDelete: function() {
+            this.props.onDelete(this.props.model);
+        },
+        handleChange: function(fieldName, ev) {
+            var val = ev.target.value;
+            console.log(val);
+            this.props.onFieldEdit(this.props.model, fieldName, val);
+        },
+        handleSelectChange: function(fieldName, ev) {
+            // TODO: maybe can check .target type?
+
+            // React treats <… someAttr={null|true|false|option} …> specially.
+            // So working around that.
+            var val = ev.target.value;
+            if (val == 'my-null') {
+                val = null;
+            } else if (val == 'my-true') {
+                val = true;
+            } else if (val == 'my-false') {
+                val = false;
+            }
+            this.props.onFieldEdit(this.props.model, fieldName, val);
+        },
+        handleCheckboxChange: function(fieldName, ev) {
+            // TODO: maybe can check .target type?
+            var val = ev.target.checked;
+            this.props.onFieldEdit(this.props.model, fieldName, val);
+        },
+        handleIntChange: function(fieldName, ev) {
+            var val = Number.parseInt(ev.target.value) || 0;
+            this.props.onFieldEdit(this.props.model, fieldName, val);
+        },
+        render: function() {
+            var errBox;
+            if (this.props.errTxt) {
+                errBox = <div>
+                    <span className="status-error">{this.props.errTxt}</span>
+                </div>;
+            }
+            return <div>
+                <label>Summary:</label>
+                <input type="text"
+                    disabled={this.props.disabled}
+                    value={this.props.model.summary}
+                    onChange={this.handleChange.bind(this, 'summary')}
+                    />
+                <br/>
+
+                <label>Description:</label>
+                <textarea
+                    disabled={this.props.disabled}
+                    value={this.props.model.description}
+                    onChange={this.handleChange.bind(this, 'description')}
+                    />
+                <br/>
+
+                <label>Location:</label>
+                <select
+                    disabled={this.props.disabled}
+                    value={this.props.model.location === null ?
+                        'my-null' : this.props.model.location}
+                    onChange={this.handleSelectChange.bind(this, 'location')}
+                    >
+                    <option value='my-null'>—</option>
+                    {this.props.rooms.map(function(r) {
+                        return <option key={r.id} value={r.id}>{r.name}</option>;
+                    })}
+                </select>
+                <br/>
+
+                <label>Day offset (TODO explain this):</label>
+                <input type="number"
+                    disabled={this.props.disabled}
+                    value={this.props.model.dayOffset}
+                    onChange={this.handleChange.bind(this, 'dayOffset')}
+                    // If the user types 'hello' or '-' for '-3' only convert
+                    // it to a number (0 for invalid strings) on blur
+                    onBlur={this.handleIntChange.bind(this, 'dayOffset')}
+                    />
+                <br/>
+
+                <label>From:</label>
+                <input type="text"
+                    disabled={this.props.disabled}
+                    value={this.props.model.startTime}
+                    onChange={this.handleChange.bind(this, 'startTime')}
+                    />
+                to
+                <input type="text"
+                    disabled={this.props.disabled}
+                    value={this.props.model.endTime}
+                    onChange={this.handleChange.bind(this, 'endTime')}
+                    />
+                <br/>
+
+                <label>Event Type:</label>
+                <select
+                    disabled={this.props.disabled}
+                    value={this.props.model.isCollective ?
+                        'my-true' : 'my-false'}
+                    onChange={this.handleSelectChange.bind(this, 'isCollective')}
+                    >
+                    <option value='my-true'>
+                        Common (invite all employees to the same event)
+                    </option>
+                    <option value='my-false'>
+                        Individual (one separate event for each employee)
+                    </option>
+                </select>
+                <br/>
+
+                <input type="checkbox"
+                    disabled={this.props.disabled}
+                    checked={this.props.model.inviteEmployees}
+                    onChange={this.handleCheckboxChange.bind(this,
+                            'inviteEmployees')}
+                    />
+                    Invite employee{this.props.model.isCollective ? 's' : ''}?
+                <br/>
+
+                <input type="checkbox"
+                    disabled={this.props.disabled}
+                    checked={this.props.model.inviteSupervisors}
+                    onChange={this.handleCheckboxChange.bind(this,
+                            'inviteSupervisors')}
+                    />
+                    Invite supervisor{this.props.model.isCollective ? 's' : ''}?
+                <br/>
+
+                <button type="button"
+                    onClick={this.handleDelete}
+                    disabled={this.props.disabled}
+                    >
+                    Delete
+                </button>
+                {errBox}
             </div>;
         }
-        return <div>
-            <span>{this.props.model.summary}</span>
-            <button type="button"
-                onClick={this.handleDelete}
-                disabled={this.props.disabled}
-                >
-                Delete
-            </button>
-            {errBox}
-        </div>;
-    }
-});
+    });
+})();

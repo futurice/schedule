@@ -1,3 +1,11 @@
 form#add-event-template {
 	background-color: PaleGreen;
 }
+
+.status-info {
+	background-color: AliceBlue;
+}
+
+.status-error {
+	background-color: LightPink;
+}
