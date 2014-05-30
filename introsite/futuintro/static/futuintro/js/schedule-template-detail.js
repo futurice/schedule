@@ -296,28 +296,25 @@ var EventTemplate = (function() {
             this.props.onDelete(this.props.model);
         },
         handleChange: function(fieldName, ev) {
-            var val = ev.target.value;
-            console.log(val);
-            this.props.onFieldEdit(this.props.model, fieldName, val);
-        },
-        handleSelectChange: function(fieldName, ev) {
-            // TODO: maybe can check .target type?
-
-            // React treats <… someAttr={null|true|false|option} …> specially.
-            // So working around that.
-            var val = ev.target.value;
-            if (val == 'my-null') {
-                val = null;
-            } else if (val == 'my-true') {
-                val = true;
-            } else if (val == 'my-false') {
-                val = false;
+            var target = ev.target, val = target.value;
+            switch (target.tagName) {
+                case "SELECT":
+                    // React treats <… someAttr={null|true|false|option} …>
+                    // specially. So working around that.
+                    if (val == 'null') {
+                        val = null;
+                    } else if (val == 'true') {
+                        val = true;
+                    } else if (val == 'false') {
+                        val = false;
+                    }
+                    break;
+                case "INPUT":
+                    if (target.type == 'checkbox') {
+                        val = target.checked;
+                    }
+                    break;
             }
-            this.props.onFieldEdit(this.props.model, fieldName, val);
-        },
-        handleCheckboxChange: function(fieldName, ev) {
-            // TODO: maybe can check .target type?
-            var val = ev.target.checked;
             this.props.onFieldEdit(this.props.model, fieldName, val);
         },
         handleIntChange: function(fieldName, ev) {
@@ -352,10 +349,10 @@ var EventTemplate = (function() {
                 <select
                     disabled={this.props.disabled}
                     value={this.props.model.location === null ?
-                        'my-null' : this.props.model.location}
-                    onChange={this.handleSelectChange.bind(this, 'location')}
+                        'null' : this.props.model.location}
+                    onChange={this.handleChange.bind(this, 'location')}
                     >
-                    <option value='my-null'>—</option>
+                    <option value='null'>—</option>
                     {this.props.rooms.map(function(r) {
                         return <option key={r.id} value={r.id}>{r.name}</option>;
                     })}
@@ -390,14 +387,13 @@ var EventTemplate = (function() {
                 <label>Event Type:</label>
                 <select
                     disabled={this.props.disabled}
-                    value={this.props.model.isCollective ?
-                        'my-true' : 'my-false'}
-                    onChange={this.handleSelectChange.bind(this, 'isCollective')}
+                    value={this.props.model.isCollective ? 'true' : 'false'}
+                    onChange={this.handleChange.bind(this, 'isCollective')}
                     >
-                    <option value='my-true'>
+                    <option value='true'>
                         Common (invite all employees to the same event)
                     </option>
-                    <option value='my-false'>
+                    <option value='false'>
                         Individual (one separate event for each employee)
                     </option>
                 </select>
@@ -406,8 +402,7 @@ var EventTemplate = (function() {
                 <input type="checkbox"
                     disabled={this.props.disabled}
                     checked={this.props.model.inviteEmployees}
-                    onChange={this.handleCheckboxChange.bind(this,
-                            'inviteEmployees')}
+                    onChange={this.handleChange.bind(this, 'inviteEmployees')}
                     />
                     Invite employee{this.props.model.isCollective ? 's' : ''}?
                 <br/>
@@ -415,8 +410,7 @@ var EventTemplate = (function() {
                 <input type="checkbox"
                     disabled={this.props.disabled}
                     checked={this.props.model.inviteSupervisors}
-                    onChange={this.handleCheckboxChange.bind(this,
-                            'inviteSupervisors')}
+                    onChange={this.handleChange.bind(this, 'inviteSupervisors')}
                     />
                     Invite supervisor{this.props.model.isCollective ? 's' : ''}?
                 <br/>
