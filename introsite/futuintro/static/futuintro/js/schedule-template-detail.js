@@ -368,6 +368,8 @@ var ScheduleTemplateDetail = React.createClass({
             </div>;
         }
 
+        var hasUnsavedChanges = this.hasUnsavedChanges();
+
         return (
             <div>
                 <label>Schedule Template Name:</label>
@@ -422,20 +424,20 @@ var ScheduleTemplateDetail = React.createClass({
                 <div>
                     <button type="button"
                         disabled={this.state.ajaxInFlight ||
-                            !this.hasUnsavedChanges()}
+                            !hasUnsavedChanges}
                         onClick={this.saveAll}
                         >
                         Save all changes
                     </button>
                     <button type="button"
                         disabled={this.state.ajaxInFlight ||
-                            !this.hasUnsavedChanges()}
+                            !hasUnsavedChanges}
                         onClick={this.undoChanges}
                         >
                         Undo changes
                     </button>
                     <span>
-                        {this.hasUnsavedChanges() ?
+                        {hasUnsavedChanges ?
                             'There are unsaved changes' :
                             'You haven\'t made any changes'}
                     </span>
