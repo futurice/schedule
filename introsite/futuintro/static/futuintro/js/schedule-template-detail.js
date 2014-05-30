@@ -31,14 +31,7 @@ var ScheduleTemplateDetail = React.createClass({
                     x = clone(x);
                     var re = /\d\d\:\d\d\:\d\d/;
                     ['startTime', 'endTime'].forEach(function(fName) {
-                        var s = x[fName];
-                        if (s.match(re)) {
-                            s = s.slice(0, -3);
-                            if (s[0] == '0') {
-                                s = s.slice(1);
-                            }
-                            x[fName] = s;
-                        }
+                        x[fName] = dropSeconds(x[fName]);
                     });
                     return x;
                 });
@@ -102,7 +95,8 @@ var ScheduleTemplateDetail = React.createClass({
     },
     // returns boolean telling if we have unsaved edits in the page
     hasUnsavedChanges: function() {
-        return !sameModels(this.state.evTempl, this.state.editEvTempl);
+        return !sameModels(this.state.editSchedTempl, this.state.schedTempl)
+            || !sameModels(this.state.evTempl, this.state.editEvTempl);
     },
     createEventTemplate: function(ev) {
         ev.preventDefault();
@@ -205,6 +199,20 @@ var ScheduleTemplateDetail = React.createClass({
         });
         }).bind(this), 1000);
     },
+    schedTemplFieldEdit: function(fieldName, newValue) {
+        var editSchedTempl = clone(this.state.editSchedTempl);
+        editSchedTempl[fieldName] = newValue;
+        this.setState({
+            editSchedTempl: editSchedTempl
+        });
+    },
+    handleSchedTemplateChange: function(fieldName, convertToInt, ev) {
+        var val = ev.target.value;
+        if (convertToInt && typeof(val) == 'string') {
+            val = Number.parseInt(val) || 0;
+        }
+        this.schedTemplFieldEdit(fieldName, val);
+    },
     evTemplFieldEdit: function(model, fieldName, newValue) {
         var i = this.getEditModelIdx(model);
         if (i == -1) {
@@ -222,6 +230,104 @@ var ScheduleTemplateDetail = React.createClass({
         this.setState({
             newEventSummary: ev.target.value
         });
+    },
+    undoChanges: function() {
+        this.setState({
+            editSchedTempl: clone(this.state.schedTempl),
+            editEvTempl: clone(this.state.evTempl)
+        });
+    },
+    saveAll: function() {
+        // save the Schedule template, then each event template
+        var eventTemplIndex;
+
+        var saveSchedTemplate = (function() {
+            this.setState({
+                ajaxInFlight: 'Saving the Schedule Template…'
+            });
+
+            $.ajax({
+                url: '/futuintro/api/scheduletemplates/'
+                    + this.state.editSchedTempl.id + '/',
+                type: 'PUT',
+                contentType: 'application/json; charset=UTF-8',
+                headers: {'X-CSRFToken': $.cookie('csrftoken')},
+                data: JSON.stringify(this.state.editSchedTempl),
+                success: (function(data) {
+                    this.setState({
+                        ajaxErr: '',
+                        schedTempl: clone(data),
+                        editSchedTempl: clone(data)
+                    });
+
+                    eventTemplIndex = 0;
+                    saveNextEventTemplate();
+                }).bind(this),
+                error: (function(xhr, txtStatus, saveErr) {
+                    this.setState({
+                        ajaxInFlight: '',
+                        ajaxErr: getAjaxErr.apply(this, arguments)
+                    })
+                }).bind(this)
+            });
+        }).bind(this);
+
+        var saveNextEventTemplate = (function () {
+            if (eventTemplIndex == this.state.editEvTempl.length) {
+                this.setState({
+                    ajaxInFlight: ''
+                });
+                return;
+            }
+            this.setState({
+                ajaxInFlight: 'Saving Event ' + (eventTemplIndex+1)
+                    + ' of ' + this.state.editEvTempl.length
+            });
+            var evTemplAjaxErrors = clone(this.state.evTemplAjaxErrors);
+
+            $.ajax({
+                url: '/futuintro/api/eventtemplates/'
+                    + this.state.editEvTempl[eventTemplIndex].id + '/',
+                type: 'PUT',
+                contentType: 'application/json; charset=UTF-8',
+                headers: {'X-CSRFToken': $.cookie('csrftoken')},
+                data: JSON.stringify(this.state.editEvTempl[eventTemplIndex]),
+                success: (function(data) {
+                    ['startTime', 'endTime'].forEach(function(fName) {
+                        data[fName] = dropSeconds(data[fName]);
+                    });
+
+                    evTemplAjaxErrors[eventTemplIndex] = '';
+
+                    var evTempl = clone(this.state.evTempl);
+                    evTempl[eventTemplIndex] = clone(data);
+
+                    var editEvTempl = clone(this.state.editEvTempl);
+                    editEvTempl[eventTemplIndex] = clone(data);
+
+                    this.setState({
+                        ajaxErr: '',
+                        evTempl: evTempl,
+                        editEvTempl: editEvTempl,
+                        evTemplAjaxErrors: evTemplAjaxErrors
+                    });
+
+                    eventTemplIndex++;
+                    saveNextEventTemplate();
+                }).bind(this),
+                error: (function(xhr, txtStatus, saveErr) {
+                    var errTxt = getAjaxErr.apply(this, arguments);
+                    evTemplAjaxErrors[eventTemplIndex] = errTxt;
+                    this.setState({
+                        ajaxInFlight: '',
+                        ajaxErr: errTxt,
+                        evTemplAjaxErrors: evTemplAjaxErrors
+                    })
+                }).bind(this)
+            });
+        }).bind(this);
+
+        saveSchedTemplate();
     },
     render: function() {
         var v, i, fName;
@@ -260,6 +366,28 @@ var ScheduleTemplateDetail = React.createClass({
 
         return (
             <div>
+                <label>Schedule Template Name:</label>
+                <input type="text"
+                    value={this.state.editSchedTempl.name}
+                    disabled={Boolean(this.state.ajaxInFlight)}
+                    onChange={this.handleSchedTemplateChange.bind(this, 'name', false)}
+                    />
+                <br/>
+
+                <label>TimeZone:</label>
+                <select
+                    value={this.state.editSchedTempl.timezone}
+                    disabled={Boolean(this.state.ajaxInFlight)}
+                    onChange={this.handleSchedTemplateChange.bind(this, 'timezone', true)}
+                    >
+                    {this.state.timezones.map(function(tz) {
+                        return <option key={tz.id} value={tz.id}>
+                            {tz.name}
+                        </option>;
+                    })}
+                </select>
+                <br/>
+
                 <ul>
                 {this.state.editEvTempl.map((function(et, i) {
                     return <li key={et.id}>
@@ -291,8 +419,16 @@ var ScheduleTemplateDetail = React.createClass({
                     <button type="button"
                         disabled={this.state.ajaxInFlight ||
                             !this.hasUnsavedChanges()}
+                        onClick={this.saveAll}
                         >
                         Save all changes
+                    </button>
+                    <button type="button"
+                        disabled={this.state.ajaxInFlight ||
+                            !this.hasUnsavedChanges()}
+                        onClick={this.undoChanges}
+                        >
+                        Undo changes
                     </button>
                     <span>
                         {this.hasUnsavedChanges() ?
@@ -330,7 +466,7 @@ var EventTemplate = (function() {
         handleDelete: function() {
             this.props.onDelete(this.props.model);
         },
-        handleChange: function(fieldName, ev) {
+        handleChange: function(fieldName, convertToInt, ev) {
             var target = ev.target, val = target.value;
             switch (target.tagName) {
                 case "SELECT":
@@ -350,9 +486,12 @@ var EventTemplate = (function() {
                     }
                     break;
             }
+            if (convertToInt && typeof(val) == 'string') {
+                val = Number.parseInt(val) || 0;
+            }
             this.props.onFieldEdit(this.props.model, fieldName, val);
         },
-        handleIntChange: function(fieldName, ev) {
+        handleIntBlur: function(fieldName, ev) {
             var val = Number.parseInt(ev.target.value) || 0;
             this.props.onFieldEdit(this.props.model, fieldName, val);
         },
@@ -389,7 +528,7 @@ var EventTemplate = (function() {
                 <input type="text"
                     disabled={this.props.disabled}
                     value={this.props.model.summary}
-                    onChange={this.handleChange.bind(this, 'summary')}
+                    onChange={this.handleChange.bind(this, 'summary', false)}
                     />
                 <br/>
 
@@ -397,7 +536,7 @@ var EventTemplate = (function() {
                 <textarea
                     disabled={this.props.disabled}
                     value={this.props.model.description}
-                    onChange={this.handleChange.bind(this, 'description')}
+                    onChange={this.handleChange.bind(this, 'description', false)}
                     />
                 <br/>
 
@@ -406,7 +545,7 @@ var EventTemplate = (function() {
                     disabled={this.props.disabled}
                     value={this.props.model.location === null ?
                         'null' : this.props.model.location}
-                    onChange={this.handleChange.bind(this, 'location')}
+                    onChange={this.handleChange.bind(this, 'location', true)}
                     >
                     <option value='null'>—</option>
                     {this.props.rooms.map(function(r) {
@@ -419,10 +558,10 @@ var EventTemplate = (function() {
                 <input type="number"
                     disabled={this.props.disabled}
                     value={this.props.model.dayOffset}
-                    onChange={this.handleChange.bind(this, 'dayOffset')}
+                    onChange={this.handleChange.bind(this, 'dayOffset', false)}
                     // If the user types 'hello' or '-' for '-3' only convert
                     // it to a number (0 for invalid strings) on blur
-                    onBlur={this.handleIntChange.bind(this, 'dayOffset')}
+                    onBlur={this.handleIntBlur.bind(this, 'dayOffset')}
                     />
                 <br/>
 
@@ -430,13 +569,13 @@ var EventTemplate = (function() {
                 <input type="text"
                     disabled={this.props.disabled}
                     value={this.props.model.startTime}
-                    onChange={this.handleChange.bind(this, 'startTime')}
+                    onChange={this.handleChange.bind(this, 'startTime', false)}
                     />
                 to
                 <input type="text"
                     disabled={this.props.disabled}
                     value={this.props.model.endTime}
-                    onChange={this.handleChange.bind(this, 'endTime')}
+                    onChange={this.handleChange.bind(this, 'endTime', false)}
                     />
                 <br/>
 
@@ -444,7 +583,7 @@ var EventTemplate = (function() {
                 <select
                     disabled={this.props.disabled}
                     value={this.props.model.isCollective ? 'true' : 'false'}
-                    onChange={this.handleChange.bind(this, 'isCollective')}
+                    onChange={this.handleChange.bind(this, 'isCollective', false)}
                     >
                     <option value='true'>
                         Common (invite all employees to the same event)
@@ -458,17 +597,17 @@ var EventTemplate = (function() {
                 <input type="checkbox"
                     disabled={this.props.disabled}
                     checked={this.props.model.inviteEmployees}
-                    onChange={this.handleChange.bind(this, 'inviteEmployees')}
+                    onChange={this.handleChange.bind(this, 'inviteEmployees', false)}
                     />
-                    Invite employee{this.props.model.isCollective ? 's' : ''}?
+                    Invite employee{this.props.model.isCollective ? 's' : ''}
                 <br/>
 
                 <input type="checkbox"
                     disabled={this.props.disabled}
                     checked={this.props.model.inviteSupervisors}
-                    onChange={this.handleChange.bind(this, 'inviteSupervisors')}
+                    onChange={this.handleChange.bind(this, 'inviteSupervisors', false)}
                     />
-                    Invite supervisor{this.props.model.isCollective ? 's' : ''}?
+                    Invite supervisor{this.props.model.isCollective ? 's' : ''}
                 <br/>
 
                 <label>People to invite:</label>
@@ -478,6 +617,7 @@ var EventTemplate = (function() {
                     selectedIds={this.props.model.otherInvitees}
                     onRemove={this.removeInvitee}
                     onAdd={this.addInvitee}
+                    disabled={this.props.disabled}
                     />
                 <br/>
 
@@ -504,6 +644,7 @@ var EventTemplate = (function() {
             onRemove: React.PropTypes.func.isRequired,
             // onAdd(id)
             onAdd: React.PropTypes.func.isRequired,
+            disabled: React.PropTypes.bool.isRequired
         },
         handleAdd: function() {
             this.props.onAdd(this.refs.newPerson.getDOMNode().value);
@@ -522,11 +663,12 @@ var EventTemplate = (function() {
                                 + ' (' + p.email + ')'}
                             <a href=""
                                 onClick={this.handleRemove.bind(this, sid)}
+                                hidden={this.props.disabled}
                                 >×</a>
                         </li>;
                     }).bind(this))}
                 </ul>
-                <select ref="newPerson">
+                <select ref="newPerson" disabled={this.props.disabled}>
                     {this.props.allPersons.map(function(p) {
                         return <option value={p.id} key={p.id}>
                             {p.first_name + ' ' + p.last_name

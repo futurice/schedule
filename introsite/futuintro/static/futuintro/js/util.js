@@ -213,3 +213,20 @@ function getPropModelClonerMixin(blankModel) {
         }
     };
 };
+
+
+/*
+ * Drop seconds from time string.
+ *
+ * 11:00:00 → 11:00, 08:00:00 → 8:00
+ */
+function dropSeconds(s) {
+    var re = /\d\d\:\d\d\:\d\d/;
+    if (s.match(re)) {
+        s = s.slice(0, -3);
+        if (s[0] == '0') {
+            s = s.slice(1);
+        }
+    }
+    return s;
+}
