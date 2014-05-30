@@ -124,6 +124,10 @@ var ScheduleTemplateDetail = React.createClass({
                 });
             }).bind(this),
             success: (function(data) {
+                ['startTime', 'endTime'].forEach(function(fName) {
+                    data[fName] = dropSeconds(data[fName]);
+                });
+
                 this.setState({
                     ajaxErr: '',
 
