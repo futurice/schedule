@@ -57,6 +57,8 @@ class FutuUser(AbstractBaseUser):
         return self.get_full_name() + ' (' + self.username + ')'
 
     class Meta:
+        # TODO: this doesn't seem to work (by default)
+        # in the Django REST Framework API
         ordering = ('first_name', 'last_name')
 
 

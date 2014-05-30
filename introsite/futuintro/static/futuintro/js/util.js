@@ -18,11 +18,11 @@ function noop() {
  * To do manual refreshes, use compFetchRest() below.
  */
 function getRestLoaderMixin(url, dataFieldName,
-        successFieldName, errorFieldName) {
+        successFieldName, errorFieldName, successCallback) {
     return {
         componentDidMount: function() {
             compFetchRest.bind(this)(url, dataFieldName,
-                    successFieldName, errorFieldName);
+                    successFieldName, errorFieldName, successCallback);
         }
     };
 };

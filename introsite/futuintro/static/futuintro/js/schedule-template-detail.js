@@ -7,8 +7,17 @@ var ScheduleTemplateDetail = React.createClass({
     mixins: [
         getRestLoaderMixin('/futuintro/api/timezones/', 'timezones',
             'tzLoaded', 'tzErr'),
-        getRestLoaderMixin('/futuintro/api/users/', 'users',
-            'usersLoaded', 'usersErr'),
+        getRestLoaderMixin('/futuintro/api/users/?ordering=first_name,last_name',
+            'users', 'usersLoaded', 'usersErr',
+            function() {
+                var usersById = {};
+                this.state.users.forEach(function(u) {
+                    usersById[u.id] = u;
+                });
+                this.setState({
+                    usersById: usersById
+                });
+            }),
         getRestLoaderMixin('/futuintro/api/calendarresources/', 'rooms',
             'roomsLoaded', 'roomsErr'),
     ],
@@ -17,9 +26,27 @@ var ScheduleTemplateDetail = React.createClass({
             '/futuintro/api/eventtemplates/?scheduleTemplate=' + this.props.id,
             'evTempl', 'etLoaded', 'etErr',
             function() {
+                // drop seconds. 11:00:00 → 11:00, 08:00:00 → 8:00
+                var newEvTempl = this.state.evTempl.map(function(x) {
+                    x = clone(x);
+                    var re = /\d\d\:\d\d\:\d\d/;
+                    ['startTime', 'endTime'].forEach(function(fName) {
+                        var s = x[fName];
+                        if (s.match(re)) {
+                            s = s.slice(0, -3);
+                            if (s[0] == '0') {
+                                s = s.slice(1);
+                            }
+                            x[fName] = s;
+                        }
+                    });
+                    return x;
+                });
+
                 this.setState({
-                    editEvTempl: clone(this.state.evTempl),
-                    evTemplAjaxErrors: this.state.evTempl.map(function() {
+                    evTempl: newEvTempl,
+                    editEvTempl: clone(newEvTempl),
+                    evTemplAjaxErrors: newEvTempl.map(function() {
                         return '';
                     })
                 });
@@ -45,6 +72,7 @@ var ScheduleTemplateDetail = React.createClass({
             users: [],
             usersLoaded: false,
             usersErr: '',
+            usersById: null,
 
             rooms: [],
             roomsLoaded: false,
@@ -212,7 +240,7 @@ var ScheduleTemplateDetail = React.createClass({
         // check if initial loading completed
         v = ['tzLoaded', 'usersLoaded', 'roomsLoaded', 'etLoaded',
           'schedTempl',
-          'editEvTempl', 'evTemplAjaxErrors', 'editSchedTempl'];
+          'usersById', 'editEvTempl', 'evTemplAjaxErrors', 'editSchedTempl'];
         for (i = 0; i < v.length; i++) {
             fName = v[i];
             if (!this.state[fName]) {
@@ -237,6 +265,8 @@ var ScheduleTemplateDetail = React.createClass({
                     return <li key={et.id}>
                         <EventTemplate
                             model={et}
+                            users={this.state.users}
+                            usersById={this.state.usersById}
                             rooms={this.state.rooms}
                             disabled={Boolean(this.state.ajaxInFlight)}
                             errTxt={this.state.evTemplAjaxErrors[i]}
@@ -279,9 +309,14 @@ var ScheduleTemplateDetail = React.createClass({
 
 
 var EventTemplate = (function() {
-    return React.createClass({
+    var EventTemplate = React.createClass({
         propTypes: {
             model: React.PropTypes.object.isRequired,
+
+            // needed by <MultiPersonSelect/>
+            users: React.PropTypes.array.isRequired,
+            usersById: React.PropTypes.object.isRequired,
+
             rooms: React.PropTypes.array.isRequired,
             // disable all input fields and buttons, e.g. during the parent's
             // ajax requests
@@ -320,6 +355,27 @@ var EventTemplate = (function() {
         handleIntChange: function(fieldName, ev) {
             var val = Number.parseInt(ev.target.value) || 0;
             this.props.onFieldEdit(this.props.model, fieldName, val);
+        },
+        removeInvitee: function(removeId) {
+            this.props.onFieldEdit(this.props.model, 'otherInvitees',
+                    this.props.model.otherInvitees.filter(function(id) {
+                        return id != removeId;
+                    })
+                );
+        },
+        addInvitee: function(addId) {
+            for (var i = 0; i < this.props.model.otherInvitees.length; i++) {
+                if (this.props.model.otherInvitees[i] == addId) {
+                    // person already invited
+                    return;
+                }
+            }
+            if (!(addId in this.props.usersById)) {
+                console.error('No user with id', addId);
+                return;
+            }
+            this.props.onFieldEdit(this.props.model, 'otherInvitees',
+                    this.props.model.otherInvitees.concat(addId));
         },
         render: function() {
             var errBox;
@@ -415,6 +471,16 @@ var EventTemplate = (function() {
                     Invite supervisor{this.props.model.isCollective ? 's' : ''}?
                 <br/>
 
+                <label>People to invite:</label>
+                <MultiPersonSelect
+                    allPersonsById={this.props.usersById}
+                    allPersons={this.props.users}
+                    selectedIds={this.props.model.otherInvitees}
+                    onRemove={this.removeInvitee}
+                    onAdd={this.addInvitee}
+                    />
+                <br/>
+
                 <button type="button"
                     onClick={this.handleDelete}
                     disabled={this.props.disabled}
@@ -425,4 +491,53 @@ var EventTemplate = (function() {
             </div>;
         }
     });
+
+    var MultiPersonSelect = React.createClass({
+        propTypes: {
+            // for O(1) lookup: {id1: personObj1, id2: personObj2, …}
+            allPersonsById: React.PropTypes.object.isRequired,
+            // specifies the display order (e.g. by first name)
+            allPersons: React.PropTypes.array.isRequired,
+            // if the size is small, an array is ok and keeps the order
+            selectedIds: React.PropTypes.array.isRequired,
+            // onRemove(id)
+            onRemove: React.PropTypes.func.isRequired,
+            // onAdd(id)
+            onAdd: React.PropTypes.func.isRequired,
+        },
+        handleAdd: function() {
+            this.props.onAdd(this.refs.newPerson.getDOMNode().value);
+        },
+        handleRemove: function(id, ev) {
+            ev.preventDefault();
+            this.props.onRemove(id);
+        },
+        render: function() {
+            return <div>
+                <ul>
+                    {this.props.selectedIds.map((function(sid) {
+                        var p = this.props.allPersonsById[sid];
+                        return <li key={sid}>
+                            {p.first_name + ' ' + p.last_name
+                                + ' (' + p.email + ')'}
+                            <a href=""
+                                onClick={this.handleRemove.bind(this, sid)}
+                                >×</a>
+                        </li>;
+                    }).bind(this))}
+                </ul>
+                <select ref="newPerson">
+                    {this.props.allPersons.map(function(p) {
+                        return <option value={p.id} key={p.id}>
+                            {p.first_name + ' ' + p.last_name
+                                + ' (' + p.email + ')'}
+                        </option>;
+                    })}
+                </select>
+                <button type="button" onClick={this.handleAdd}>+ Add</button>
+            </div>;
+        }
+    });
+
+    return EventTemplate;
 })();
