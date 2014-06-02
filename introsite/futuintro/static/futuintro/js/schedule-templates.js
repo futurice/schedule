@@ -94,7 +94,7 @@ var ScheduleTemplateSummary = React.createClass({
         getPropModelClonerMixin({
             id: null,
             name: '',
-            timezone: 0
+            timezone: null
         }),
     ],
     propTypes: {
@@ -147,8 +147,10 @@ var ScheduleTemplateSummary = React.createClass({
         });
     },
     handleChange: function(modelFieldName, event) {
+        var val = getTargetValue(event);
+
         var m = clone(this.state.editModel);
-        m[modelFieldName] = event.target.value;
+        m[modelFieldName] = val;
         this.setState({
             editModel: m
         });
@@ -282,7 +284,7 @@ var ScheduleTemplateSummary = React.createClass({
                 onChange={this.handleChange.bind(this, 'timezone')}
                 disabled={this.state.ajaxInFlight}
                 >
-                <option value={0}>–</option>
+                <option value='null'>–</option>
                 {this.props.allTimezones.map(function(tz) {
                     // Don't need the key here, just silencing React warning
                     return <option key={tz.id} value={tz.id}>{tz.name}</option>;

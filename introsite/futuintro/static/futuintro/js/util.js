@@ -230,3 +230,30 @@ function dropSeconds(s) {
     }
     return s;
 }
+
+
+/*
+ * Get the value from the event's target, with special cases for "null" etc.
+ */
+function getTargetValue(event) {
+    var target = event.target, val = target.value;
+    switch (target.tagName) {
+        case "SELECT":
+            // React treats <… someAttr={null|true|false|option} …>
+            // specially. So working around that.
+            if (val == 'null') {
+                val = null;
+            } else if (val == 'true') {
+                val = true;
+            } else if (val == 'false') {
+                val = false;
+            }
+            break;
+        case "INPUT":
+            if (target.type == 'checkbox') {
+                val = target.checked;
+            }
+            break;
+    }
+    return val;
+}

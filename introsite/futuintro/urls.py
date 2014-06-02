@@ -11,4 +11,6 @@ urlpatterns = patterns('',
         name='schedule-templates'),
     url(r'^schedule-template/(?P<st_id>\d+)/$', views.scheduleTemplateDetail,
         name='schedule-template-detail'),
+    url(r'^new-schedule-page/', views.newSchedulePage,
+        name='new-schedule-page'),
 )

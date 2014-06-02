@@ -145,7 +145,8 @@ class Schedule(models.Model):
     E.g. the onboarding program for one employee.
     """
     forUser = models.ForeignKey(settings.AUTH_USER_MODEL)
-    template = models.ForeignKey(ScheduleTemplate)
+    template = models.ForeignKey(ScheduleTemplate, null=True, blank=True,
+            on_delete=models.SET_NULL)
     createdAt = models.DateTimeField(auto_now_add=True)
     updatedAt = models.DateTimeField(auto_now=True)
 
@@ -161,6 +162,13 @@ class Event(models.Model):
     # TODO: use JsonField when we start putting data here
     jsonData = models.BinaryField()
     schedules = models.ManyToManyField(Schedule)
+
+    # Be able to group events by the template they came from (e.g. you didn't
+    # attend the 'HC Intro' meeting so another one was scheduled for you).
+    # But don't request that the templates stay in place forever. If they're
+    # deleted, simply orphan this object.
+    template = models.ForeignKey(EventTemplate, null=True, blank=True,
+            on_delete=models.SET_NULL)
 
     def __unicode__(self):
         return 'Event (on ' + str(self.schedules.count()) + ' schedule(s))'

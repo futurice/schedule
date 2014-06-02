@@ -27,3 +27,6 @@ def timezones(request):
 def scheduleTemplateDetail(request, st_id):
     context = {'st_id': st_id}
     return render(request, 'futuintro/schedule-template-detail.html', context)
+
+def newSchedulePage(request):
+    return render(request, 'futuintro/new-schedule-page.html')

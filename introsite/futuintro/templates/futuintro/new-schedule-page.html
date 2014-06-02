@@ -1,0 +1,11 @@
+{% extends "futuintro/base.html" %}
+
+{% block title %}Create New Schedule{% endblock %}
+
+{% block body %}
+<script type="text/jsx">
+/** @jsx React.DOM */
+React.renderComponent(<NewSchedule />,
+  document.getElementById('main-content'));
+</script>
+{% endblock %}

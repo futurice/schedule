@@ -473,25 +473,7 @@ var EventTemplate = (function() {
             this.props.onDelete(this.props.model);
         },
         handleChange: function(fieldName, convertToInt, ev) {
-            var target = ev.target, val = target.value;
-            switch (target.tagName) {
-                case "SELECT":
-                    // React treats <… someAttr={null|true|false|option} …>
-                    // specially. So working around that.
-                    if (val == 'null') {
-                        val = null;
-                    } else if (val == 'true') {
-                        val = true;
-                    } else if (val == 'false') {
-                        val = false;
-                    }
-                    break;
-                case "INPUT":
-                    if (target.type == 'checkbox') {
-                        val = target.checked;
-                    }
-                    break;
-            }
+            var val = getTargetValue(ev);
             if (convertToInt && typeof(val) == 'string') {
                 val = Number.parseInt(val) || 0;
             }
