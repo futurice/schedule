@@ -122,6 +122,7 @@ var NewSchedule;
             return <NewSchedEdit
                 scheduleTemplate={schedTemplObj}
                 startDate={this.state.startDate}
+                users={this.state.users}
                 usersById={this.state.usersById}
                 selectedUsers={this.state.selectedUsers}
                 />;
@@ -238,6 +239,7 @@ var NewSchedule;
         propTypes: {
             scheduleTemplate: React.PropTypes.object.isRequired,
             startDate: React.PropTypes.string.isRequired,
+            users: React.PropTypes.array.isRequired,
             usersById: React.PropTypes.object.isRequired,
             selectedUsers: React.PropTypes.array.isRequired
         },
@@ -317,10 +319,47 @@ var NewSchedule;
                 // one group per event template: a group is 1 element for a
                 // collective template, or an array of  N elements (one per
                 // user) for an individual event template.
+                //
+                // Deleting:
+                // ― collective event: delete the event template and delete
+                // the event group.
+                // ― individual event: the event group is an array. Deleting
+                // the event for a user replaces that array entry with null.
+                // When all entries are replaced with null, remove the whole
+                // event group and the event template (just like in the
+                // collective case).
                 evGroups: null
             };
         },
-        deleteEventGroup: function(id) {
+        deleteEventAndGroup: function(idx) {
+            var evTempl = this.state.evTempl.concat(),
+                evGroups = this.state.evGroups.concat();
+            evTempl.splice(idx, 1);
+            evGroups.splice(idx, 1);
+            this.setState({
+                evTempl: evTempl,
+                evGroups: evGroups
+            });
+        },
+        deleteIndividualEvent: function(groupIdx, eventIdx) {
+            var group = this.state.evGroups[groupIdx];
+            // if this is the last one, delete the whole group
+            for (var i = 0; i < group.length; i++) {
+                if (i != eventIdx && group[i] != null) {
+                    break;
+                }
+            }
+            if (i == group.length) {
+                this.deleteEventAndGroup(groupIdx);
+                return;
+            }
+
+            var evGroups = this.state.evGroups.concat();
+            evGroups[groupIdx] = evGroups[groupIdx].concat();
+            evGroups[groupIdx][eventIdx] = null;
+            this.setState({
+                evGroups: evGroups
+            });
         },
         render: function() {
             var err = this.state.evTemplErr;
@@ -336,20 +375,66 @@ var NewSchedule;
                 Based on template: {this.props.scheduleTemplate.name}
                 <ul>
                 {this.state.evTempl.map((function(et, idx) {
+                    function getFullName(user) {
+                        return user.first_name + ' ' + user.last_name;
+                    }
+
+                    var eventsBox;
+                    if (et.isCollective) {
+                        eventsBox = <EventEditor
+                            event={this.state.evGroups[idx]}
+                        />;
+                    } else {
+                        eventsBox = <ul>
+                            {this.state.evGroups[idx].map((function(ev, j) {
+                                var fullName = getFullName(
+                                    this.props.selectedUsers[j]);
+
+                                if (ev == null) {
+                                    return <li key={j}>Deleted event for
+                                        {fullName}
+                                    </li>;
+                                }
+                                return <li key={j}>
+                                    Event for {fullName}
+                                    <button type="button"
+                                        onClick={this.deleteIndividualEvent.bind(this, idx, j)}>
+                                        Delete
+                                    </button>
+                                    <EventEditor event={ev}/>
+                                </li>;
+                            }).bind(this))}
+                        </ul>;
+                    }
+
                     return <li key={et.id} className={'event-group-' +
                         (et.isCollective ? 'collective' : 'individual')}>
-                        {et.summary}
+                        {et.summary} {' ('}
+                        {et.isCollective ?
+                            'common event for ' +
+                            this.props.selectedUsers.map(getFullName).join(', ') :
+                            'separate event for each person'}
+                        {')'}
+                        <button type="button"
+                            onClick={this.deleteEventAndGroup.bind(this, idx)}>
+                            Delete
+                        </button>
+                        <br/>
+
+                        {eventsBox}
                         <br/>
                         {JSON.stringify(this.state.evGroups[idx])}
                         <br/>
-                        <button type="button"
-                            onClick={this.deleteEventGroup.bind(this, et.id)}>
-                            Delete
-                        </button>
                     </li>;
                 }).bind(this))}
                 </ul>
             </div>;
+        }
+    });
+
+    var EventEditor = React.createClass({
+        render: function() {
+            return <div>Hello!</div>;
         }
     });
 })();
