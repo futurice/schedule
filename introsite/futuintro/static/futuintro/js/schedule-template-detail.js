@@ -620,54 +620,54 @@ var EventTemplate = (function() {
         }
     });
 
-    var MultiPersonSelect = React.createClass({
-        propTypes: {
-            // for O(1) lookup: {id1: personObj1, id2: personObj2, …}
-            allPersonsById: React.PropTypes.object.isRequired,
-            // specifies the display order (e.g. by first name)
-            allPersons: React.PropTypes.array.isRequired,
-            // if the size is small, an array is ok and keeps the order
-            selectedIds: React.PropTypes.array.isRequired,
-            // onRemove(id)
-            onRemove: React.PropTypes.func.isRequired,
-            // onAdd(id)
-            onAdd: React.PropTypes.func.isRequired,
-            disabled: React.PropTypes.bool.isRequired
-        },
-        handleAdd: function() {
-            this.props.onAdd(this.refs.newPerson.getDOMNode().value);
-        },
-        handleRemove: function(id, ev) {
-            ev.preventDefault();
-            this.props.onRemove(id);
-        },
-        render: function() {
-            return <div>
-                <ul>
-                    {this.props.selectedIds.map((function(sid) {
-                        var p = this.props.allPersonsById[sid];
-                        return <li key={sid}>
-                            {p.first_name + ' ' + p.last_name
-                                + ' (' + p.email + ')'}
-                            <a href=""
-                                onClick={this.handleRemove.bind(this, sid)}
-                                hidden={this.props.disabled}
-                                >×</a>
-                        </li>;
-                    }).bind(this))}
-                </ul>
-                <select ref="newPerson" disabled={this.props.disabled}>
-                    {this.props.allPersons.map(function(p) {
-                        return <option value={p.id} key={p.id}>
-                            {p.first_name + ' ' + p.last_name
-                                + ' (' + p.email + ')'}
-                        </option>;
-                    })}
-                </select>
-                <button type="button" onClick={this.handleAdd}>+ Add</button>
-            </div>;
-        }
-    });
-
     return EventTemplate;
 })();
+
+var MultiPersonSelect = React.createClass({
+    propTypes: {
+        // for O(1) lookup: {id1: personObj1, id2: personObj2, …}
+        allPersonsById: React.PropTypes.object.isRequired,
+        // specifies the display order (e.g. by first name)
+        allPersons: React.PropTypes.array.isRequired,
+        // if the size is small, an array is ok and keeps the order
+        selectedIds: React.PropTypes.array.isRequired,
+        // onRemove(id)
+        onRemove: React.PropTypes.func.isRequired,
+        // onAdd(id)
+        onAdd: React.PropTypes.func.isRequired,
+        disabled: React.PropTypes.bool.isRequired
+    },
+    handleAdd: function() {
+        this.props.onAdd(this.refs.newPerson.getDOMNode().value);
+    },
+    handleRemove: function(id, ev) {
+        ev.preventDefault();
+        this.props.onRemove(id);
+    },
+    render: function() {
+        return <div>
+            <ul>
+                {this.props.selectedIds.map((function(sid) {
+                    var p = this.props.allPersonsById[sid];
+                    return <li key={sid}>
+                        {p.first_name + ' ' + p.last_name
+                            + ' (' + p.email + ')'}
+                        <a href=""
+                            onClick={this.handleRemove.bind(this, sid)}
+                            hidden={this.props.disabled}
+                            >×</a>
+                    </li>;
+                }).bind(this))}
+            </ul>
+            <select ref="newPerson" disabled={this.props.disabled}>
+                {this.props.allPersons.map(function(p) {
+                    return <option value={p.id} key={p.id}>
+                        {p.first_name + ' ' + p.last_name
+                            + ' (' + p.email + ')'}
+                    </option>;
+                })}
+            </select>
+            <button type="button" onClick={this.handleAdd}>+ Add</button>
+        </div>;
+    }
+});

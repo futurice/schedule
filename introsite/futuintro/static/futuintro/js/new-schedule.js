@@ -1,5 +1,10 @@
 /** @jsx React.DOM */
 
+// TODO: clean up a bit. Argument passing is a bit messy (passing whole objects
+// e.g. Users instead of just IDs) in a few places. One place doesn't reuse
+// MultiPersonSelect but instead has a <select> and add/remove functions.
+// This is because of speed to get a working prototype asap.
+
 var NewSchedule;
 (function() {
     // app stage while creating a new schedule.
@@ -177,7 +182,7 @@ var NewSchedule;
         },
         handleStartDateBlur: function() {
             var val = this.refs.startDate.getDOMNode().value;
-            if (val == '' || new Date(val).valueOf() === NaN) {
+            if (val == '' || Number.isNaN(new Date(val).valueOf())) {
                 val = fmtLocalDate(new Date());
             }
             this.props.onStartDateChange(val);
@@ -244,6 +249,8 @@ var NewSchedule;
             selectedUsers: React.PropTypes.array.isRequired
         },
         componentDidMount: function() {
+            compFetchRest.bind(this)('/futuintro/api/calendarresources/',
+                'rooms', 'roomsLoaded', 'roomsErr');
             compFetchRest.bind(this)('/futuintro/api/eventtemplates/?scheduleTemplate=' + this.props.scheduleTemplate.id,
                 'evTempl', 'evTemplLoaded', 'evTemplErr',
                 function() {
@@ -283,7 +290,15 @@ var NewSchedule;
                             forUsers.forEach(function(u) {
                                 var s_id = u.supervisor;
                                 if (s_id) {
-                                    result.invitees.push(s_id);
+                                    var existing = false;
+                                    result.invitees.forEach(function(id) {
+                                        if (id == s_id) {
+                                            existing = true;
+                                        }
+                                    });
+                                    if (!existing) {
+                                        result.invitees.push(s_id);
+                                    }
                                 }
                             });
                         }
@@ -315,6 +330,10 @@ var NewSchedule;
                 evTempl: [],
                 evTemplLoaded: false,
                 evTemplErr: '',
+
+                rooms: [],
+                roomsLoaded: false,
+                roomsErr: '',
 
                 // one group per event template: a group is 1 element for a
                 // collective template, or an array of  N elements (one per
@@ -361,12 +380,29 @@ var NewSchedule;
                 evGroups: evGroups
             });
         },
+        handleEventFieldEdit: function(grpIdx, evIdx, fieldName, value) {
+            var evGroups = this.state.evGroups.concat();
+            var event;
+            if (this.state.evTempl[grpIdx].isCollective) {
+                evGroups[grpIdx] = clone(evGroups[grpIdx]);
+                event = evGroups[grpIdx];
+            } else {
+                evGroups[grpIdx] = evGroups[grpIdx].concat();
+                evGroups[grpIdx][evIdx] = clone(evGroups[grpIdx][evIdx]);
+                event = evGroups[grpIdx][evIdx];
+            }
+            event[fieldName] = value;
+            this.setState({
+                evGroups: evGroups
+            });
+        },
         render: function() {
-            var err = this.state.evTemplErr;
+            var err = this.state.evTemplErr || this.state.roomsErr;
             if (err) {
                 return <div>{err}</div>;
             }
-            var loaded = this.state.evTemplLoaded && this.state.evGroups;
+            var loaded = this.state.evTemplLoaded && this.state.evGroups &&
+                this.state.roomsLoaded;
             if (!loaded) {
                 return <div>Loading…</div>;
             }
@@ -382,7 +418,12 @@ var NewSchedule;
                     var eventsBox;
                     if (et.isCollective) {
                         eventsBox = <EventEditor
-                            event={this.state.evGroups[idx]}
+                            model={this.state.evGroups[idx]}
+                            rooms={this.state.rooms}
+                            usersById={this.props.usersById}
+                            users={this.props.users}
+                            onFieldEdit={this.handleEventFieldEdit.bind(this,
+                                idx, null)}
                         />;
                     } else {
                         eventsBox = <ul>
@@ -401,7 +442,15 @@ var NewSchedule;
                                         onClick={this.deleteIndividualEvent.bind(this, idx, j)}>
                                         Delete
                                     </button>
-                                    <EventEditor event={ev}/>
+                                    <EventEditor
+                                        model={ev}
+                                        rooms={this.state.rooms}
+                                        usersById={this.props.usersById}
+                                        users={this.props.users}
+                                        onFieldEdit={
+                                            this.handleEventFieldEdit.bind(
+                                                this, idx, j)}
+                                    />
                                 </li>;
                             }).bind(this))}
                         </ul>;
@@ -433,8 +482,112 @@ var NewSchedule;
     });
 
     var EventEditor = React.createClass({
+        propTypes: {
+            model: React.PropTypes.object.isRequired,
+            rooms: React.PropTypes.array.isRequired,
+            usersById: React.PropTypes.object.isRequired,
+            users: React.PropTypes.array.isRequired,
+            disabled: React.PropTypes.bool.isRequired,
+
+            // onFieldEdit(fieldName, newValue)
+            onFieldEdit: React.PropTypes.func.isRequired
+        },
+        handleChange: function(fieldName, convertToInt, ev) {
+            var val = getTargetValue(ev);
+            if (convertToInt && typeof(val) == 'string') {
+                val = Number.parseInt(val) || 0;
+            }
+            this.props.onFieldEdit(fieldName, val);
+        },
+        handleDateBlur: function() {
+            // TODO: not sure about this (maybe a race condition if
+            // hadleChange() doesn't yet propagate the state change
+            // by the time handleDateBlur() runs).
+            var val = this.props.model.date;
+            if (val == '' || Number.isNaN(new Date(val).valueOf())) {
+                val = fmtLocalDate(new Date());
+            }
+            this.props.onFieldEdit('date', val);
+        },
+        removeInvitee: function(id) {
+            this.props.onFieldEdit('invitees',
+                    this.props.model.invitees.filter(function(x) {
+                        return x != id;
+                    }));
+        },
+        addInvitee: function(id) {
+            for (var i = 0; i < this.props.model.invitees.length; i++) {
+                if (this.props.model.invitees[i] == id) {
+                    return;
+                }
+            }
+            this.props.onFieldEdit('invitees',
+                    this.props.model.invitees.concat(id));
+        },
         render: function() {
-            return <div>Hello!</div>;
+            return <div>
+                <label>Summary:</label>
+                <input
+                    disabled={this.props.disabled}
+                    value={this.props.model.summary}
+                    onChange={this.handleChange.bind(this, 'summary', false)}
+                />
+                <br/>
+
+                <label>Description:</label>
+                <textarea
+                    disabled={this.props.disabled}
+                    value={this.props.model.description}
+                    onChange={this.handleChange.bind(this, 'description', false)}
+                />
+                <br/>
+
+                <label>Location:</label>
+                <select
+                    disabled={this.props.disabled}
+                    value={this.props.model.location === null ?
+                        'null' : this.props.model.location}
+                    onChange={this.handleChange.bind(this, 'location', true)}
+                    >
+                    <option value='null'>—</option>
+                    {this.props.rooms.map(function(r) {
+                        return <option key={r.id} value={r.id}>{r.name}</option>;
+                    })}
+                </select>
+                <br/>
+
+                <label>Date:</label>
+                <input type="date"
+                    value={this.props.model.date}
+                    onChange={this.handleChange.bind(this, 'date', false)}
+                    onBlur={this.handleDateBlur}/>
+                <br/>
+
+                <label>From:</label>
+                <input type="time"
+                    disabled={this.props.disabled}
+                    value={this.props.model.startTime}
+                    onChange={this.handleChange.bind(this, 'startTime', false)}
+                    />
+                to
+                <input type="time"
+                    disabled={this.props.disabled}
+                    value={this.props.model.endTime}
+                    onChange={this.handleChange.bind(this, 'endTime', false)}
+                    />
+                <br/>
+
+                <label>People to invite:</label>
+                <MultiPersonSelect
+                    allPersonsById={this.props.usersById}
+                    allPersons={this.props.users}
+                    selectedIds={this.props.model.invitees}
+                    onRemove={this.removeInvitee}
+                    onAdd={this.addInvitee}
+                    disabled={this.props.disabled}
+                    />
+                <br/>
+            </div>;
         }
     });
 })();
