@@ -92,6 +92,11 @@ var NewSchedule;
                 stage: STAGE_EDIT
             });
         },
+        gotoPrepare: function() {
+            this.setState({
+                stage: STAGE_PREPARE
+            });
+        },
         render: function() {
             var err = this.state.sTemplErr || this.state.usersErr;
             if (err) {
@@ -130,6 +135,7 @@ var NewSchedule;
                 users={this.state.users}
                 usersById={this.state.usersById}
                 selectedUsers={this.state.selectedUsers}
+                onCancel={this.gotoPrepare}
                 />;
         }
     });
@@ -246,7 +252,8 @@ var NewSchedule;
             startDate: React.PropTypes.string.isRequired,
             users: React.PropTypes.array.isRequired,
             usersById: React.PropTypes.object.isRequired,
-            selectedUsers: React.PropTypes.array.isRequired
+            selectedUsers: React.PropTypes.array.isRequired,
+            onCancel: React.PropTypes.func.isRequired
         },
         componentDidMount: function() {
             compFetchRest.bind(this)('/futuintro/api/calendarresources/',
@@ -261,7 +268,10 @@ var NewSchedule;
 
                     function eventFromTemplate(et, forUsers) {
                         var result = clone(et);
-                        result.eventTemplateId = result.id;
+
+                        delete result.scheduleTemplate;
+
+                        result.eventTemplate = result.id;
                         delete result.id;
 
                         result.date = fmtUTCDate(new Date(
@@ -396,6 +406,60 @@ var NewSchedule;
                 evGroups: evGroups
             });
         },
+        createEvents: function() {
+            // TODO: disable buttons during AJAX call and handle errors
+
+            $.ajax({
+                url: '/futuintro/create-schedules/',
+                type: 'POST',
+                contentType: 'application/json; charset=UTF-8',
+                headers: {'X-CSRFToken': $.cookie('csrftoken')},
+                data: JSON.stringify({
+                    scheduleTemplate: this.props.scheduleTemplate.id,
+                    users: this.props.selectedUsers.map(function(u) {
+                        return u.id;
+                    }),
+                    events: (function() {
+                        var result = [];
+                        this.state.evTempl.forEach((function(et, idx) {
+                            var crt = {
+                                meta: {
+                                    isCollective: et.isCollective
+                                }
+                            };
+                            var data;
+                            if (et.isCollective) {
+                                result.push({
+                                    meta: {
+                                        isCollective: true
+                                    },
+                                    data: clone(this.state.evGroups[idx])
+                                });
+                            } else {
+                                this.props.selectedUsers.forEach((function(u, j) {
+                                    if (this.state.evGroups[idx][j]) {
+                                        result.push({
+                                            meta: {
+                                                isCollective: false,
+                                                forUser: u.id
+                                            },
+                                            data: clone(this.state.evGroups[idx][j])
+                                        });
+                                    }
+                                }).bind(this));
+                            }
+                        }).bind(this));
+                        return result;
+                    }).bind(this)()
+                }),
+                success: (function(data) {
+                    alert('it worked');
+                }).bind(this),
+                error: (function(xhr, txtStatus, saveErr) {
+                    alert('error');
+                }).bind(this)
+            });
+        },
         render: function() {
             var err = this.state.evTemplErr || this.state.roomsErr;
             if (err) {
@@ -477,6 +541,12 @@ var NewSchedule;
                     </li>;
                 }).bind(this))}
                 </ul>
+                <button type="button" onClick={this.createEvents}>
+                    Create Events in Google Calendar
+                </button>
+                <button type="button" onClick={this.props.onCancel}>
+                CANCEL
+                </button>
             </div>;
         }
     });

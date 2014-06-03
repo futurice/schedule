@@ -13,4 +13,6 @@ urlpatterns = patterns('',
         name='schedule-template-detail'),
     url(r'^new-schedule-page/', views.newSchedulePage,
         name='new-schedule-page'),
+    url(r'^create-schedules/', views.createSchedules,
+        name='create-schedules'),
 )
