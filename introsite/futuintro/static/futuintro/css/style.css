@@ -1,11 +1,82 @@
-form#add-event-template {
-	background-color: PaleGreen;
+@charset "utf-8";
+
+
+.info {
+	background-color: cornsilk;
 }
 
-.status-info {
+.warn {
+	background-color: orange;
+}
+
+.status-waiting {
 	background-color: AliceBlue;
 }
 
 .status-error {
 	background-color: LightPink;
+}
+
+abbr {
+	border-bottom: dashed 1px;
+	cursor: pointer;
+}
+
+
+/* TimeZones */
+
+ul#timezone-list {
+	list-style-type: none;
+}
+
+
+/* Schedule Template List */
+
+ul#schedule-template-list {
+	list-style-type: none;
+}
+
+
+/* Schedule Template Detail */
+
+div#schedule-template-status {
+	background-color: HoneyDew;
+	padding: 1em;
+	border: 1px solid;
+	margin-top: 1em;
+	margin-bottom: 1em;
+}
+
+div#schedule-template-fields {
+	background-color: Beige;
+	padding: 0.5em;
+	border: 1px solid;
+	margin-bottom: 1em;
+}
+
+div#event-templates-container {
+	background-color: MistyRose;
+	padding: 0.5em;
+	border: 1px solid;
+	margin-bottom: 1em;
+}
+
+ul#event-templates-list {
+	list-style-type: none;
+}
+
+ul#event-templates-list li.event-template {
+	background-color: Lavender;
+	padding: 0.5em;
+	border: 1px solid;
+	margin-bottom: 1em;
+}
+
+table.event-template-fields td {
+	vertical-align: top;
+}
+
+
+form#add-event-template {
+	background-color: PaleGreen;
 }

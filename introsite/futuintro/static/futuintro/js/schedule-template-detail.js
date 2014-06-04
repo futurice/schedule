@@ -102,8 +102,6 @@ var ScheduleTemplateDetail = React.createClass({
         this.setState({
             ajaxInFlight: 'Creating…'
         });
-        // TODO: remove the timeout
-        setTimeout((function() {
         $.ajax({
             url: '/futuintro/api/eventtemplates/',
             type: 'POST',
@@ -141,7 +139,6 @@ var ScheduleTemplateDetail = React.createClass({
                 this.setState({ajaxErr: getAjaxErr.apply(this, arguments)});
             }).bind(this)
         });
-        }).bind(this), 1000);
     },
     getEditModelIdx: function(model) {
         var i, v = this.state.editEvTempl;
@@ -162,8 +159,6 @@ var ScheduleTemplateDetail = React.createClass({
         this.setState({
             ajaxInFlight: 'Deleting…'
         });
-        // TODO: remove the timeout
-        setTimeout((function() {
         $.ajax({
             url: '/futuintro/api/eventtemplates/' + model.id + '/',
             type: 'DELETE',
@@ -200,7 +195,6 @@ var ScheduleTemplateDetail = React.createClass({
                 });
             }).bind(this)
         });
-        }).bind(this), 1000);
     },
     schedTemplFieldEdit: function(fieldName, newValue) {
         var editSchedTempl = clone(this.state.editSchedTempl);
@@ -340,9 +334,11 @@ var ScheduleTemplateDetail = React.createClass({
         for (i = 0; i < v.length; i++) {
             fName = v[i];
             if (this.state[fName]) {
-                return <span className="status-error">
-                    {this.state[fName]}
-                </span>;
+                return <div>
+                    <span className="status-error">
+                        {this.state[fName]}
+                    </span>
+                </div>;
             }
         }
 
@@ -353,7 +349,9 @@ var ScheduleTemplateDetail = React.createClass({
         for (i = 0; i < v.length; i++) {
             fName = v[i];
             if (!this.state[fName]) {
-                return <span className="status-info">Loading…</span>;
+                return <div>
+                    <span className="status-waiting">Loading…</span>
+                </div>;
             }
         }
 
@@ -361,90 +359,119 @@ var ScheduleTemplateDetail = React.createClass({
 
         var statusBox;
         if (this.state.ajaxInFlight || this.state.ajaxErr) {
-            statusBox = <div className={'status-' +
-                (this.state.ajaxInFlight ? 'info' : 'error')}>
-                {this.state.ajaxInFlight || this.state.ajaxErr}
+            statusBox = <div>
+                <span className={'status-' +
+                    (this.state.ajaxInFlight ? 'waiting' : 'error')}>
+                    {this.state.ajaxInFlight || this.state.ajaxErr}
+                </span>
             </div>;
         }
 
         var hasUnsavedChanges = this.hasUnsavedChanges();
 
-        return (
-            <div>
-                <label>Schedule Template Name:</label>
-                <input type="text"
-                    value={this.state.editSchedTempl.name}
-                    disabled={Boolean(this.state.ajaxInFlight)}
-                    onChange={this.handleSchedTemplateChange.bind(this, 'name', false)}
-                    />
+        return <div>
+            <div id="schedule-template-status">
+                <span className={hasUnsavedChanges ? 'warn' : 'info'}>
+                    {hasUnsavedChanges ?
+                        'There are unsaved changes' :
+                        'You haven\'t made any changes'}
+                </span>
                 <br/>
-
-                <label>TimeZone:</label>
-                <select
-                    value={this.state.editSchedTempl.timezone}
-                    disabled={Boolean(this.state.ajaxInFlight)}
-                    onChange={this.handleSchedTemplateChange.bind(this, 'timezone', true)}
+                <button type="button"
+                    disabled={this.state.ajaxInFlight ||
+                        !hasUnsavedChanges}
+                    onClick={this.saveAll}
                     >
-                    {this.state.timezones.map(function(tz) {
-                        return <option key={tz.id} value={tz.id}>
-                            {tz.name}
-                        </option>;
-                    })}
-                </select>
-                <br/>
-
-                <ul>
-                {this.state.editEvTempl.map((function(et, i) {
-                    return <li key={et.id}>
-                        <EventTemplate
-                            model={et}
-                            users={this.state.users}
-                            usersById={this.state.usersById}
-                            rooms={this.state.rooms}
-                            disabled={Boolean(this.state.ajaxInFlight)}
-                            errTxt={this.state.evTemplAjaxErrors[i]}
-                            onDelete={this.deleteEventTemplate}
-                            onFieldEdit={this.evTemplFieldEdit}
-                        />
-                    </li>;
-                }).bind(this))}
-                </ul>
-
-                <form id="add-event-template"
-                    onSubmit={this.createEventTemplate}>
-                    <label>Add an event template:</label>
-                    <input type="text" placeholder="Event Summary…"
-                        value={this.state.newEventSummary}
-                        onChange={this.handleChangeNewEvent}
-                        disabled={this.state.ajaxInFlight} />
-                    <button type="submit" disabled={this.state.ajaxInFlight}>+ Add</button>
-                </form>
-
-                <div>
-                    <button type="button"
-                        disabled={this.state.ajaxInFlight ||
-                            !hasUnsavedChanges}
-                        onClick={this.saveAll}
-                        >
-                        Save all changes
-                    </button>
-                    <button type="button"
-                        disabled={this.state.ajaxInFlight ||
-                            !hasUnsavedChanges}
-                        onClick={this.undoChanges}
-                        >
-                        Undo changes
-                    </button>
-                    <span>
-                        {hasUnsavedChanges ?
-                            'There are unsaved changes' :
-                            'You haven\'t made any changes'}
-                    </span>
-                </div>
+                    Save all changes
+                </button>
+                <button type="button"
+                    disabled={this.state.ajaxInFlight ||
+                        !hasUnsavedChanges}
+                    onClick={this.undoChanges}
+                    >
+                    Undo changes
+                </button>
 
                 {statusBox}
             </div>
-        );
+
+            <div id="schedule-template-fields">
+                <h1>Schedule Template</h1>
+                <table>
+                <tr>
+                    <td>
+                        <label>Name:</label>
+                    </td>
+                    <td>
+                        <input type="text"
+                            value={this.state.editSchedTempl.name}
+                            disabled={Boolean(this.state.ajaxInFlight)}
+                            onChange={this.handleSchedTemplateChange.bind(
+                                    this, 'name', false)}
+                        />
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <label>TimeZone:</label>
+                    </td>
+                    <td>
+                        <select
+                            value={this.state.editSchedTempl.timezone}
+                            disabled={Boolean(this.state.ajaxInFlight)}
+                            onChange={this.handleSchedTemplateChange.bind(
+                                    this, 'timezone', true)}
+                            >
+                            {this.state.timezones.map(function(tz) {
+                                return <option key={tz.id} value={tz.id}>
+                                    {tz.name}
+                                </option>;
+                            })}
+                        </select>
+                    </td>
+                </tr>
+                </table>
+            </div>
+
+            <div id="event-templates-container">
+                <h1>Event Templates</h1>
+                {this.state.editEvTempl.length ? '' :
+                    <span className="info">There are no event templates</span>}
+
+                <ul id="event-templates-list">
+                    {this.state.editEvTempl.map((function(et, i) {
+                        return <li key={et.id} className="event-template">
+                            <EventTemplate
+                                model={et}
+                                users={this.state.users}
+                                usersById={this.state.usersById}
+                                rooms={this.state.rooms}
+                                disabled={Boolean(this.state.ajaxInFlight)}
+                                errTxt={this.state.evTemplAjaxErrors[i]}
+                                onDelete={this.deleteEventTemplate}
+                                onFieldEdit={this.evTemplFieldEdit}
+                            />
+                        </li>;
+                    }).bind(this))}
+
+                    <li>
+                        <form id="add-event-template"
+                            onSubmit={this.createEventTemplate}>
+                            <label>Add an event template:</label>
+                            <input type="text" placeholder="Event Summary…"
+                                value={this.state.newEventSummary}
+                                onChange={this.handleChangeNewEvent}
+                                disabled={this.state.ajaxInFlight} />
+                            <button type="submit"
+                                disabled={this.state.ajaxInFlight}>
+                                + Add
+                            </button>
+                        </form>
+                    </li>
+                </ul>
+            </div>
+
+            </div>;
     }
 });
 
@@ -510,102 +537,164 @@ var EventTemplate = (function() {
                     <span className="status-error">{this.props.errTxt}</span>
                 </div>;
             }
+
             return <div>
-                <label>Summary:</label>
-                <input type="text"
-                    disabled={this.props.disabled}
-                    value={this.props.model.summary}
-                    onChange={this.handleChange.bind(this, 'summary', false)}
-                    />
-                <br/>
+                <table className="event-template-fields">
+                <tr>
+                    <td><label>Summary:</label></td>
+                    <td>
+                        <input type="text"
+                            disabled={this.props.disabled}
+                            value={this.props.model.summary}
+                            onChange={this.handleChange.bind(
+                                    this, 'summary', false)}
+                            />
+                    </td>
+                </tr>
 
-                <label>Description:</label>
-                <textarea
-                    disabled={this.props.disabled}
-                    value={this.props.model.description}
-                    onChange={this.handleChange.bind(this, 'description', false)}
-                    />
-                <br/>
+                <tr>
+                    <td><label>Description:</label></td>
+                    <td>
+                        <textarea
+                            disabled={this.props.disabled}
+                            value={this.props.model.description}
+                            onChange={this.handleChange.bind(
+                                    this, 'description', false)}
+                            />
+                    </td>
+                </tr>
 
-                <label>Location:</label>
-                <select
-                    disabled={this.props.disabled}
-                    value={this.props.model.location === null ?
-                        'null' : this.props.model.location}
-                    onChange={this.handleChange.bind(this, 'location', true)}
-                    >
-                    <option value='null'>—</option>
-                    {this.props.rooms.map(function(r) {
-                        return <option key={r.id} value={r.id}>{r.name}</option>;
-                    })}
-                </select>
-                <br/>
+                <tr>
+                    <td><label>Location:</label></td>
+                    <td>
+                        <select
+                            disabled={this.props.disabled}
+                            value={this.props.model.location === null ?
+                                'null' : this.props.model.location}
+                            onChange={this.handleChange.bind(this,
+                                    'location', true)}
+                            >
+                            <option value='null'>—</option>
+                            {this.props.rooms.map(function(r) {
+                                return <option key={r.id} value={r.id}>
+                                    {r.name}
+                                </option>;
+                            })}
+                        </select>
+                    </td>
+                </tr>
 
-                <label>Day offset (TODO explain this):</label>
-                <input type="number"
-                    disabled={this.props.disabled}
-                    value={this.props.model.dayOffset}
-                    onChange={this.handleChange.bind(this, 'dayOffset', false)}
-                    // If the user types 'hello' or '-' for '-3' only convert
-                    // it to a number (0 for invalid strings) on blur
-                    onBlur={this.handleIntBlur.bind(this, 'dayOffset')}
-                    />
-                <br/>
+                <tr>
+                    <td>
+                        <abbr title={'How many calendar days ' +
+                            'to add or subtract from the start date.\n' +
+                            '0 = the start date\n' +
+                            '1 = the day after the start date\n' +
+                            '-7 = one week before the start date'}>
+                            Day offset
+                        </abbr>:
+                    </td>
+                    <td>
+                        <input type="number"
+                            disabled={this.props.disabled}
+                            value={this.props.model.dayOffset}
+                            onChange={this.handleChange.bind(
+                                    this, 'dayOffset', false)}
+                            // If the user types 'hello' or '-' for '-3'
+                            // only convert it to a number (0 for invalid
+                            // strings) on blur
+                            onBlur={this.handleIntBlur.bind(this, 'dayOffset')}
+                            />
+                    </td>
+                </tr>
 
-                <label>From:</label>
-                <input type="time"
-                    disabled={this.props.disabled}
-                    value={this.props.model.startTime}
-                    onChange={this.handleChange.bind(this, 'startTime', false)}
-                    />
-                to
-                <input type="time"
-                    disabled={this.props.disabled}
-                    value={this.props.model.endTime}
-                    onChange={this.handleChange.bind(this, 'endTime', false)}
-                    />
-                <br/>
+                <tr>
+                    <td><label>From:</label></td>
+                    <td>
+                        <input type="time"
+                            disabled={this.props.disabled}
+                            value={this.props.model.startTime}
+                            onChange={this.handleChange.bind(this, 'startTime', false)}
+                            />
+                        to
+                        <input type="time"
+                            disabled={this.props.disabled}
+                            value={this.props.model.endTime}
+                            onChange={this.handleChange.bind(this, 'endTime', false)}
+                            />
+                    </td>
+                </tr>
 
-                <label>Event Type:</label>
-                <select
-                    disabled={this.props.disabled}
-                    value={this.props.model.isCollective ? 'true' : 'false'}
-                    onChange={this.handleChange.bind(this, 'isCollective', false)}
-                    >
-                    <option value='true'>
-                        Common (invite all employees to the same event)
-                    </option>
-                    <option value='false'>
-                        Individual (one separate event for each employee)
-                    </option>
-                </select>
-                <br/>
+                <tr>
+                    <td><label>Event Type:</label></td>
+                    <td>
+                        <select
+                            disabled={this.props.disabled}
+                            value={this.props.model.isCollective ? 'true' :
+                                'false'}
+                            onChange={this.handleChange.bind(this,
+                                    'isCollective', false)}
+                            >
+                            <option value='true'>
+                                Common (invite all employees to the same event)
+                            </option>
+                            <option value='false'>
+                                Individual (one separate event for each
+                                        employee)
+                            </option>
+                        </select>
+                    </td>
+                </tr>
 
-                <input type="checkbox"
-                    disabled={this.props.disabled}
-                    checked={this.props.model.inviteEmployees}
-                    onChange={this.handleChange.bind(this, 'inviteEmployees', false)}
-                    />
-                    Invite employee{this.props.model.isCollective ? 's' : ''}
-                <br/>
+                <tr>
+                    <td>Participants:</td>
+                    <td>
+                        <input type="checkbox"
+                            disabled={this.props.disabled}
+                            checked={this.props.model.inviteEmployees}
+                            onChange={this.handleChange.bind(this,
+                                    'inviteEmployees', false)}
+                            />
+                            Invite employee{this.props.model.isCollective ?
+                                's' : ''}
+                    </td>
+                </tr>
 
-                <input type="checkbox"
-                    disabled={this.props.disabled}
-                    checked={this.props.model.inviteSupervisors}
-                    onChange={this.handleChange.bind(this, 'inviteSupervisors', false)}
-                    />
-                    Invite supervisor{this.props.model.isCollective ? 's' : ''}
-                <br/>
+                <tr>
+                    <td></td>
+                    <td>
+                        <input type="checkbox"
+                            disabled={this.props.disabled}
+                            checked={this.props.model.inviteSupervisors}
+                            onChange={this.handleChange.bind(this,
+                                    'inviteSupervisors', false)}
+                            />
+                            Invite supervisor{this.props.model.isCollective ?
+                                's' : ''}
+                    </td>
+                </tr>
 
-                <label>People to invite:</label>
-                <MultiPersonSelect
-                    allPersonsById={this.props.usersById}
-                    allPersons={this.props.users}
-                    selectedIds={this.props.model.otherInvitees}
-                    onRemove={this.removeInvitee}
-                    onAdd={this.addInvitee}
-                    disabled={this.props.disabled}
-                    />
+                <tr>
+                    <td><label>Other participants:</label></td>
+                    <td>
+                        <MultiPersonSelect
+                            allPersonsById={this.props.usersById}
+                            allPersons={this.props.users}
+                            selectedIds={this.props.model.otherInvitees}
+                            onRemove={this.removeInvitee}
+                            onAdd={this.addInvitee}
+                            disabled={this.props.disabled}
+                            />
+                    </td>
+                </tr>
+
+                <tr>
+                    <td></td>
+                    <td>
+                    </td>
+                </tr>
+                </table>
+
                 <br/>
 
                 <button type="button"
@@ -645,6 +734,8 @@ var MultiPersonSelect = React.createClass({
     },
     render: function() {
         return <div>
+            {this.props.selectedIds.length ? '' :
+                <span className="info">No person selected</span>}
             <ul>
                 {this.props.selectedIds.map((function(sid) {
                     var p = this.props.allPersonsById[sid];
@@ -666,7 +757,9 @@ var MultiPersonSelect = React.createClass({
                     </option>;
                 })}
             </select>
-            <button type="button" onClick={this.handleAdd}>+ Add</button>
+            <button type="button"
+                disabled={this.props.disabled}
+                onClick={this.handleAdd}>+ Add</button>
         </div>;
     }
 });

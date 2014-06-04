@@ -41,10 +41,14 @@ var TimeZoneListComp = React.createClass({
     },
     render: function() {
         if (this.state.tzErr) {
-            return <div>{this.state.tzErr}</div>;
+            return <div>
+                <span className="status-error">{this.state.tzErr}</span>
+            </div>;
         }
         if (!this.state.tzLoaded) {
-            return <div>Getting data…</div>;
+            return <div>
+                <span className="status-waiting">Getting data…</span>
+            </div>;
         }
 
         // tz is either an object or null (for the "add new" form).
@@ -58,10 +62,16 @@ var TimeZoneListComp = React.createClass({
                     />
                 </li>;
         }
-        return <ul>
-            {this.state.timezones.map(createTimezoneComp, this)}
-            {createTimezoneComp.bind(this)(null)}
-        </ul>;
+        return <div>
+            {this.state.timezones.length ? '' :
+                <span className="info">
+                    You have not entered any timezones.
+                </span>}
+            <ul id="timezone-list">
+                {this.state.timezones.map(createTimezoneComp, this)}
+                {createTimezoneComp.bind(this)(null)}
+            </ul>
+        </div>;
     }
 });
 
@@ -138,8 +148,6 @@ var TimeZoneComp = React.createClass({
             url = '/futuintro/api/timezones/' + this.props.model.id + '/';
         }
 
-        // TODO: remove the setTimeout (tests delays in DEV).
-        setTimeout((function() {
         $.ajax({
             url: url,
             type: this.isNewItem() ? 'POST' : 'PUT',
@@ -169,15 +177,12 @@ var TimeZoneComp = React.createClass({
                 this.setState({reqErr: getAjaxErr.apply(this, arguments)});
             }).bind(this)
         });
-        }).bind(this), 3000);
     },
     delete: function() {
         this.setState({
             reqInFlight: 'Deleting…'
         });
 
-        // TODO: remove the setTimeout (tests delays in DEV).
-        setTimeout((function() {
         $.ajax({
             url: '/futuintro/api/timezones/' + this.props.model.id + '/',
             type: 'DELETE',
@@ -200,7 +205,6 @@ var TimeZoneComp = React.createClass({
                 this.setState({reqErr: getAjaxErr.apply(this, arguments)});
             }).bind(this)
         });
-        }).bind(this), 3000);
     },
 
     render: function() {
@@ -213,7 +217,7 @@ var TimeZoneComp = React.createClass({
         if (this.state.reqInFlight || this.state.reqErr) {
             statusBox = <span
                     className={'status-' +
-                        (this.state.reqInFlight ? 'info' : 'error')}>
+                        (this.state.reqInFlight ? 'waiting' : 'error')}>
                     {this.state.reqInFlight ?
                         this.state.reqInFlight : this.state.reqErr }
                 </span>;
@@ -234,6 +238,7 @@ var TimeZoneComp = React.createClass({
 
         return <form onSubmit={this.saveOrCreate}>
                 <input type="text"
+                    placeholder="Time zone name…"
                     value={this.state.editModel.name}
                     onChange={this.handleChange.bind(this, 'name')}
                     disabled={this.state.reqInFlight} />
@@ -245,6 +250,8 @@ var TimeZoneComp = React.createClass({
                     disabled={this.state.reqInFlight}>
                     {this.isNewItem() ? 'Add new' : 'Save'}
                 </button>
+
+                {this.isNewItem() ? <br/> : ''}
                 {statusBox}
             </form>;
     }

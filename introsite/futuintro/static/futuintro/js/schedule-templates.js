@@ -50,17 +50,25 @@ var ScheduleTemplatesList = React.createClass({
     },
     render: function() {
         if (this.state.schedTemplErr || this.state.tzErr) {
-            return (
-                <div>{this.state.schedTemplErr || this.state.tzErr}</div>
-            );
+            return <div>
+                <span className="status-error">
+                    {this.state.schedTemplErr || this.state.tzErr}
+                </span>
+            </div>;
         }
 
         if (!(this.state.schedTemplLoaded && this.state.tzLoaded)) {
-            return <div>Loading…</div>;
+            return <div>
+                <span className="status-waiting">Loading…</span>
+            </div>;
         }
 
         return <div>
-            <ul>
+            {this.state.schedTempl.length ? '' :
+                <span className="info">
+                    There are no Schedule Templates.
+                </span>}
+            <ul id="schedule-template-list">
                 {this.state.schedTempl.map((function(st) {
                     return <li key={st.id || 'add-new-st-item'}>
                         <ScheduleTemplateSummary
@@ -168,8 +176,6 @@ var ScheduleTemplateSummary = React.createClass({
             url = '/futuintro/api/scheduletemplates/' + this.props.model.id + '/';
         }
 
-        // TODO: remove the setTimeout (tests delays in DEV).
-        setTimeout((function() {
         $.ajax({
             url: url,
             type: this.isNewItem() ? 'POST' : 'PUT',
@@ -199,7 +205,6 @@ var ScheduleTemplateSummary = React.createClass({
                 this.setState({ajaxErr: getAjaxErr.apply(this, arguments)});
             }).bind(this)
         });
-        }).bind(this), 3000);
     },
     delete: function() {
         if (!confirm('Delete this Schedule Template ' +
@@ -211,8 +216,6 @@ var ScheduleTemplateSummary = React.createClass({
             ajaxInFlight: 'Deleting…'
         });
 
-        // TODO: remove the setTimeout (tests delays in DEV).
-        setTimeout((function() {
         $.ajax({
             url: '/futuintro/api/scheduletemplates/' + this.props.model.id + '/',
             type: 'DELETE',
@@ -235,7 +238,6 @@ var ScheduleTemplateSummary = React.createClass({
                 this.setState({ajaxErr: getAjaxErr.apply(this, arguments)});
             }).bind(this)
         });
-        }).bind(this), 3000);
     },
 
     render: function() {
@@ -247,7 +249,7 @@ var ScheduleTemplateSummary = React.createClass({
         if (this.state.ajaxInFlight || this.state.ajaxErr) {
             statusBox = <span
                 className={'status-' +
-                    (this.state.ajaxInFlight ? 'info' : 'error')}>
+                    (this.state.ajaxInFlight ? 'waiting' : 'error')}>
                 {this.state.ajaxInFlight || this.state.ajaxErr}
             </span>;
         }
@@ -274,13 +276,13 @@ var ScheduleTemplateSummary = React.createClass({
 
         return <form onSubmit={this.saveOrCreate}>
             <input type="text"
-                placeholder="Name of this Schedule Template…"
+                placeholder="Template Name…"
                 value={this.state.editModel.name}
                 onChange={this.handleChange.bind(this, 'name')}
                 disabled={this.state.ajaxInFlight}
                 />
             <select
-                value={this.state.editModel.timezone}
+                value={this.state.editModel.timezone || 'null'}
                 onChange={this.handleChange.bind(this, 'timezone')}
                 disabled={this.state.ajaxInFlight}
                 >
@@ -304,9 +306,10 @@ var ScheduleTemplateSummary = React.createClass({
                 disabled={this.state.ajaxInFlight}
                 hidden={!this.isNewItem()}
                 >
-                Clear
+                Clear fields
             </button>
 
+            {this.isNewItem() ? <br/> : ''}
             {statusBox}
         </form>;
     }
