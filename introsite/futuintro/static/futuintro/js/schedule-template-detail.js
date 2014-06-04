@@ -29,7 +29,6 @@ var ScheduleTemplateDetail = React.createClass({
                 // drop seconds. 11:00:00 → 11:00, 08:00:00 → 8:00
                 var newEvTempl = this.state.evTempl.map(function(x) {
                     x = clone(x);
-                    var re = /\d\d\:\d\d\:\d\d/;
                     ['startTime', 'endTime'].forEach(function(fName) {
                         x[fName] = dropSeconds(x[fName]);
                     });
@@ -554,13 +553,13 @@ var EventTemplate = (function() {
                 <br/>
 
                 <label>From:</label>
-                <input type="text"
+                <input type="time"
                     disabled={this.props.disabled}
                     value={this.props.model.startTime}
                     onChange={this.handleChange.bind(this, 'startTime', false)}
                     />
                 to
-                <input type="text"
+                <input type="time"
                     disabled={this.props.disabled}
                     value={this.props.model.endTime}
                     onChange={this.handleChange.bind(this, 'endTime', false)}

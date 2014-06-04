@@ -277,6 +277,10 @@ var NewSchedule;
                                 startDate.valueOf() + result.dayOffset*dayMillis));
                         delete result.dayOffset;
 
+                        ['startTime', 'endTime'].forEach(function(fName) {
+                            result[fName] = dropSeconds(result[fName]);
+                        });
+
                         result.invitees = result.otherInvitees;
                         delete result.otherInvitees;
 
