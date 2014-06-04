@@ -102,4 +102,4 @@ def createSchedules(request):
 
     # TODO: in case of error, try to roll back everything
 
-    # TODO: return an HttpResponse object
+    return HttpResponse('')
