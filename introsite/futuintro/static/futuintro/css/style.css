@@ -80,3 +80,43 @@ table.event-template-fields td {
 form#add-event-template {
 	background-color: PaleGreen;
 }
+
+
+/* New Schedule */
+
+table#new-schedule-fields td {
+	vertical-align: top;
+}
+
+ul#new-schedule-events {
+	list-style-type: none;
+}
+
+ul#new-schedule-events li.event-group-collective {
+	background-color: Azure;
+	margin-bottom: 1em;
+	padding: 1em;
+	border: solid 1px;
+}
+
+ul#new-schedule-events li.event-group-individual {
+	background-color: PeachPuff;
+	margin-bottom: 1em;
+	padding: 1em;
+	border: solid 1px;
+}
+
+ul.individual-events-list {
+	list-style-type: none;
+}
+
+ul.individual-events-list li {
+	background-color: MistyRose;
+	margin-bottom: 1em;
+	padding: 1em;
+	border: solid 1px;
+}
+
+table#new-event-fields td {
+	vertical-align: top;
+}

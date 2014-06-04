@@ -100,12 +100,14 @@ var NewSchedule;
         render: function() {
             var err = this.state.sTemplErr || this.state.usersErr;
             if (err) {
-                return <div>{err}</div>;
+                return <div><span className="status-error">{err}</span></div>;
             }
             var loaded = this.state.sTemplLoaded && this.state.usersLoaded
                 && this.state.usersById;
             if (!loaded) {
-                return <div>Loading…</div>;
+                return <div>
+                    <span className="status-waiting">Loading…</span>
+                </div>;
             }
 
             if (this.state.stage == STAGE_PREPARE) {
@@ -114,6 +116,7 @@ var NewSchedule;
                     selectedSchedTempl={this.state.selectedSchedTempl}
                     startDate={this.state.startDate}
                     users={this.state.users}
+                    usersById={this.state.usersById}
                     selectedUsers={this.state.selectedUsers}
                     onSelectScheduleTemplate={this.setField.bind(this,
                             'selectedSchedTempl')}
@@ -147,6 +150,7 @@ var NewSchedule;
             selectedSchedTempl: React.PropTypes.any,
             startDate: React.PropTypes.string.isRequired,
             users: React.PropTypes.array.isRequired,
+            usersById: React.PropTypes.object.isRequired,
             selectedUsers: React.PropTypes.array.isRequired,
 
             onSelectScheduleTemplate: React.PropTypes.func.isRequired,
@@ -164,8 +168,7 @@ var NewSchedule;
             });
             this.props.onSelectUsers(selectedUsers);
         },
-        addUser: function() {
-            var id = Number.parseInt(this.refs.userSelect.getDOMNode().value);
+        addUser: function(id) {
             var user;
             this.props.users.forEach(function(u) {
                 if (u.id == id) {
@@ -194,53 +197,53 @@ var NewSchedule;
             this.props.onStartDateChange(val);
         },
         render: function() {
-            return <div>
-                <label>From template:</label>
-                <select
-                    value={this.props.selectedSchedTempl}
-                    onChange={this.schedTemplChanged}
-                    >
-                    <option value='null'>—</option>
-                    {this.props.scheduleTemplates.map(function(st) {
-                        return <option value={st.id} key={st.id}>
-                            {st.name}
-                        </option>;
-                    })}
-                </select>
-                <br/>
+            return <div id="new-schedule-prepare">
+                <table id="new-schedule-fields">
+                <tr>
+                    <td><label>From template:</label></td>
+                    <td>
+                        <select
+                            value={this.props.selectedSchedTempl}
+                            onChange={this.schedTemplChanged}
+                            >
+                            <option value='null'>—</option>
+                            {this.props.scheduleTemplates.map(function(st) {
+                                return <option value={st.id} key={st.id}>
+                                    {st.name}
+                                </option>;
+                            })}
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <td><label>Start date:</label></td>
+                    <td>
+                        <input type="date" ref="startDate"
+                            value={this.props.startDate}
+                            onChange={this.handleStartDateChange}
+                            onBlur={this.handleStartDateBlur}/>
+                    </td>
+                </tr>
+                <tr>
+                    <td><label>For Employees:</label></td>
+                    <td>
+                        <MultiPersonSelect
+                            allPersonsById={this.props.usersById}
+                            allPersons={this.props.users}
+                            selectedIds={this.props.selectedUsers.map(
+                                    function(u) { return u.id; }
+                            )}
+                            onRemove={this.removeUser}
+                            onAdd={this.addUser}
+                            disabled={false}
+                            />
+                    </td>
+                </tr>
+                </table>
 
-                <label>Start date:</label>
-                <input type="date" ref="startDate"
-                    value={this.props.startDate}
-                    onChange={this.handleStartDateChange}
-                    onBlur={this.handleStartDateBlur}/>
-                <br/>
-
-                <label>For Employees:</label>
-                <ul>
-                    {this.props.selectedUsers.map((function(u) {
-                        return <li key={u.id}>
-                            {u.first_name + ' ' + u.last_name}
-                            <a href="#"
-                                onClick={this.removeUser.bind(this, u.id)}
-                                >×</a>
-                        </li>;
-                    }).bind(this))}
-                </ul>
-                <select ref="userSelect">
-                    {this.props.users.map(function(u) {
-                        return <option key={u.id} value={u.id}>
-                            {u.first_name + ' ' + u.last_name +
-                                ' <' + u.email + '>'}
-                        </option>;
-                    })}
-                </select>
-                <button type="button" onClick={this.addUser}>+ Add</button>
-                <br/>
-
-                <span>Prepare new schedule</span>
                 <button type="button" onClick={this.props.onAdvance}>
-                    Start!
+                    Configure new schedule
+                    {this.props.selectedUsers.length > 1 ? 's' : ''}…
                 </button>
             </div>;
         }
@@ -360,8 +363,14 @@ var NewSchedule;
                 // When all entries are replaced with null, remove the whole
                 // event group and the event template (just like in the
                 // collective case).
-                evGroups: null
+                evGroups: null,
+
+                ajaxInFlight: '',
+                ajaxErr: ''
             };
+        },
+        shouldDisable: function() {
+            return this.state.ajaxInFlight != '';
         },
         deleteEventAndGroup: function(idx) {
             var evTempl = this.state.evTempl.concat(),
@@ -410,6 +419,10 @@ var NewSchedule;
             });
         },
         createEvents: function() {
+            this.setState({
+                ajaxInFlight: 'Creating…'
+            });
+
             // TODO: disable buttons during AJAX call and handle errors
 
             $.ajax({
@@ -455,10 +468,19 @@ var NewSchedule;
                         return result;
                     }).bind(this)()
                 }),
+                complete: (function(data) {
+                    this.setState({
+                        ajaxInFlight: ''
+                    });
+                }).bind(this),
                 success: (function(data) {
+                    this.setState({
+                        ajaxErr: ''
+                    });
                     alert('it worked');
                 }).bind(this),
                 error: (function(xhr, txtStatus, saveErr) {
+                    this.setState({ajaxErr: getAjaxErr.apply(this, arguments)});
                     alert('error');
                 }).bind(this)
             });
@@ -466,17 +488,22 @@ var NewSchedule;
         render: function() {
             var err = this.state.evTemplErr || this.state.roomsErr;
             if (err) {
-                return <div>{err}</div>;
+                return <div><span className='status-err'>{err}</span></div>;
             }
             var loaded = this.state.evTemplLoaded && this.state.evGroups &&
                 this.state.roomsLoaded;
             if (!loaded) {
-                return <div>Loading…</div>;
+                return <div>
+                    <span className='status-waiting'>Loading…</span>
+                </div>;
             }
 
-            return <div>
-                Based on template: {this.props.scheduleTemplate.name}
-                <ul>
+            return <div id="new-schedule-edit">
+                <h1>
+                    From template:{' '}
+                    {this.props.scheduleTemplate.name}
+                </h1>
+                <ul id="new-schedule-events">
                 {this.state.evTempl.map((function(et, idx) {
                     function getFullName(user) {
                         return user.first_name + ' ' + user.last_name;
@@ -493,18 +520,18 @@ var NewSchedule;
                                 idx, null)}
                         />;
                     } else {
-                        eventsBox = <ul>
+                        eventsBox = <ul className="individual-events-list">
                             {this.state.evGroups[idx].map((function(ev, j) {
                                 var fullName = getFullName(
                                     this.props.selectedUsers[j]);
 
                                 if (ev == null) {
-                                    return <li key={j}>Deleted event for
+                                    return <li key={j}>Deleted event for {' '}
                                         {fullName}
                                     </li>;
                                 }
                                 return <li key={j}>
-                                    Event for {fullName}
+                                    <b>Event for {fullName}</b>
                                     <button type="button"
                                         onClick={this.deleteIndividualEvent.bind(this, idx, j)}>
                                         Delete
@@ -525,22 +552,21 @@ var NewSchedule;
 
                     return <li key={et.id} className={'event-group-' +
                         (et.isCollective ? 'collective' : 'individual')}>
+                        <b>
                         {et.summary} {' ('}
                         {et.isCollective ?
                             'common event for ' +
                             this.props.selectedUsers.map(getFullName).join(', ') :
                             'separate event for each person'}
                         {')'}
+                        </b>
+
+                        {eventsBox}
+
                         <button type="button"
                             onClick={this.deleteEventAndGroup.bind(this, idx)}>
                             Delete
                         </button>
-                        <br/>
-
-                        {eventsBox}
-                        <br/>
-                        {JSON.stringify(this.state.evGroups[idx])}
-                        <br/>
                     </li>;
                 }).bind(this))}
                 </ul>
@@ -599,67 +625,99 @@ var NewSchedule;
         },
         render: function() {
             return <div>
-                <label>Summary:</label>
-                <input
-                    disabled={this.props.disabled}
-                    value={this.props.model.summary}
-                    onChange={this.handleChange.bind(this, 'summary', false)}
-                />
-                <br/>
-
-                <label>Description:</label>
-                <textarea
-                    disabled={this.props.disabled}
-                    value={this.props.model.description}
-                    onChange={this.handleChange.bind(this, 'description', false)}
-                />
-                <br/>
-
-                <label>Location:</label>
-                <select
-                    disabled={this.props.disabled}
-                    value={this.props.model.location === null ?
-                        'null' : this.props.model.location}
-                    onChange={this.handleChange.bind(this, 'location', true)}
-                    >
-                    <option value='null'>—</option>
-                    {this.props.rooms.map(function(r) {
-                        return <option key={r.id} value={r.id}>{r.name}</option>;
-                    })}
-                </select>
-                <br/>
-
-                <label>Date:</label>
-                <input type="date"
-                    value={this.props.model.date}
-                    onChange={this.handleChange.bind(this, 'date', false)}
-                    onBlur={this.handleDateBlur}/>
-                <br/>
-
-                <label>From:</label>
-                <input type="time"
-                    disabled={this.props.disabled}
-                    value={this.props.model.startTime}
-                    onChange={this.handleChange.bind(this, 'startTime', false)}
-                    />
-                to
-                <input type="time"
-                    disabled={this.props.disabled}
-                    value={this.props.model.endTime}
-                    onChange={this.handleChange.bind(this, 'endTime', false)}
-                    />
-                <br/>
-
-                <label>People to invite:</label>
-                <MultiPersonSelect
-                    allPersonsById={this.props.usersById}
-                    allPersons={this.props.users}
-                    selectedIds={this.props.model.invitees}
-                    onRemove={this.removeInvitee}
-                    onAdd={this.addInvitee}
-                    disabled={this.props.disabled}
-                    />
-                <br/>
+                <table>
+                <tr>
+                    <td>
+                        <label>Summary:</label>
+                    </td>
+                    <td>
+                        <input
+                            disabled={this.props.disabled}
+                            value={this.props.model.summary}
+                            onChange={this.handleChange.bind(this,
+                                    'summary', false)}
+                        />
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <label>Description:</label>
+                    </td>
+                    <td>
+                        <textarea
+                            disabled={this.props.disabled}
+                            value={this.props.model.description}
+                            onChange={this.handleChange.bind(this,
+                                    'description', false)}
+                        />
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <label>Location:</label>
+                    </td>
+                    <td>
+                        <select
+                            disabled={this.props.disabled}
+                            value={this.props.model.location === null ?
+                                'null' : this.props.model.location}
+                            onChange={this.handleChange.bind(this,
+                                    'location', true)}
+                            >
+                            <option value='null'>—</option>
+                            {this.props.rooms.map(function(r) {
+                                return <option key={r.id} value={r.id}>
+                                    {r.name}
+                                </option>;
+                            })}
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <label>Date:</label>
+                    </td>
+                    <td>
+                        <input type="date"
+                            value={this.props.model.date}
+                            onChange={this.handleChange.bind(this, 'date', false)}
+                            onBlur={this.handleDateBlur}/>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <label>From:</label>
+                    </td>
+                    <td>
+                        <input type="time"
+                            disabled={this.props.disabled}
+                            value={this.props.model.startTime}
+                            onChange={this.handleChange.bind(this, 'startTime', false)}
+                            />
+                        to
+                        <input type="time"
+                            disabled={this.props.disabled}
+                            value={this.props.model.endTime}
+                            onChange={this.handleChange.bind(this, 'endTime', false)}
+                            />
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <label>People to invite:</label>
+                    </td>
+                    <td>
+                        <MultiPersonSelect
+                            allPersonsById={this.props.usersById}
+                            allPersons={this.props.users}
+                            selectedIds={this.props.model.invitees}
+                            onRemove={this.removeInvitee}
+                            onAdd={this.addInvitee}
+                            disabled={this.props.disabled}
+                            />
+                    </td>
+                </tr>
+                </table>
             </div>;
         }
     });
