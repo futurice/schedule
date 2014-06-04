@@ -261,9 +261,8 @@ var NewSchedule;
             compFetchRest.bind(this)('/futuintro/api/eventtemplates/?scheduleTemplate=' + this.props.scheduleTemplate.id,
                 'evTempl', 'evTemplLoaded', 'evTemplErr',
                 function() {
+                    // format 'YYYY-MM-DD' guarantees midnight in UTC timezone.
                     var startDate = new Date(this.props.startDate);
-                    startDate = new Date(startDate.valueOf() +
-                        startDate.getTimezoneOffset() * 60 * 1000);
                     var dayMillis = 1000*60*60*24;
 
                     function eventFromTemplate(et, forUsers) {
