@@ -28,7 +28,7 @@ class FutuUser(AbstractBaseUser):
     is_active = models.BooleanField(default=True)
     is_admin = models.BooleanField(default=False)
     supervisor = models.ForeignKey(settings.AUTH_USER_MODEL, null=True,
-            related_name='supervisor_of')
+            related_name='supervisor_of', on_delete=models.SET_NULL)
 
     objects = FutuUserManager()
 
@@ -94,7 +94,7 @@ class ScheduleTemplate(models.Model):
     A set of event templates, e.g. 'New Employee Onboarding in Berlin'.
     """
     name = models.CharField(max_length=200)
-    timezone = models.ForeignKey(TimeZone)
+    timezone = models.ForeignKey(TimeZone, on_delete=models.PROTECT)
 
     def __unicode__(self):
         return self.name + ' (' + self.timezone.name + ')'
@@ -106,7 +106,8 @@ class ScheduleTemplate(models.Model):
 class EventTemplate(models.Model):
     summary = models.CharField(max_length=200)
     description = models.TextField(blank=True)
-    location = models.ForeignKey(CalendarResource, null=True, blank=True)
+    location = models.ForeignKey(CalendarResource, null=True, blank=True,
+            on_delete=models.PROTECT)
 
     # which calendar day the event is on. 0 is the employee's starting day,
     # 1 is her second day, -7 is 1 week before the starting day.
@@ -129,7 +130,8 @@ class EventTemplate(models.Model):
     # employee.
     isCollective = models.BooleanField(default=True)
 
-    scheduleTemplate = models.ForeignKey(ScheduleTemplate)
+    scheduleTemplate = models.ForeignKey(ScheduleTemplate,
+            on_delete=models.PROTECT)
 
     def __unicode__(self):
         return self.summary

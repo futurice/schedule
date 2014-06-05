@@ -2,10 +2,16 @@ import datetime
 import dateutil.parser
 import json
 import pytz
-from django.test import TestCase
-from futuintro import calendar, util, testutil
 
-class DummyTest(TestCase):
+from django.contrib.auth import get_user_model
+from django.db.models import ProtectedError
+from django.test import TestCase
+
+from futuintro import calendar, util, testutil
+from futuintro import models
+
+
+class GoogleCalendarTest(TestCase):
 
     def test_create_and_delete_event(self):
         calId = calendar.futuintroCalId
@@ -44,3 +50,94 @@ class DummyTest(TestCase):
                 == {x['email'] for x in ev['attendees']})
 
         calendar.deleteEvent(calId, ev['id'])
+
+
+class ForeignKeyDeleteTest(TestCase):
+    """
+    Test what happens when we delete objects involved in relationships.
+    """
+
+    def testDeleteSupervisor(self):
+        UM = get_user_model()
+
+        # one way to create & save objects
+        fry = UM(username='fry', email='fry@futu', first_name='Phillip J.',
+                last_name='Fry')
+        fry.save()
+
+        # alternative way to create & save objects
+        leela = UM.objects.create(username='leela', email='leela@futu',
+                first_name='Leela', last_name='Turanga')
+
+        prof = UM(username='farnsworth', email='farnsworth@futu',
+                first_name='Hubert J.', last_name='Farnsworth')
+        prof.save()
+
+        # one way to add foreign key (directly)
+        fry.supervisor = prof
+        fry.save()
+
+        # another way to add foreign key (the reverse relationship's Manager)
+        prof.supervisor_of.add(leela)
+
+        self.assertIs(prof.supervisor_of.count(), 2)
+        leela.delete()
+        self.assertIs(prof.supervisor_of.count(), 1)
+
+        prof.delete()
+        self.assertIsNone(UM.objects.get(username='fry').supervisor)
+
+    def testDeleteTimezoneUsedByScheduleTemplate(self):
+        stras = models.TimeZone(name='Europe/Brussels')
+        stras.save()
+        damascus = models.TimeZone(name='Asia/Damascus')
+        damascus.save()
+
+        schedTempl = models.ScheduleTemplate(name='My SchedTempl',
+                timezone=stras)
+        schedTempl.save()
+
+        damascus.delete()
+        with self.assertRaises(ProtectedError):
+            stras.delete()
+        schedTempl.delete()
+
+    def testDeleteScheduleTemplateUsedByEventTemplate(self):
+        tz = models.TimeZone.objects.create(name='Europe/Helsinki')
+        schedTempl = models.ScheduleTemplate.objects.create(name='My SchedT',
+                timezone=tz)
+        nowT = datetime.datetime.now().time()
+        et = models.EventTemplate.objects.create(dayOffset=0,
+                startTime=nowT, endTime=nowT, scheduleTemplate=schedTempl)
+        with self.assertRaises(ProtectedError):
+            schedTempl.delete()
+
+    def testDeleteRoomUsedByEventTemplate(self):
+        tz = models.TimeZone.objects.create(name='Europe/Helsinki')
+        schedTempl = models.ScheduleTemplate.objects.create(name='My SchedT',
+                timezone=tz)
+        room = models.CalendarResource.objects.create(name='basement')
+        nowT = datetime.datetime.now().time()
+        et = models.EventTemplate.objects.create(dayOffset=0,
+                startTime=nowT, endTime=nowT, scheduleTemplate=schedTempl,
+                location=room)
+        with self.assertRaises(ProtectedError):
+            room.delete()
+
+    def testDeleteUserInvitedToEventTemplate(self):
+        tz = models.TimeZone.objects.create(name='Europe/Helsinki')
+        schedTempl = models.ScheduleTemplate.objects.create(name='My SchedT',
+                timezone=tz)
+        nowT = datetime.datetime.now().time()
+        et = models.EventTemplate.objects.create(dayOffset=0,
+                startTime=nowT, endTime=nowT, scheduleTemplate=schedTempl)
+
+        UM = get_user_model()
+        bender = UM.objects.create(username='bender', email='bender@futu')
+        calculon = UM.objects.create(username='calculon', email='calculon@futu')
+        et.otherInvitees.add(bender, calculon)
+
+        calculon.delete()
+        self.assertIs(et.otherInvitees.count(), 1)
+        self.assertIs(UM.objects.filter(username='bender').count(), 1)
+        self.assertIs(UM.objects.filter(username='calculon').count(), 0)
