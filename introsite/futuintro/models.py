@@ -131,7 +131,7 @@ class EventTemplate(models.Model):
     isCollective = models.BooleanField(default=True)
 
     scheduleTemplate = models.ForeignKey(ScheduleTemplate,
-            on_delete=models.PROTECT)
+            on_delete=models.CASCADE)
 
     def __unicode__(self):
         return self.summary
