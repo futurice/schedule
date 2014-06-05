@@ -93,8 +93,8 @@ STATIC_URL = '/static/'
 
 REST_FRAMEWORK = {
     # http://www.django-rest-framework.org/api-guide/pagination
-    # TODO: set a higher value for the page size
-    'PAGINATE_BY': 3,
+    # TODO: what is a good page size?
+    'PAGINATE_BY': 100,
     # http://www.django-rest-framework.org/api-guide/filtering
     'DEFAULT_FILTER_BACKENDS': (
         'rest_framework.filters.DjangoFilterBackend',

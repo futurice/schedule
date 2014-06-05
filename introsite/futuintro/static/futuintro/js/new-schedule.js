@@ -474,7 +474,7 @@ var NewSchedule;
                     });
                 }).bind(this),
                 success: (function(data) {
-                    this.setState({
+                    this.isMounted() && this.setState({
                         ajaxErr: ''
                     });
                     alert('it worked');
@@ -498,6 +498,21 @@ var NewSchedule;
                 </div>;
             }
 
+            var statusBox;
+            if (this.state.ajaxInFlight) {
+                statusBox = <div>
+                    <span className="status-waiting">
+                        {this.state.ajaxInFlight}
+                    </span>
+                </div>;
+            } else if (this.state.ajaxErr) {
+                statusBox = <div>
+                    <span className="status-error">
+                        {this.state.ajaxErr}
+                    </span>
+                </div>;
+            }
+
             return <div id="new-schedule-edit">
                 <h1>
                     From template:{' '}
@@ -512,6 +527,7 @@ var NewSchedule;
                     var eventsBox;
                     if (et.isCollective) {
                         eventsBox = <EventEditor
+                            disabled={this.shouldDisable()}
                             model={this.state.evGroups[idx]}
                             rooms={this.state.rooms}
                             usersById={this.props.usersById}
@@ -537,6 +553,7 @@ var NewSchedule;
                                         Delete
                                     </button>
                                     <EventEditor
+                                        disabled={this.shouldDisable()}
                                         model={ev}
                                         rooms={this.state.rooms}
                                         usersById={this.props.usersById}
@@ -564,18 +581,25 @@ var NewSchedule;
                         {eventsBox}
 
                         <button type="button"
+                            disabled={this.shouldDisable()}
                             onClick={this.deleteEventAndGroup.bind(this, idx)}>
                             Delete
                         </button>
                     </li>;
                 }).bind(this))}
                 </ul>
-                <button type="button" onClick={this.createEvents}>
+
+                <button type="button"
+                    disabled={this.shouldDisable()}
+                    onClick={this.createEvents}>
                     Create Events in Google Calendar
                 </button>
-                <button type="button" onClick={this.props.onCancel}>
+                <button type="button"
+                    disabled={this.shouldDisable()}
+                    onClick={this.props.onCancel}>
                 CANCEL
                 </button>
+                {statusBox}
             </div>;
         }
     });
@@ -679,6 +703,7 @@ var NewSchedule;
                     </td>
                     <td>
                         <input type="date"
+                            disabled={this.props.disabled}
                             value={this.props.model.date}
                             onChange={this.handleChange.bind(this, 'date', false)}
                             onBlur={this.handleDateBlur}/>
