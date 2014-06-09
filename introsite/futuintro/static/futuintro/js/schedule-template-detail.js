@@ -14,8 +14,30 @@ var ScheduleTemplateDetail = React.createClass({
                 this.state.users.forEach(function(u) {
                     usersById[u.id] = u;
                 });
+
+                var userTextById = {};
+                this.state.users.forEach(function(u) {
+                    userTextById[u.id] = u.first_name + ' ' + u.last_name
+                            + ' (' + u.email + ')';
+                });
+
+                var alphabeticalUserIds = Object.keys(userTextById);
+                alphabeticalUserIds.sort(function(a, b) {
+                    a = userTextById[a].toLowerCase();
+                    b = userTextById[b].toLowerCase();
+                    if (a == b) {
+                        return 0;
+                    }
+                    if (a < b) {
+                        return -1;
+                    }
+                    return 1;
+                });
+
                 this.setState({
-                    usersById: usersById
+                    usersById: usersById,
+                    userTextById: userTextById,
+                    alphabeticalUserIds: alphabeticalUserIds
                 });
             }),
         getRestLoaderMixin('/futuintro/api/calendarresources/', 'rooms',
@@ -64,7 +86,10 @@ var ScheduleTemplateDetail = React.createClass({
             users: [],
             usersLoaded: false,
             usersErr: '',
-            usersById: null,
+            // Computed fields
+            usersById: null,            // [user-obj1, …]
+            userTextById: null,         // {id1: 'name and email', …}
+            alphabeticalUserIds: null,  // [id1, id2, …] ordered by user name
 
             rooms: [],
             roomsLoaded: false,
@@ -345,7 +370,8 @@ var ScheduleTemplateDetail = React.createClass({
         // check if initial loading completed
         v = ['tzLoaded', 'usersLoaded', 'roomsLoaded', 'etLoaded',
           'schedTempl',
-          'usersById', 'editEvTempl', 'evTemplAjaxErrors', 'editSchedTempl'];
+          'usersById', 'userTextById', 'alphabeticalUserIds',
+          'editEvTempl', 'evTemplAjaxErrors', 'editSchedTempl'];
         for (i = 0; i < v.length; i++) {
             fName = v[i];
             if (!this.state[fName]) {
@@ -443,8 +469,8 @@ var ScheduleTemplateDetail = React.createClass({
                         return <li key={et.id} className="event-template">
                             <EventTemplate
                                 model={et}
-                                users={this.state.users}
-                                usersById={this.state.usersById}
+                                userTextById={this.state.userTextById}
+                                alphabeticalUserIds={this.state.alphabeticalUserIds}
                                 rooms={this.state.rooms}
                                 disabled={Boolean(this.state.ajaxInFlight)}
                                 errTxt={this.state.evTemplAjaxErrors[i]}
@@ -481,9 +507,9 @@ var EventTemplate = (function() {
         propTypes: {
             model: React.PropTypes.object.isRequired,
 
-            // needed by <MultiPersonSelect/>
-            users: React.PropTypes.array.isRequired,
-            usersById: React.PropTypes.object.isRequired,
+            // needed by <MultiSelect/>
+            userTextById: React.PropTypes.object.isRequired,
+            alphabeticalUserIds: React.PropTypes.array.isRequired,
 
             rooms: React.PropTypes.array.isRequired,
             // disable all input fields and buttons, e.g. during the parent's
@@ -523,7 +549,7 @@ var EventTemplate = (function() {
                     return;
                 }
             }
-            if (!(addId in this.props.usersById)) {
+            if (!(addId in this.props.userTextById)) {
                 console.error('No user with id', addId);
                 return;
             }
@@ -677,9 +703,9 @@ var EventTemplate = (function() {
                 <tr>
                     <td><label>Other participants:</label></td>
                     <td>
-                        <MultiPersonSelect
-                            allPersonsById={this.props.usersById}
-                            allPersons={this.props.users}
+                        <MultiSelect
+                            itemTextById={this.props.userTextById}
+                            sortedIds={this.props.alphabeticalUserIds}
                             selectedIds={this.props.model.otherInvitees}
                             onRemove={this.removeInvitee}
                             onAdd={this.addInvitee}
@@ -710,56 +736,3 @@ var EventTemplate = (function() {
 
     return EventTemplate;
 })();
-
-var MultiPersonSelect = React.createClass({
-    propTypes: {
-        // for O(1) lookup: {id1: personObj1, id2: personObj2, …}
-        allPersonsById: React.PropTypes.object.isRequired,
-        // specifies the display order (e.g. by first name)
-        allPersons: React.PropTypes.array.isRequired,
-        // if the size is small, an array is ok and keeps the order
-        selectedIds: React.PropTypes.array.isRequired,
-        // onRemove(id)
-        onRemove: React.PropTypes.func.isRequired,
-        // onAdd(id)
-        onAdd: React.PropTypes.func.isRequired,
-        disabled: React.PropTypes.bool.isRequired
-    },
-    handleAdd: function() {
-        this.props.onAdd(this.refs.newPerson.getDOMNode().value);
-    },
-    handleRemove: function(id, ev) {
-        ev.preventDefault();
-        this.props.onRemove(id);
-    },
-    render: function() {
-        return <div>
-            {this.props.selectedIds.length ? '' :
-                <span className="info">No person selected</span>}
-            <ul>
-                {this.props.selectedIds.map((function(sid) {
-                    var p = this.props.allPersonsById[sid];
-                    return <li key={sid}>
-                        {p.first_name + ' ' + p.last_name
-                            + ' (' + p.email + ')'}
-                        <a href=""
-                            onClick={this.handleRemove.bind(this, sid)}
-                            hidden={this.props.disabled}
-                            >×</a>
-                    </li>;
-                }).bind(this))}
-            </ul>
-            <select ref="newPerson" disabled={this.props.disabled}>
-                {this.props.allPersons.map(function(p) {
-                    return <option value={p.id} key={p.id}>
-                        {p.first_name + ' ' + p.last_name
-                            + ' (' + p.email + ')'}
-                    </option>;
-                })}
-            </select>
-            <button type="button"
-                disabled={this.props.disabled}
-                onClick={this.handleAdd}>+ Add</button>
-        </div>;
-    }
-});

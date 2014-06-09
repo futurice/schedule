@@ -255,3 +255,54 @@ function getTargetValue(event) {
     }
     return val;
 }
+
+
+var MultiSelect = React.createClass({
+    propTypes: {
+        // for O(1) lookup: {id1: string-representation, id2: string-2, …}
+        itemTextById: React.PropTypes.object.isRequired,
+        // specifies the display order (e.g. alphabetical by string-repr)
+        sortedIds: React.PropTypes.array.isRequired,
+        // if the size is small, an array is ok and keeps the order
+        selectedIds: React.PropTypes.array.isRequired,
+        // onRemove(id)
+        onRemove: React.PropTypes.func.isRequired,
+        // onAdd(id)
+        onAdd: React.PropTypes.func.isRequired,
+        disabled: React.PropTypes.bool.isRequired
+    },
+    handleAdd: function() {
+        this.props.onAdd(this.refs.newItem.getDOMNode().value);
+    },
+    handleRemove: function(id, ev) {
+        ev.preventDefault();
+        this.props.onRemove(id);
+    },
+    render: function() {
+        return <div>
+            {this.props.selectedIds.length ? '' :
+                <span className="info">No item selected</span>}
+            <ul>
+                {this.props.selectedIds.map((function(id) {
+                    return <li key={id}>
+                        {this.props.itemTextById[id]}
+                        <a href=""
+                            onClick={this.handleRemove.bind(this, id)}
+                            hidden={this.props.disabled}
+                            >×</a>
+                    </li>;
+                }).bind(this))}
+            </ul>
+            <select ref="newItem" disabled={this.props.disabled}>
+                {this.props.sortedIds.map((function(id) {
+                    return <option value={id} key={id}>
+                        {this.props.itemTextById[id]}
+                    </option>;
+                }).bind(this))}
+            </select>
+            <button type="button"
+                disabled={this.props.disabled}
+                onClick={this.handleAdd}>+ Add</button>
+        </div>;
+    }
+});

@@ -1,8 +1,7 @@
 /** @jsx React.DOM */
 
 // TODO: clean up a bit. Argument passing is a bit messy (passing whole objects
-// e.g. Users instead of just IDs) in a few places. One place doesn't reuse
-// MultiPersonSelect but instead has a <select> and add/remove functions.
+// e.g. Users instead of just IDs) in a few places.
 // This is because of speed to get a working prototype asap.
 
 var NewSchedule;
@@ -36,8 +35,30 @@ var NewSchedule;
                     this.state.users.forEach(function(u) {
                         usersById[u.id] = u;
                     });
+
+                    var userTextById = {};
+                    this.state.users.forEach(function(u) {
+                        userTextById[u.id] = u.first_name + ' ' + u.last_name
+                                + ' (' + u.email + ')';
+                    });
+
+                    var alphabeticalUserIds = Object.keys(userTextById);
+                    alphabeticalUserIds.sort(function(a, b) {
+                        a = userTextById[a].toLowerCase();
+                        b = userTextById[b].toLowerCase();
+                        if (a == b) {
+                            return 0;
+                        }
+                        if (a < b) {
+                            return -1;
+                        }
+                        return 1;
+                    });
+
                     this.setState({
-                        usersById: usersById
+                        usersById: usersById,
+                        userTextById: userTextById,
+                        alphabeticalUserIds: alphabeticalUserIds
                     });
                 })
         ],
@@ -54,6 +75,8 @@ var NewSchedule;
                 usersErr: '',
 
                 usersById: null,
+                userTextById: null,
+                alphabeticalUserIds: null,
 
                 selectedSchedTempl: null,
                 selectedUsers: [],
@@ -103,7 +126,8 @@ var NewSchedule;
                 return <div><span className="status-error">{err}</span></div>;
             }
             var loaded = this.state.sTemplLoaded && this.state.usersLoaded
-                && this.state.usersById;
+                && this.state.usersById && this.state.userTextById
+                && this.state.alphabeticalUserIds;
             if (!loaded) {
                 return <div>
                     <span className="status-waiting">Loading…</span>
@@ -115,8 +139,9 @@ var NewSchedule;
                     scheduleTemplates={this.state.sTempl}
                     selectedSchedTempl={this.state.selectedSchedTempl}
                     startDate={this.state.startDate}
-                    users={this.state.users}
                     usersById={this.state.usersById}
+                    userTextById={this.state.userTextById}
+                    alphabeticalUserIds={this.state.alphabeticalUserIds}
                     selectedUsers={this.state.selectedUsers}
                     onSelectScheduleTemplate={this.setField.bind(this,
                             'selectedSchedTempl')}
@@ -136,7 +161,8 @@ var NewSchedule;
                 scheduleTemplate={schedTemplObj}
                 startDate={this.state.startDate}
                 users={this.state.users}
-                usersById={this.state.usersById}
+                userTextById={this.state.userTextById}
+                alphabeticalUserIds={this.state.alphabeticalUserIds}
                 selectedUsers={this.state.selectedUsers}
                 onCancel={this.gotoPrepare}
                 />;
@@ -149,8 +175,9 @@ var NewSchedule;
             // object or null
             selectedSchedTempl: React.PropTypes.any,
             startDate: React.PropTypes.string.isRequired,
-            users: React.PropTypes.array.isRequired,
             usersById: React.PropTypes.object.isRequired,
+            userTextById: React.PropTypes.object.isRequired,
+            alphabeticalUserIds: React.PropTypes.array.isRequired,
             selectedUsers: React.PropTypes.array.isRequired,
 
             onSelectScheduleTemplate: React.PropTypes.func.isRequired,
@@ -169,12 +196,7 @@ var NewSchedule;
             this.props.onSelectUsers(selectedUsers);
         },
         addUser: function(id) {
-            var user;
-            this.props.users.forEach(function(u) {
-                if (u.id == id) {
-                    user = u;
-                }
-            });
+            var user = this.props.usersById[id];
             if (!user) {
                 console.error('User with id', id, 'not found');
                 return;
@@ -227,9 +249,9 @@ var NewSchedule;
                 <tr>
                     <td><label>For Employees:</label></td>
                     <td>
-                        <MultiPersonSelect
-                            allPersonsById={this.props.usersById}
-                            allPersons={this.props.users}
+                        <MultiSelect
+                            itemTextById={this.props.userTextById}
+                            sortedIds={this.props.alphabeticalUserIds}
                             selectedIds={this.props.selectedUsers.map(
                                     function(u) { return u.id; }
                             )}
@@ -254,7 +276,8 @@ var NewSchedule;
             scheduleTemplate: React.PropTypes.object.isRequired,
             startDate: React.PropTypes.string.isRequired,
             users: React.PropTypes.array.isRequired,
-            usersById: React.PropTypes.object.isRequired,
+            userTextById: React.PropTypes.object.isRequired,
+            alphabeticalUserIds: React.PropTypes.array.isRequired,
             selectedUsers: React.PropTypes.array.isRequired,
             onCancel: React.PropTypes.func.isRequired
         },
@@ -530,8 +553,9 @@ var NewSchedule;
                             disabled={this.shouldDisable()}
                             model={this.state.evGroups[idx]}
                             rooms={this.state.rooms}
-                            usersById={this.props.usersById}
                             users={this.props.users}
+                            userTextById={this.props.userTextById}
+                            alphabeticalUserIds={this.props.alphabeticalUserIds}
                             onFieldEdit={this.handleEventFieldEdit.bind(this,
                                 idx, null)}
                         />;
@@ -556,8 +580,9 @@ var NewSchedule;
                                         disabled={this.shouldDisable()}
                                         model={ev}
                                         rooms={this.state.rooms}
-                                        usersById={this.props.usersById}
                                         users={this.props.users}
+                                        userTextById={this.props.userTextById}
+                                        alphabeticalUserIds={this.props.alphabeticalUserIds}
                                         onFieldEdit={
                                             this.handleEventFieldEdit.bind(
                                                 this, idx, j)}
@@ -608,8 +633,9 @@ var NewSchedule;
         propTypes: {
             model: React.PropTypes.object.isRequired,
             rooms: React.PropTypes.array.isRequired,
-            usersById: React.PropTypes.object.isRequired,
             users: React.PropTypes.array.isRequired,
+            userTextById: React.PropTypes.object.isRequired,
+            alphabeticalUserIds: React.PropTypes.array.isRequired,
             disabled: React.PropTypes.bool.isRequired,
 
             // onFieldEdit(fieldName, newValue)
@@ -732,9 +758,9 @@ var NewSchedule;
                         <label>People to invite:</label>
                     </td>
                     <td>
-                        <MultiPersonSelect
-                            allPersonsById={this.props.usersById}
-                            allPersons={this.props.users}
+                        <MultiSelect
+                            itemTextById={this.props.userTextById}
+                            sortedIds={this.props.alphabeticalUserIds}
                             selectedIds={this.props.model.invitees}
                             onRemove={this.removeInvitee}
                             onAdd={this.addInvitee}
