@@ -114,17 +114,17 @@ class ForeignKeyDeleteTest(TestCase):
         schedTempl.delete()
         self.assertIs(models.EventTemplate.objects.filter(id=etId).count(), 0)
 
-    def testDeleteRoomUsedByEventTemplate(self):
+    def testCanDeleteRoomUsedByEventTemplate(self):
         tz = models.TimeZone.objects.create(name='Europe/Helsinki')
         schedTempl = models.ScheduleTemplate.objects.create(name='My SchedT',
                 timezone=tz)
         room = models.CalendarResource.objects.create(name='basement')
         nowT = datetime.datetime.now().time()
         et = models.EventTemplate.objects.create(dayOffset=0,
-                startTime=nowT, endTime=nowT, scheduleTemplate=schedTempl,
-                location=room)
-        with self.assertRaises(ProtectedError):
-            room.delete()
+                startTime=nowT, endTime=nowT, scheduleTemplate=schedTempl)
+        et.locations.add(room)
+        room.delete()
+        self.assertIs(len(et.locations.all()), 0)
 
     def testDeleteUserInvitedToEventTemplate(self):
         tz = models.TimeZone.objects.create(name='Europe/Helsinki')

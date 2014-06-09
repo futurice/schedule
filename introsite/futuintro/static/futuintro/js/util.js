@@ -272,7 +272,9 @@ var MultiSelect = React.createClass({
         disabled: React.PropTypes.bool.isRequired
     },
     handleAdd: function() {
-        this.props.onAdd(this.refs.newItem.getDOMNode().value);
+        var val = this.refs.newItem.getDOMNode().value;
+        val = Number.parseInt(val) || 0;
+        this.props.onAdd(val);
     },
     handleRemove: function(id, ev) {
         ev.preventDefault();
@@ -306,3 +308,51 @@ var MultiSelect = React.createClass({
         </div>;
     }
 });
+
+
+/*
+ * Helper to create the props required by MultiSelect.
+ *
+ * @param {object[]} items - array of your custom models
+ * @param getId - func(model) → id
+ * @param getText - func(mdel) → string
+ * @param compareFunc - func(model1, model1) → -1, 0 or 1
+ * @returns {object}
+ */
+function makeMultiSelectModel(items, getId, getText, compareFunc) {
+    var result = {
+        itemTextById: {},
+        sortedIds: null
+    };
+    items.forEach(function(x) {
+        result.itemTextById[getId(x)] = getText(x);
+    });
+
+    var sortedItems = items.concat();
+    sortedItems.sort(compareFunc);
+    result.sortedIds = sortedItems.map(getId);
+
+    return result;
+}
+
+function makeRoomMultiSelectModel(roomObjects) {
+        return makeMultiSelectModel(roomObjects,
+                getRoomId, getRoomName, compareRoomNames);
+
+        function getRoomId(r) {
+            return r.id;
+        }
+
+        function getRoomName(r) {
+            return r.name;
+        }
+
+        function compareRoomNames(r1, r2) {
+            r1 = getRoomName(r1);
+            r2 = getRoomName(r2);
+            if (r1 == r2) {
+                return 0;
+            }
+            return (r1 < r2) ? -1 : 1;
+        }
+}

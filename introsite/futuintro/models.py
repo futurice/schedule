@@ -106,8 +106,7 @@ class ScheduleTemplate(models.Model):
 class EventTemplate(models.Model):
     summary = models.CharField(max_length=200)
     description = models.TextField(blank=True)
-    location = models.ForeignKey(CalendarResource, null=True, blank=True,
-            on_delete=models.PROTECT)
+    locations = models.ManyToManyField(CalendarResource)
 
     # which calendar day the event is on. 0 is the employee's starting day,
     # 1 is her second day, -7 is 1 week before the starting day.

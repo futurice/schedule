@@ -51,7 +51,7 @@ def createSchedules(request):
                 data: {
                     summary: 'Breakfast!',
                     description: 'Everyone is welcome',
-                    location: int (room id) or null,
+                    locations: [list of room IDs],
                     date: '2014-05-22',
                     startTime: '09:00',
                     endTime: '09:25',
@@ -79,13 +79,14 @@ def createSchedules(request):
             id=body['scheduleTemplate']).timezone.name
 
     for ev in body['events']:
-        room = (models.CalendarResource.objects.get(id=ev['data']['location'])
-                if ev['data']['location'] else None)
-        roomName = room.name if room else ''
+        rooms = list(models.CalendarResource.objects.filter(
+                id__in=ev['data']['locations']))
+        eventLocation = ', '.join(r.name for r in rooms)
+
         attendingEmails = map(lambda x: UM.objects.get(id=x).email,
                 ev['data']['invitees'])
-        if room:
-            attendingEmails.append(room.email)
+        for r in rooms:
+            attendingEmails.append(r.email)
 
         d = datetime.datetime.strptime(ev['data']['date'], '%Y-%m-%d').date()
         # [:5] drops seconds from 'HH:MM:SS'
@@ -98,7 +99,7 @@ def createSchedules(request):
 
         calendar.createEvent(calendar.futuintroCalId, False,
                 ev['data']['summary'], ev['data']['description'],
-                roomName, startDt, endDt, tz, attendingEmails)
+                eventLocation, startDt, endDt, tz, attendingEmails)
 
     # TODO: in case of error, try to roll back everything
 

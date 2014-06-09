@@ -283,7 +283,12 @@ var NewSchedule;
         },
         componentDidMount: function() {
             compFetchRest.bind(this)('/futuintro/api/calendarresources/',
-                'rooms', 'roomsLoaded', 'roomsErr');
+                'rooms', 'roomsLoaded', 'roomsErr',
+                function() {
+                    this.setState({
+                        roomMSModel: makeRoomMultiSelectModel(this.state.rooms)
+                    });
+                });
             compFetchRest.bind(this)('/futuintro/api/eventtemplates/?scheduleTemplate=' + this.props.scheduleTemplate.id,
                 'evTempl', 'evTemplLoaded', 'evTemplErr',
                 function() {
@@ -373,6 +378,8 @@ var NewSchedule;
                 rooms: [],
                 roomsLoaded: false,
                 roomsErr: '',
+                // model for MultiSelect
+                roomMSModel: null,
 
                 // one group per event template: a group is 1 element for a
                 // collective template, or an array of  N elements (one per
@@ -514,7 +521,7 @@ var NewSchedule;
                 return <div><span className='status-err'>{err}</span></div>;
             }
             var loaded = this.state.evTemplLoaded && this.state.evGroups &&
-                this.state.roomsLoaded;
+                this.state.roomsLoaded && this.state.roomMSModel;
             if (!loaded) {
                 return <div>
                     <span className='status-waiting'>Loading…</span>
@@ -552,7 +559,7 @@ var NewSchedule;
                         eventsBox = <EventEditor
                             disabled={this.shouldDisable()}
                             model={this.state.evGroups[idx]}
-                            rooms={this.state.rooms}
+                            roomMSModel={this.state.roomMSModel}
                             users={this.props.users}
                             userTextById={this.props.userTextById}
                             alphabeticalUserIds={this.props.alphabeticalUserIds}
@@ -579,7 +586,7 @@ var NewSchedule;
                                     <EventEditor
                                         disabled={this.shouldDisable()}
                                         model={ev}
-                                        rooms={this.state.rooms}
+                                        roomMSModel={this.state.roomMSModel}
                                         users={this.props.users}
                                         userTextById={this.props.userTextById}
                                         alphabeticalUserIds={this.props.alphabeticalUserIds}
@@ -632,7 +639,7 @@ var NewSchedule;
     var EventEditor = React.createClass({
         propTypes: {
             model: React.PropTypes.object.isRequired,
-            rooms: React.PropTypes.array.isRequired,
+            roomMSModel: React.PropTypes.object.isRequired,
             users: React.PropTypes.array.isRequired,
             userTextById: React.PropTypes.object.isRequired,
             alphabeticalUserIds: React.PropTypes.array.isRequired,
@@ -673,6 +680,20 @@ var NewSchedule;
             this.props.onFieldEdit('invitees',
                     this.props.model.invitees.concat(id));
         },
+        removeRoom: function(removeId) {
+            this.props.onFieldEdit('locations',
+                this.props.model.locations.filter(function(id) {
+                    return id != removeId;
+                })
+            );
+        },
+        addRoom: function(addId) {
+            this.props.onFieldEdit('locations',
+                this.props.model.locations.filter(function(id) {
+                    return id != addId;
+                }).concat(addId)
+            );
+        },
         render: function() {
             return <div>
                 <table>
@@ -704,23 +725,17 @@ var NewSchedule;
                 </tr>
                 <tr>
                     <td>
-                        <label>Location:</label>
+                        <label>Locations:</label>
                     </td>
                     <td>
-                        <select
+                        <MultiSelect
                             disabled={this.props.disabled}
-                            value={this.props.model.location === null ?
-                                'null' : this.props.model.location}
-                            onChange={this.handleChange.bind(this,
-                                    'location', true)}
-                            >
-                            <option value='null'>—</option>
-                            {this.props.rooms.map(function(r) {
-                                return <option key={r.id} value={r.id}>
-                                    {r.name}
-                                </option>;
-                            })}
-                        </select>
+                            itemTextById={this.props.roomMSModel.itemTextById}
+                            sortedIds={this.props.roomMSModel.sortedIds}
+                            selectedIds={this.props.model.locations}
+                            onRemove={this.removeRoom}
+                            onAdd={this.addRoom}
+                        />
                     </td>
                 </tr>
                 <tr>

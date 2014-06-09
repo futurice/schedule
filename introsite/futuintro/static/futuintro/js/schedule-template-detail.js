@@ -41,7 +41,12 @@ var ScheduleTemplateDetail = React.createClass({
                 });
             }),
         getRestLoaderMixin('/futuintro/api/calendarresources/', 'rooms',
-            'roomsLoaded', 'roomsErr'),
+            'roomsLoaded', 'roomsErr',
+            function() {
+                this.setState({
+                    roomMSModel: makeRoomMultiSelectModel(this.state.rooms)
+                });
+            }),
     ],
     componentDidMount: function() {
         compFetchRest.bind(this)(
@@ -94,6 +99,8 @@ var ScheduleTemplateDetail = React.createClass({
             rooms: [],
             roomsLoaded: false,
             roomsErr: '',
+            // model for the MultiSelect
+            roomMSModel: null,
 
             evTempl: [],
             etLoaded: false,
@@ -370,7 +377,7 @@ var ScheduleTemplateDetail = React.createClass({
         // check if initial loading completed
         v = ['tzLoaded', 'usersLoaded', 'roomsLoaded', 'etLoaded',
           'schedTempl',
-          'usersById', 'userTextById', 'alphabeticalUserIds',
+          'usersById', 'userTextById', 'alphabeticalUserIds', 'roomMSModel',
           'editEvTempl', 'evTemplAjaxErrors', 'editSchedTempl'];
         for (i = 0; i < v.length; i++) {
             fName = v[i];
@@ -471,7 +478,7 @@ var ScheduleTemplateDetail = React.createClass({
                                 model={et}
                                 userTextById={this.state.userTextById}
                                 alphabeticalUserIds={this.state.alphabeticalUserIds}
-                                rooms={this.state.rooms}
+                                roomMSModel={this.state.roomMSModel}
                                 disabled={Boolean(this.state.ajaxInFlight)}
                                 errTxt={this.state.evTemplAjaxErrors[i]}
                                 onDelete={this.deleteEventTemplate}
@@ -511,7 +518,7 @@ var EventTemplate = (function() {
             userTextById: React.PropTypes.object.isRequired,
             alphabeticalUserIds: React.PropTypes.array.isRequired,
 
-            rooms: React.PropTypes.array.isRequired,
+            roomMSModel: React.PropTypes.object.isRequired,
             // disable all input fields and buttons, e.g. during the parent's
             // ajax requests
             disabled: React.PropTypes.bool.isRequired,
@@ -556,6 +563,20 @@ var EventTemplate = (function() {
             this.props.onFieldEdit(this.props.model, 'otherInvitees',
                     this.props.model.otherInvitees.concat(addId));
         },
+        removeRoom: function(removeId) {
+            this.props.onFieldEdit(this.props.model, 'locations',
+                this.props.model.locations.filter(function(id) {
+                    return id != removeId;
+                })
+            );
+        },
+        addRoom: function(addId) {
+            this.props.onFieldEdit(this.props.model, 'locations',
+                this.props.model.locations.filter(function(id) {
+                    return id != addId;
+                }).concat(addId)
+            );
+        },
         render: function() {
             var errBox;
             if (this.props.errTxt) {
@@ -591,22 +612,16 @@ var EventTemplate = (function() {
                 </tr>
 
                 <tr>
-                    <td><label>Location:</label></td>
+                    <td><label>Locations:</label></td>
                     <td>
-                        <select
+                        <MultiSelect
                             disabled={this.props.disabled}
-                            value={this.props.model.location === null ?
-                                'null' : this.props.model.location}
-                            onChange={this.handleChange.bind(this,
-                                    'location', true)}
-                            >
-                            <option value='null'>—</option>
-                            {this.props.rooms.map(function(r) {
-                                return <option key={r.id} value={r.id}>
-                                    {r.name}
-                                </option>;
-                            })}
-                        </select>
+                            itemTextById={this.props.roomMSModel.itemTextById}
+                            sortedIds={this.props.roomMSModel.sortedIds}
+                            selectedIds={this.props.model.locations}
+                            onRemove={this.removeRoom}
+                            onAdd={this.addRoom}
+                        />
                     </td>
                 </tr>
 
