@@ -5,7 +5,7 @@ from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 import json
 
-from futuintro import calendar, models
+from futuintro import calendar, models, tasksched, taskimpl
 
 @csrf_exempt
 def ajax(request):
@@ -77,7 +77,7 @@ def createSchedules(request):
             json=json.load(request),
             requestedBy=request.user,
             status=models.SchedulingRequest.IN_PROGRESS)
-    # TODO: submit task with schedReq.id
+    tasksched.enqueue(taskimpl.SCHED_REQ, schedReq.id)
     return HttpResponse('')
 
 def TODO_move_this_code():

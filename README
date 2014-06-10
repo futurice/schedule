@@ -1,7 +1,5 @@
 Automate setting calendar invites for new employees
 
-This is currently a prototype, any part may be rewritten or thrown away.
-
 Setup:
 =====
 Make a Python virtual environment however you prefer, then:
@@ -38,3 +36,15 @@ Populate your DB with Meeting Rooms (it asks the password for Google Admin):
 ./introsite/manage.py shell
 import futuintro.util
 futuintro.util.createMeetingRooms()
+
+
+Running:
+=======
+
+Start the webserver:
+REMOTE_USER=myusername ./introsite/manage.py shell runserver
+
+Start the task-processer:
+./introsite/manage.py shell
+from futuintro.tasksched import loop
+loop()

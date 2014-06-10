@@ -205,3 +205,14 @@ class Event(models.Model):
 
     def __unicode__(self):
         return 'Event (on ' + str(self.schedules.count()) + ' schedule(s))'
+
+
+class Task(models.Model):
+    """
+    Task model for our Task Queue, used by tasksched.py but placed here so
+    Django finds it.
+    Was the fastest thing to use, but can easily replace with an existing
+    task queue system.
+    """
+    taskType = models.CharField(max_length=100)
+    modelId = models.IntegerField()
