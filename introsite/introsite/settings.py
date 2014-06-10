@@ -38,6 +38,7 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'futuintro',
     'rest_framework',
+    'django_extensions',
 )
 
 MIDDLEWARE_CLASSES = (

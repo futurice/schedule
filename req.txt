@@ -5,3 +5,4 @@ google-api-python-client
 gdata
 python-dateutil
 pytz
+django-extensions
