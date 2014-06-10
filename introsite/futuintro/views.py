@@ -1,11 +1,10 @@
 import datetime
-from django.contrib.auth import get_user_model
 from django.http import HttpResponse
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 import json
 
-from futuintro import calendar, models, tasksched, taskimpl
+from futuintro import calendar, models, tasksched
 
 @csrf_exempt
 def ajax(request):
@@ -77,7 +76,7 @@ def createSchedules(request):
             json=json.load(request),
             requestedBy=request.user,
             status=models.SchedulingRequest.IN_PROGRESS)
-    tasksched.enqueue(taskimpl.SCHED_REQ, schedReq.id)
+    tasksched.enqueue(tasksched.SCHED_REQ, schedReq.id)
     return HttpResponse('')
 
 def TODO_move_this_code():

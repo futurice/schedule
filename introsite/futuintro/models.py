@@ -154,7 +154,7 @@ class SchedulingRequest(models.Model):
     json = JSONField()
     requestedBy = models.ForeignKey(settings.AUTH_USER_MODEL, null=True,
             blank=True, on_delete=models.SET_NULL)
-    requestedAt = models.DateTimeField(auto_now=True)
+    requestedAt = models.DateTimeField(auto_now_add=True)
 
     IN_PROGRESS = 'IN_PROGRESS'
     SUCCESS = 'SUCCESS'
@@ -216,3 +216,19 @@ class Task(models.Model):
     """
     taskType = models.CharField(max_length=100)
     modelId = models.IntegerField()
+
+
+class EventTask(models.Model):
+    """
+    Describes an event to create in both Google Calendar and our model.
+    """
+    summary = models.CharField(max_length=200)
+    description = models.TextField(blank=True)
+    locations = models.ManyToManyField(CalendarResource)
+    startDt = models.DateTimeField()
+    endDt = models.DateTimeField()
+    attendees = models.ManyToManyField(settings.AUTH_USER_MODEL,
+            null=True, blank=True)
+    schedules = models.ManyToManyField(Schedule)
+    template = models.ForeignKey(EventTemplate, null=True, blank=True,
+            on_delete=models.SET_NULL)

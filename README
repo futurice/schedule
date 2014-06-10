@@ -44,7 +44,7 @@ Running:
 Start the webserver:
 REMOTE_USER=myusername ./introsite/manage.py shell runserver
 
-Start the task-processer:
+Start the task-processor:
 ./introsite/manage.py shell
 from futuintro.tasksched import loop
 loop()

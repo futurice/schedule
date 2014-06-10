@@ -6,17 +6,23 @@ in which they are submitted.
 The actual task queue implementation is encapsulated (and hidden) in this
 module.
 
-Task types are mapped to task implementations in the taskimpl module.
-Those implementations are called sequentially.
+Task types are mapped to task implementations, and those implementations
+are executed sequentially.
 """
 
+import datetime
+from django.contrib.auth import get_user_model
 from django.db import models
+from django.utils.timezone import utc
+import json
 import logging
 import sys
 import time
+import traceback
 
-from futuintro import taskimpl
-from futuintro.models import Task
+from futuintro.models import (Task, Schedule, CalendarResource, EventTask,
+        EventTemplate, SchedulingRequest, ScheduleTemplate, Event)
+from futuintro import calendar
 
 logging.basicConfig()
 
@@ -35,10 +41,10 @@ def enqueue(taskType, modelId):
 
 
 def process(taskType, modelId):
-    if taskType not in taskimpl.implForName:
+    if taskType not in implForName:
         logging.error('Invalid task type ' + str(taskType))
         return
-    handler = taskimpl.implForName[taskType]
+    handler = implForName[taskType]
     handler(modelId)
 
 
@@ -49,7 +55,7 @@ def loop():
     while True:
         try:
             if not Task.objects.count():
-                time.sleep(5)
+                time.sleep(1)
                 continue
             minId = Task.objects.aggregate(models.Min('id'))['id__min']
             t = Task.objects.get(id=minId)
@@ -61,3 +67,121 @@ def loop():
             # recover from an unexpected exception thrown by the task processor
             exctype, value = sys.exc_info()[:2]
             logging.error(str(exctype) + ' ' + str(value))
+
+
+def processSchedulingRequest(modelId):
+    def makeSchedules(schedReq, body):
+        schedules = []
+        for uid in body['users']:
+            try:
+                user = UM.objects.get(id=uid)
+            except UM.DoesNotExist as e:
+                pass
+            schedules.append(Schedule.objects.create(
+                schedulingRequest=schedReq, forUser=user, template=schedTempl))
+        return schedules
+
+    def makeEventTasks():
+        for ev in body['events']:
+            if ev['meta']['isCollective']:
+                evSchedules = schedules
+            else:
+                evSchedules = [s for s in schedules
+                        if s.forUser.id == ev['meta']['forUser']]
+            if not evSchedules:
+                logging.error('No schedules for event: ' + json.dumps(ev))
+                continue
+
+            invitees = list(UM.objects.filter(id__in=ev['data']['invitees']))
+            if not invitees:
+                logging.error('No invitees for event: ' + json.dumps(ev))
+                continue
+
+            rooms = list(CalendarResource.objects.filter(
+                    id__in=ev['data']['locations']))
+            d = datetime.datetime.strptime(ev['data']['date'],
+                    '%Y-%m-%d').date()
+            # [:5] drops seconds from 'HH:MM:SS'
+            sTime = datetime.datetime.strptime(ev['data']['startTime'][:5],
+                    '%H:%M').time()
+            eTime = datetime.datetime.strptime(ev['data']['endTime'][:5],
+                    '%H:%M').time()
+            startDt = datetime.datetime.combine(d, sTime).replace(tzinfo=utc)
+            endDt = datetime.datetime.combine(d, eTime).replace(tzinfo=utc)
+
+            evTask = EventTask(summary=ev['data']['summary'],
+                    description=ev['data']['description'],
+                    startDt=startDt, endDt=endDt)
+            # save so we can add items to many-to-many fields
+            evTask.save()
+            evTask.locations.add(*rooms)
+            evTask.attendees.add(*invitees)
+            evTask.schedules.add(*evSchedules)
+            try:
+                evTask.template = EventTemplate.objects.get(
+                        id=ev['data']['eventTemplate'])
+            except EventTemplate.DoesNotExist as e:
+                pass
+            evTask.save()
+            enqueue(EVENT_TASK, evTask.id)
+
+    try:
+        UM = get_user_model()
+        schedReq = SchedulingRequest.objects.get(id=modelId)
+        body = schedReq.json
+        schedTempl = ScheduleTemplate.objects.get(
+            id=body['scheduleTemplate'])
+        schedules = makeSchedules(schedReq, body)
+        makeEventTasks()
+    except:
+        exctype, value, tb = sys.exc_info()
+        logging.error(str(exctype) + ' ' + str(value))
+        traceback.print_tb(tb)
+
+        failSchedulingRequest(modelId)
+
+
+def processEventTask(modelId):
+    evTask = EventTask.objects.get(id=modelId)
+    try:
+        schedules = evTask.schedules.all()
+        srStatus = schedules[0].schedulingRequest.status
+        if srStatus != SchedulingRequest.IN_PROGRESS:
+            logging.error('Drop EventTask because SchedulingRequest state is '
+                    + srStatus)
+            return
+
+        rooms = evTask.locations.all()
+        locTxt = ', '.join(r.name for r in rooms)
+        eventLocation = ', '.join(r.name for r in rooms)
+        attendingEmails = [u.email for u in evTask.attendees.all()]
+        for r in rooms:
+            attendingEmails.append(r.email)
+        # FIXME: sleep only if we're too soon after last call
+        time.sleep(1)
+        gCalJson = calendar.createEvent(calendar.futuintroCalId, False,
+                evTask.summary, evTask.description,
+                locTxt, evTask.startDt, evTask.endDt,
+                schedules[0].template.timezone.name, attendingEmails)
+        print(gCalJson)
+    finally:
+        evTask.delete()
+
+def processCleanupSchedulingRequest(modelId):
+    print('Cleanup Scheduling Request:', modelId)
+
+def failSchedulingRequest(modelId):
+    sr = SchedulingRequest.objects.get(id=modelId)
+    sr.status = SchedulingRequest.ERROR
+    sr.save()
+    enqueue(CLEANUP_SCHED_REQ, modelId)
+
+
+SCHED_REQ = 'scheduling-request'
+EVENT_TASK = 'event-task'
+CLEANUP_SCHED_REQ = 'cleanup-scheduling-request'
+implForName = {
+        SCHED_REQ: processSchedulingRequest,
+        EVENT_TASK: processEventTask,
+        CLEANUP_SCHED_REQ: processCleanupSchedulingRequest,
+}
