@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 from django.db import models
+from jsonfield import JSONField
 
 
 class FutuUserManager(BaseUserManager):
@@ -139,12 +140,43 @@ class EventTemplate(models.Model):
         ordering = ('dayOffset', 'startTime')
 
 
+class SchedulingRequest(models.Model):
+    """
+    A bundle of work submitted by a user, to create schedules & events.
+
+    This is made up of individual tasks (e.g. make google calendar events)
+    which should all succeed or all fail.
+
+    Maybe this could be better named.
+    """
+
+    # the JSON format is documented in views.createSchedules
+    json = JSONField()
+    requestedBy = models.ForeignKey(settings.AUTH_USER_MODEL, null=True,
+            blank=True, on_delete=models.SET_NULL)
+    requestedAt = models.DateTimeField(auto_now=True)
+
+    IN_PROGRESS = 'IN_PROGRESS'
+    SUCCESS = 'SUCCESS'
+    ERROR = 'ERROR'
+    status = models.CharField(max_length=10,
+            choices = (
+                (IN_PROGRESS, 'In progress'),
+                (SUCCESS, 'Successfully completed'),
+                (ERROR, 'Error'),
+            ), null=False, blank=False, default=IN_PROGRESS)
+    # error description if status is ERROR
+    error = models.TextField(blank=True)
+
+
 class Schedule(models.Model):
     """
     A set of Events which were created together, for one user.
 
     E.g. the onboarding program for one employee.
     """
+    schedulingRequest = models.ForeignKey(SchedulingRequest,
+            on_delete=models.PROTECT)
     forUser = models.ForeignKey(settings.AUTH_USER_MODEL)
     template = models.ForeignKey(ScheduleTemplate, null=True, blank=True,
             on_delete=models.SET_NULL)
@@ -154,14 +186,14 @@ class Schedule(models.Model):
     def __unicode__(self):
         return 'Schedule TODO' + ' (' + self.forUser.get_full_name() + ')'
 
+
 class Event(models.Model):
     """
     An event which exists in Google Calendar.
 
     It may belong to several Schedules (e.g. a collective event).
     """
-    # TODO: use JsonField when we start putting data here
-    jsonData = models.BinaryField()
+    json = JSONField()
     schedules = models.ManyToManyField(Schedule)
 
     # Be able to group events by the template they came from (e.g. you didn't

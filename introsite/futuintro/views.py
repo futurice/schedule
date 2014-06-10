@@ -38,7 +38,7 @@ def newSchedulePage(request):
 
 def createSchedules(request):
     """
-    Create Google Calendar Events and Schedules and Events in our model.
+    Create SchedulingRequest and submit a task in the queue to process it.
 
     The request body looks like this:
     {
@@ -73,6 +73,14 @@ def createSchedules(request):
     }
     """
 
+    schedReq = models.SchedulingRequest.objects.create(
+            json=json.load(request),
+            requestedBy=request.user,
+            status=models.SchedulingRequest.IN_PROGRESS)
+    # TODO: submit task with schedReq.id
+    return HttpResponse('')
+
+def TODO_move_this_code():
     UM = get_user_model()
     body = json.load(request)
     tz = models.ScheduleTemplate.objects.get(
@@ -102,5 +110,3 @@ def createSchedules(request):
                 eventLocation, startDt, endDt, tz, attendingEmails)
 
     # TODO: in case of error, try to roll back everything
-
-    return HttpResponse('')
