@@ -233,3 +233,11 @@ class EventTask(models.Model):
     schedules = models.ManyToManyField(Schedule)
     template = models.ForeignKey(EventTemplate, null=True, blank=True,
             on_delete=models.SET_NULL)
+
+
+class LastApiCall(models.Model):
+    """
+    Model with (at most) 1 object showing the most recent time we made a
+    Google Calendar API call.
+    """
+    dt = models.DateTimeField(auto_now=True)

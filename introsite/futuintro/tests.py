@@ -8,7 +8,7 @@ from django.db.models import ProtectedError
 from django.test import TestCase
 
 from futuintro import calendar, util, testutil
-from futuintro import models
+from futuintro import models, tasksched
 
 
 class GoogleCalendarTest(TestCase):
@@ -143,3 +143,25 @@ class ForeignKeyDeleteTest(TestCase):
         self.assertIs(et.otherInvitees.count(), 1)
         self.assertIs(UM.objects.filter(username='bender').count(), 1)
         self.assertIs(UM.objects.filter(username='calculon').count(), 0)
+
+
+class ApiCallsRateLimits(TestCase):
+
+    def testCallsOneSecondApart(self):
+        # test this both when no previous API calls were made and when a
+        # previous one exists.
+        minDelta = datetime.timedelta(seconds=1)
+
+        tasksched.sleepForRateLimit()
+        lastDt = datetime.datetime.utcnow()
+        lastDb = models.LastApiCall.objects.get().dt
+
+        for i in range(5):
+            tasksched.sleepForRateLimit()
+            nowDt = datetime.datetime.utcnow()
+            nowDb = models.LastApiCall.objects.get().dt
+
+            self.assertTrue(nowDt-lastDt >= minDelta)
+            self.assertTrue(nowDb-lastDb >= minDelta)
+
+            lastDt, lastDb = nowDt, nowDb

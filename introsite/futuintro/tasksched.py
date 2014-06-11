@@ -21,7 +21,8 @@ import time
 import traceback
 
 from futuintro.models import (Task, Schedule, CalendarResource, EventTask,
-        EventTemplate, SchedulingRequest, ScheduleTemplate, Event)
+        EventTemplate, SchedulingRequest, ScheduleTemplate, Event,
+        LastApiCall)
 from futuintro import calendar
 
 logging.basicConfig()
@@ -161,10 +162,9 @@ def processEventTask(modelId):
             attendingEmails.append(r.email)
 
         # TODO: exception handling, Google API retry logic, then
-        # calling failSchedulingRequest(…)
+        # calling failSchedulingRequest(...)
 
-        # FIXME: sleep only if we're too soon after last call
-        time.sleep(1)
+        sleepForRateLimit()
         gCalJson = calendar.createEvent(calendar.futuintroCalId, False,
                 evTask.summary, evTask.description,
                 locTxt, evTask.startDt, evTask.endDt,
@@ -181,6 +181,30 @@ def failSchedulingRequest(modelId):
     sr.status = SchedulingRequest.ERROR
     sr.save()
     enqueue(CLEANUP_SCHED_REQ, modelId)
+
+
+def sleepForRateLimit():
+    """
+    Optionally sleep depending on when we last made an API call.
+
+    Checks when the most recent Google API call was made, optionally sleeps,
+    updates the most recent call time to 'right now' then returns.
+    Because of this logic, this function must only be called from a single
+    thread (e.g. the single thread processing the task queue sequentially).
+    """
+
+    if not LastApiCall.objects.count():
+        LastApiCall.objects.create()
+        return
+
+    now = datetime.datetime.utcnow().replace(tzinfo=utc)
+    last = LastApiCall.objects.get()
+    minDelta = datetime.timedelta(seconds=1)
+    delta = now-last.dt
+    if delta < minDelta:
+        toSleep = minDelta - delta
+        time.sleep(toSleep.seconds + toSleep.microseconds/1000000.)
+    last.save()
 
 
 SCHED_REQ = 'scheduling-request'
