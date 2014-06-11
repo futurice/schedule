@@ -78,3 +78,6 @@ def createSchedules(request):
             status=models.SchedulingRequest.IN_PROGRESS)
     tasksched.enqueue(tasksched.SCHED_REQ, schedReq.id)
     return HttpResponse('')
+
+def schedulingRequests(request):
+    return render(request, 'futuintro/scheduling-requests.html')

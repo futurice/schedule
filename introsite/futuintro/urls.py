@@ -15,4 +15,7 @@ urlpatterns = patterns('',
         name='new-schedule-page'),
     url(r'^create-schedules/', views.createSchedules,
         name='create-schedules'),
+    # TODO: improve the name for this 'scheduling-requests'
+    url(r'^scheduling-requests/', views.schedulingRequests,
+        name='scheduling-requests'),
 )

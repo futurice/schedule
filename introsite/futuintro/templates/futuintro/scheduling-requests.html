@@ -1,0 +1,11 @@
+{% extends "futuintro/base.html" %}
+
+{% block title %}Submitted Scheduling Requests{% endblock %}
+
+{% block body %}
+<script type="text/jsx">
+/** @jsx React.DOM */
+React.renderComponent(<SchedulingRequestsList />,
+  document.getElementById('main-content'));
+</script>
+{% endblock %}

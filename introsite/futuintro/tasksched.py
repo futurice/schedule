@@ -175,7 +175,7 @@ def processEventTask(modelId):
     except:
         logging.error(traceback.format_exc())
         if schedReq:
-            failSchedulingRequest(schedReq.id, traceback.format_exc)
+            failSchedulingRequest(schedReq.id, traceback.format_exc())
     finally:
         evTask.delete()
 

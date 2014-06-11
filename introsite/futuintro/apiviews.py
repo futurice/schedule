@@ -30,6 +30,10 @@ class ScheduleViewSet(viewsets.ModelViewSet):
 class EventViewSet(viewsets.ModelViewSet):
     model = models.Event
 
+class SchedulingRequestViewSet(viewsets.ModelViewSet):
+    model = models.SchedulingRequest
+    ordering_fields = ('requestedAt')
+
 
 # Routers provide an easy way of automatically determining the URL conf.
 router = routers.DefaultRouter()
@@ -41,5 +45,6 @@ for prefix, viewset in {
         r'calendarresources': CalendarResourcesViewSet,
         r'schedules': ScheduleViewSet,
         r'events': EventViewSet,
+        r'schedulingrequests': SchedulingRequestViewSet,
         }.items():
     router.register(prefix, viewset)
