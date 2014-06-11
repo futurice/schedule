@@ -66,8 +66,7 @@ def loop():
             raise
         except:
             # recover from an unexpected exception thrown by the task processor
-            exctype, value = sys.exc_info()[:2]
-            logging.error(str(exctype) + ' ' + str(value))
+            logging.error(traceback.format_exc())
 
 
 def processSchedulingRequest(modelId):
@@ -133,27 +132,24 @@ def processSchedulingRequest(modelId):
             id=body['scheduleTemplate'])
         schedules = makeSchedules()
         makeEventTasks()
+        enqueue(MARK_SCHED_REQ_SUCCESS, modelId)
     except:
-        exctype, value, tb = sys.exc_info()
-        logging.error(str(exctype) + ' ' + str(value))
-        traceback.print_tb(tb)
-
-        failSchedulingRequest(modelId)
+        logging.error(traceback.format_exc())
+        failSchedulingRequest(modelId, traceback.format_exc())
 
 
 def processEventTask(modelId):
     evTask = EventTask.objects.get(id=modelId)
+    schedReq = None
     try:
         schedules = evTask.schedules.all()
         if not schedules:
-            logging.error('EventTask to create event for 0 schedules')
-            return
+            raise Exception('EventTask to create event for 0 schedules')
 
         schedReq = schedules[0].schedulingRequest
         if schedReq.status != SchedulingRequest.IN_PROGRESS:
-            logging.error('Drop EventTask because SchedulingRequest state is '
+            raise Exception('Drop EventTask: SchedulingRequest status is '
                     + schedReq.status)
-            return
 
         rooms = evTask.locations.all()
         locTxt = ', '.join(r.name for r in rooms)
@@ -161,26 +157,64 @@ def processEventTask(modelId):
         for r in rooms:
             attendingEmails.append(r.email)
 
-        # TODO: exception handling, Google API retry logic, then
-        # calling failSchedulingRequest(...)
+        # TODO: exception handling, Google API retry logic
+
+        schedTempl = schedules[0].template
+        if not schedTempl:
+            raise Exception('Drop EventTask because schedule template was ' +
+                    'deleted and we can\'t find out the timezone')
 
         sleepForRateLimit()
         gCalJson = calendar.createEvent(calendar.futuintroCalId, False,
                 evTask.summary, evTask.description,
                 locTxt, evTask.startDt, evTask.endDt,
-                schedules[0].template.timezone.name, attendingEmails)
-        print(gCalJson)
+                schedTempl.timezone.name, attendingEmails)
+        newEv = Event.objects.create(json=gCalJson, template=evTask.template)
+        newEv.schedules.add(*schedules)
+    except:
+        logging.error(traceback.format_exc())
+        if schedReq:
+            failSchedulingRequest(schedReq.id, traceback.format_exc)
     finally:
         evTask.delete()
 
-def processCleanupSchedulingRequest(modelId):
-    print('Cleanup Scheduling Request:', modelId)
 
-def failSchedulingRequest(modelId):
+def processMarkSchedReqSuccess(modelId):
+    """
+    Mark scheduling request status as SUCCESS if status is IN_PROGRESS.
+
+    This gets submitted after all the event creation tasks. When this runs,
+    if the scheduling request's status is still marked as in progress, than
+    everything ran successfully so far and didn't mark it as failed, so this
+    task sets it as successful. Otherwise this task does nothing.
+    """
+    schReq = SchedulingRequest.objects.get(id=modelId)
+    if schReq.status == SchedulingRequest.IN_PROGRESS:
+        schReq.status = SchedulingRequest.SUCCESS
+        schReq.save()
+
+
+def processCleanupSchedulingRequest(modelId):
+    schReq = SchedulingRequest.objects.get(id=modelId)
+    for schedule in schReq.schedule_set.all():
+        for event in schedule.event_set.all():
+            sleepForRateLimit()
+            try:
+                calendar.deleteEvent(calendar.futuintroCalId, event.json['id'])
+            except:
+                logging.error(traceback.format_exc())
+            event.delete()
+        schedule.delete()
+
+def failSchedulingRequest(modelId, errTxt=''):
     sr = SchedulingRequest.objects.get(id=modelId)
-    sr.status = SchedulingRequest.ERROR
-    sr.save()
-    enqueue(CLEANUP_SCHED_REQ, modelId)
+    # allow this function to be called multiple times
+    if sr.status != SchedulingRequest.ERROR:
+        sr.status = SchedulingRequest.ERROR
+        if errTxt:
+            sr.error = errTxt
+        sr.save()
+        enqueue(CLEANUP_SCHED_REQ, modelId)
 
 
 def sleepForRateLimit():
@@ -209,9 +243,11 @@ def sleepForRateLimit():
 
 SCHED_REQ = 'scheduling-request'
 EVENT_TASK = 'event-task'
+MARK_SCHED_REQ_SUCCESS = 'mark-scheduling-request-successful'
 CLEANUP_SCHED_REQ = 'cleanup-scheduling-request'
 implForName = {
         SCHED_REQ: processSchedulingRequest,
         EVENT_TASK: processEventTask,
+        MARK_SCHED_REQ_SUCCESS: processMarkSchedReqSuccess,
         CLEANUP_SCHED_REQ: processCleanupSchedulingRequest,
 }
