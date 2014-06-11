@@ -148,8 +148,9 @@ def processEventTask(modelId):
 
         schedReq = schedules[0].schedulingRequest
         if schedReq.status != SchedulingRequest.IN_PROGRESS:
-            raise Exception('Drop EventTask: SchedulingRequest status is '
+            logging.info('Drop EventTask: SchedulingRequest status is '
                     + schedReq.status)
+            return
 
         rooms = evTask.locations.all()
         locTxt = ', '.join(r.name for r in rooms)
@@ -195,6 +196,11 @@ def processMarkSchedReqSuccess(modelId):
 
 
 def processCleanupSchedulingRequest(modelId):
+    """
+    Delete what got created in Google Calendar, our Events and Schedules.
+
+    Something went wrong, and this task is set to roll-back and delete objects.
+    """
     schReq = SchedulingRequest.objects.get(id=modelId)
     for schedule in schReq.schedule_set.all():
         for event in schedule.event_set.all():
