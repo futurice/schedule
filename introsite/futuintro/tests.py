@@ -148,15 +148,14 @@ class ForeignKeyDeleteTest(TestCase):
 class ApiCallsRateLimits(TestCase):
 
     def testCallsOneSecondApart(self):
-        # test this both when no previous API calls were made and when a
-        # previous one exists.
+        # If this test fails, set minDelta to 0.8 seconds or so.
         minDelta = datetime.timedelta(seconds=1)
 
         tasksched.sleepForRateLimit()
         lastDt = datetime.datetime.utcnow()
         lastDb = models.LastApiCall.objects.get().dt
 
-        for i in range(5):
+        for i in range(1):
             tasksched.sleepForRateLimit()
             nowDt = datetime.datetime.utcnow()
             nowDb = models.LastApiCall.objects.get().dt

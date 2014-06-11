@@ -78,34 +78,3 @@ def createSchedules(request):
             status=models.SchedulingRequest.IN_PROGRESS)
     tasksched.enqueue(tasksched.SCHED_REQ, schedReq.id)
     return HttpResponse('')
-
-def TODO_move_this_code():
-    UM = get_user_model()
-    body = json.load(request)
-    tz = models.ScheduleTemplate.objects.get(
-            id=body['scheduleTemplate']).timezone.name
-
-    for ev in body['events']:
-        rooms = list(models.CalendarResource.objects.filter(
-                id__in=ev['data']['locations']))
-        eventLocation = ', '.join(r.name for r in rooms)
-
-        attendingEmails = map(lambda x: UM.objects.get(id=x).email,
-                ev['data']['invitees'])
-        for r in rooms:
-            attendingEmails.append(r.email)
-
-        d = datetime.datetime.strptime(ev['data']['date'], '%Y-%m-%d').date()
-        # [:5] drops seconds from 'HH:MM:SS'
-        sTime = datetime.datetime.strptime(ev['data']['startTime'][:5],
-                '%H:%M').time()
-        eTime = datetime.datetime.strptime(ev['data']['endTime'][:5],
-                '%H:%M').time()
-        startDt = datetime.datetime.combine(d, sTime)
-        endDt = datetime.datetime.combine(d, eTime)
-
-        calendar.createEvent(calendar.futuintroCalId, False,
-                ev['data']['summary'], ev['data']['description'],
-                eventLocation, startDt, endDt, tz, attendingEmails)
-
-    # TODO: in case of error, try to roll back everything
