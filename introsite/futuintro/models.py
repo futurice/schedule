@@ -177,7 +177,8 @@ class Schedule(models.Model):
     """
     schedulingRequest = models.ForeignKey(SchedulingRequest,
             on_delete=models.PROTECT)
-    forUser = models.ForeignKey(settings.AUTH_USER_MODEL)
+    forUser = models.ForeignKey(settings.AUTH_USER_MODEL,
+            on_delete=models.CASCADE)
     template = models.ForeignKey(ScheduleTemplate, null=True, blank=True,
             on_delete=models.SET_NULL)
     createdAt = models.DateTimeField(auto_now_add=True)

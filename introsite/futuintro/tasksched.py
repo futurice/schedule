@@ -6,8 +6,8 @@ in which they are submitted.
 The actual task queue implementation is encapsulated (and hidden) in this
 module.
 
-Task types are mapped to task implementations, and those implementations
-are executed sequentially.
+Task types are mapped to task implementations by implForName, and those
+implementations are executed sequentially.
 """
 
 import datetime
@@ -70,13 +70,13 @@ def loop():
 
 
 def processSchedulingRequest(modelId):
-    def makeSchedules(schedReq, body):
+    def makeSchedules():
         schedules = []
         for uid in body['users']:
             try:
                 user = UM.objects.get(id=uid)
             except UM.DoesNotExist as e:
-                pass
+                continue
             schedules.append(Schedule.objects.create(
                 schedulingRequest=schedReq, forUser=user, template=schedTempl))
         return schedules
@@ -101,7 +101,7 @@ def processSchedulingRequest(modelId):
                     id__in=ev['data']['locations']))
             d = datetime.datetime.strptime(ev['data']['date'],
                     '%Y-%m-%d').date()
-            # [:5] drops seconds from 'HH:MM:SS'
+            # [:5] drops seconds from 'HH:MM:SS' if present
             sTime = datetime.datetime.strptime(ev['data']['startTime'][:5],
                     '%H:%M').time()
             eTime = datetime.datetime.strptime(ev['data']['endTime'][:5],
@@ -109,20 +109,19 @@ def processSchedulingRequest(modelId):
             startDt = datetime.datetime.combine(d, sTime).replace(tzinfo=utc)
             endDt = datetime.datetime.combine(d, eTime).replace(tzinfo=utc)
 
-            evTask = EventTask(summary=ev['data']['summary'],
-                    description=ev['data']['description'],
-                    startDt=startDt, endDt=endDt)
-            # save so we can add items to many-to-many fields
-            evTask.save()
-            evTask.locations.add(*rooms)
-            evTask.attendees.add(*invitees)
-            evTask.schedules.add(*evSchedules)
+            evTempl = None
             try:
-                evTask.template = EventTemplate.objects.get(
+                evTempl = EventTemplate.objects.get(
                         id=ev['data']['eventTemplate'])
             except EventTemplate.DoesNotExist as e:
                 pass
-            evTask.save()
+
+            evTask = EventTask.objects.create(summary=ev['data']['summary'],
+                    description=ev['data']['description'],
+                    startDt=startDt, endDt=endDt, template=evTempl)
+            evTask.locations.add(*rooms)
+            evTask.attendees.add(*invitees)
+            evTask.schedules.add(*evSchedules)
             enqueue(EVENT_TASK, evTask.id)
 
     try:
@@ -131,7 +130,7 @@ def processSchedulingRequest(modelId):
         body = schedReq.json
         schedTempl = ScheduleTemplate.objects.get(
             id=body['scheduleTemplate'])
-        schedules = makeSchedules(schedReq, body)
+        schedules = makeSchedules()
         makeEventTasks()
     except:
         exctype, value, tb = sys.exc_info()
@@ -145,18 +144,25 @@ def processEventTask(modelId):
     evTask = EventTask.objects.get(id=modelId)
     try:
         schedules = evTask.schedules.all()
-        srStatus = schedules[0].schedulingRequest.status
-        if srStatus != SchedulingRequest.IN_PROGRESS:
+        if not schedules:
+            logging.error('EventTask to create event for 0 schedules')
+            return
+
+        schedReq = schedules[0].schedulingRequest
+        if schedReq.status != SchedulingRequest.IN_PROGRESS:
             logging.error('Drop EventTask because SchedulingRequest state is '
-                    + srStatus)
+                    + schedReq.status)
             return
 
         rooms = evTask.locations.all()
         locTxt = ', '.join(r.name for r in rooms)
-        eventLocation = ', '.join(r.name for r in rooms)
         attendingEmails = [u.email for u in evTask.attendees.all()]
         for r in rooms:
             attendingEmails.append(r.email)
+
+        # TODO: exception handling, Google API retry logic, then
+        # calling failSchedulingRequest(…)
+
         # FIXME: sleep only if we're too soon after last call
         time.sleep(1)
         gCalJson = calendar.createEvent(calendar.futuintroCalId, False,
