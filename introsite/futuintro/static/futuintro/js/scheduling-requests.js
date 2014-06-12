@@ -56,6 +56,42 @@ var SchedulingRequest = React.createClass({
         model: React.PropTypes.object.isRequired,
         usersById: React.PropTypes.object.isRequired
     },
+    getInitialState: function() {
+        return {
+            showDeleteBtn: true,
+            ajaxInFlight: '',
+            ajaxErr: ''
+        };
+    },
+    delete: function() {
+        if (confirm('Delete ALL events from Google Calendar?')) {
+            this.setState({
+                ajaxInFlight: 'Deleting…'
+            });
+            $.ajax({
+                url: '/futuintro/scheduling-request/' +
+                    this.props.model.id + '/',
+                type: 'DELETE',
+                headers: {'X-CSRFToken': $.cookie('csrftoken')},
+                complete: (function(data) {
+                    this.setState({
+                        ajaxInFlight: ''
+                    });
+                }).bind(this),
+                success: (function(data) {
+                    this.setState({
+                        ajaxErr: ''
+                    });
+                }).bind(this),
+                error: (function(xhr, txtStatus, saveErr) {
+                    this.setState({ajaxErr: getAjaxErr.apply(this, arguments)});
+                }).bind(this)
+            });
+            this.setState({
+                showDeleteBtn: false
+            });
+        }
+    },
     render: function() {
         var user = this.props.usersById[this.props.model.requestedBy];
         var userText = "Unknown user";
@@ -63,14 +99,35 @@ var SchedulingRequest = React.createClass({
             userText = user.first_name + ' ' + user.last_name + ' (' +
                 user.email + ')';
         }
-        var reasonBox;
+        var deleteBox;
+        if (this.state.showDeleteBtn) {
+            deleteBox = <div>
+                    <button type="button" onClick={this.delete}>Delete</button>
+                </div>;
+        } else if (this.state.ajaxInFlight) {
+            deleteBox = <div>
+                <span className='status-waiting'>
+                    {this.state.ajaxInFlight}
+                </span>
+            </div>;
+        } else if (this.state.ajaxErr) {
+            deleteBox = <div>
+                <span className='status-error'>{this.state.ajaxErr}</span>
+            </div>;
+        } else {
+            deleteBox = <div>
+                <span className='info'>Deleted</span>
+            </div>;
+        }
+
         return <div>
             Submitted on {new Date(this.props.model.requestedAt).toString()}
             {' '} by {userText}.
             <br/>
             Status: {this.props.model.status}.
             {this.props.model.status == 'ERROR' ?
-                ' Reason: ' + this.props.model.error : ''}
+                <PreviewExpandBox text={this.props.model.error}/> : ''}
+            {deleteBox}
         </div>;
     }
 });

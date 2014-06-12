@@ -86,3 +86,18 @@ def createSchedules(request):
 
 def schedulingRequests(request):
     return render(request, 'futuintro/scheduling-requests.html')
+
+def schedulingRequestDetail(request, sr_id):
+    if request.method == 'DELETE':
+        sr = models.SchedulingRequest.objects.get(id=sr_id)
+        dr = models.DeletionTask.objects.create(schedReq=sr,
+                requestedByUser=request.user)
+        tasksched.enqueue(tasksched.DELETION_TASK, dr.id)
+        return HttpResponse('')
+    elif request.method == 'GET':
+        context = {'sr_id': sr_id}
+        return render(request, 'futuintro/scheduling-request-detail.html',
+                context)
+    else:
+        return HttpResponse(json.dumps({'error': 'Method ' + request.method +
+            ' not allowed.'}), content_type="application/json", status=405)

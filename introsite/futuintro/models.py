@@ -235,6 +235,21 @@ class EventTask(models.Model):
             on_delete=models.SET_NULL)
 
 
+class DeletionTask(models.Model):
+    """
+    Describes which scheduling request to delete, who requested it and when.
+
+    To follow our current model (single-threaded task queue processing,
+    in order) and avoid concurrency / race conditions, this task is created
+    when the user requests deletion and processed by the queue later.
+    """
+    schedReq = models.ForeignKey(SchedulingRequest, null=True, blank=True,
+            on_delete=models.SET_NULL)
+    requestedByUser = models.ForeignKey(settings.AUTH_USER_MODEL,
+            null=True, blank=True, on_delete=models.SET_NULL)
+    requestedAt = models.DateTimeField(auto_now_add=True)
+
+
 class LastApiCall(models.Model):
     """
     Model with (at most) 1 object showing the most recent time we made a

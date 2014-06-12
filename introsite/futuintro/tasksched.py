@@ -22,7 +22,7 @@ import traceback
 
 from futuintro.models import (Task, Schedule, CalendarResource, EventTask,
         EventTemplate, SchedulingRequest, ScheduleTemplate, Event,
-        LastApiCall)
+        DeletionTask, LastApiCall)
 from futuintro import calendar
 
 logging.basicConfig()
@@ -199,7 +199,9 @@ def processCleanupSchedulingRequest(modelId):
     """
     Delete what got created in Google Calendar, our Events and Schedules.
 
-    Something went wrong, and this task is set to roll-back and delete objects.
+    Either something went wrong or the user decided to delete an entire
+    scheduling request. In either case, this task is set to roll-back and
+    delete objects.
     """
     schReq = SchedulingRequest.objects.get(id=modelId)
     for schedule in schReq.schedule_set.all():
@@ -221,6 +223,35 @@ def failSchedulingRequest(modelId, errTxt=''):
             sr.error = errTxt
         sr.save()
         enqueue(CLEANUP_SCHED_REQ, modelId)
+
+
+def processDeletionTask(modelId):
+    """
+    Process the user's request to delete a scheduling request.
+
+    This may come in at any point (while still processing the scheduling
+    request, after completing with success or after failing with an error).
+    """
+    deleteTask = DeletionTask.objects.get(id=modelId)
+    try:
+        if not deleteTask.schedReq:
+            logging.warning('Found task to delete a scheduling request ' +
+                    'which doesn\'t exist (anymore).')
+            return
+        user = deleteTask.requestedByUser
+        logging.info('Deleting a scheduling request, as requested by ' +
+                (user.username if user else 'Unknown User') + ' at ' +
+                str(deleteTask.requestedAt))
+        failSchedulingRequest(deleteTask.schedReq.id,
+                'Deleting, as requested by user')
+        enqueue(DELETE_SCHED_REQ, deleteTask.schedReq.id)
+    finally:
+        deleteTask.delete()
+
+
+def processDeleteSchedulingRequest(modelId):
+    sr = SchedulingRequest.objects.get(id=modelId)
+    sr.delete()
 
 
 def sleepForRateLimit():
@@ -251,9 +282,13 @@ SCHED_REQ = 'scheduling-request'
 EVENT_TASK = 'event-task'
 MARK_SCHED_REQ_SUCCESS = 'mark-scheduling-request-successful'
 CLEANUP_SCHED_REQ = 'cleanup-scheduling-request'
+DELETION_TASK = 'deletion-task'
+DELETE_SCHED_REQ = 'delete-scheduling-request'
 implForName = {
         SCHED_REQ: processSchedulingRequest,
         EVENT_TASK: processEventTask,
         MARK_SCHED_REQ_SUCCESS: processMarkSchedReqSuccess,
         CLEANUP_SCHED_REQ: processCleanupSchedulingRequest,
+        DELETION_TASK: processDeletionTask,
+        DELETE_SCHED_REQ: processDeleteSchedulingRequest,
 }

@@ -22,6 +22,12 @@ abbr {
 	cursor: pointer;
 }
 
+div.preview-expand-box {
+	cursor: pointer;
+	background: lightgray;
+	white-space: pre-wrap;
+}
+
 
 /* TimeZones */
 

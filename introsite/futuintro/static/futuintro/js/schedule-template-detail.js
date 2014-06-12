@@ -390,19 +390,19 @@ var ScheduleTemplateDetail = React.createClass({
 
         // all loaded without errors
 
-        var statusBox;
-        if (this.state.ajaxInFlight || this.state.ajaxErr) {
-            statusBox = <div>
-                <span className={'status-' +
-                    (this.state.ajaxInFlight ? 'waiting' : 'error')}>
-                    {this.state.ajaxInFlight || this.state.ajaxErr}
-                </span>
-            </div>;
-        }
-
         var hasUnsavedChanges = this.hasUnsavedChanges();
 
         var makeSaveBox = (function() {
+            var statusBox;
+            if (this.state.ajaxInFlight || this.state.ajaxErr) {
+                statusBox = <div>
+                    <span className={'status-' +
+                        (this.state.ajaxInFlight ? 'waiting' : 'error')}>
+                        {this.state.ajaxInFlight || this.state.ajaxErr}
+                    </span>
+                </div>;
+            }
+
             return <div className="schedule-template-status">
                 <span className={hasUnsavedChanges ? 'warn' : 'info'}>
                     {hasUnsavedChanges ?

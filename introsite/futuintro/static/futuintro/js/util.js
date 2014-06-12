@@ -356,3 +356,39 @@ function makeRoomMultiSelectModel(roomObjects) {
             return (r1 < r2) ? -1 : 1;
         }
 }
+
+/*
+ * A component that displays a prefix of the text and lets you click it to
+ * see the full text.
+ */
+var PreviewExpandBox = React.createClass({
+    propTypes: {
+        text: React.PropTypes.string.isRequired,
+        previewLength: React.PropTypes.number
+    },
+    getDefaultProps: function() {
+        return {
+            previewLength: 60
+        }
+    },
+    getInitialState: function() {
+        return {
+            expanded: false
+        };
+    },
+    toggle: function() {
+        this.setState({
+            expanded: !this.state.expanded
+        });
+    },
+    render: function() {
+        var txt = this.props.text;
+        if (!this.state.expanded &&
+                this.props.text.length > this.props.previewLength) {
+            txt = this.props.text.substring(0, this.props.previewLength) + '…';
+        }
+        return <div className="preview-expand-box" onClick={this.toggle}>
+            {txt}
+        </div>;
+    }
+});

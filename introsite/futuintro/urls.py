@@ -16,6 +16,8 @@ urlpatterns = patterns('',
     url(r'^create-schedules/', views.createSchedules,
         name='create-schedules'),
     # TODO: improve the name for this 'scheduling-requests'
-    url(r'^scheduling-requests/', views.schedulingRequests,
+    url(r'^scheduling-requests/$', views.schedulingRequests,
         name='scheduling-requests'),
+    url(r'^scheduling-request/(?P<sr_id>\d+)/$', views.schedulingRequestDetail,
+        name='scheduling-request-detail')
 )
