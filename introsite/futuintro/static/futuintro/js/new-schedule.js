@@ -320,6 +320,13 @@ var NewSchedule;
 
                         delete result.scheduleTemplate;
 
+                        var usersSentence = enumSentence(
+                            forUsers.map(function(u) {
+                                return u.first_name + ' ' + u.last_name;
+                            })
+                        );
+                        result.summary += ' – ' + usersSentence;
+
                         result.eventTemplate = result.id;
                         delete result.id;
 
@@ -624,9 +631,7 @@ var NewSchedule;
                         <b>
                         {et.summary} {' ('}
                         {et.isCollective ?
-                            'common event for ' +
-                            this.props.selectedUsers.map(getFullName).join(', ') :
-                            'separate event for each person'}
+                            'common event' : 'individual events'}
                         {')'}
                         </b>
 
@@ -716,13 +721,14 @@ var NewSchedule;
         },
         render: function() {
             return <div>
-                <table>
+                <table className="new-event-fields">
                 <tr>
                     <td>
                         <label>Summary:</label>
                     </td>
                     <td>
                         <input
+                            className="event-summary"
                             disabled={this.props.disabled}
                             value={this.props.model.summary}
                             onChange={this.handleChange.bind(this,
@@ -736,6 +742,7 @@ var NewSchedule;
                     </td>
                     <td>
                         <textarea
+                            className="event-description"
                             disabled={this.props.disabled}
                             value={this.props.model.description}
                             onChange={this.handleChange.bind(this,

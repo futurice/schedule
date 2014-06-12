@@ -28,6 +28,13 @@ div.preview-expand-box {
 	white-space: pre-wrap;
 }
 
+input.event-summary {
+	width: 50em;
+}
+textarea.event-description {
+	width: 50em;
+}
+
 
 /* TimeZones */
 
@@ -116,13 +123,13 @@ ul.individual-events-list {
 	list-style-type: none;
 }
 
-ul.individual-events-list li {
+ul.individual-events-list > li {
 	background-color: MistyRose;
 	margin-bottom: 1em;
 	padding: 1em;
 	border: solid 1px;
 }
 
-table#new-event-fields td {
+table.new-event-fields td {
 	vertical-align: top;
 }

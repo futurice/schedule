@@ -392,3 +392,19 @@ var PreviewExpandBox = React.createClass({
         </div>;
     }
 });
+
+
+/*
+ * ['John', 'Pete', 'Paul'] → 'John, Pete and Paul'
+ */
+function enumSentence(items) {
+    switch (items.length) {
+        case 0:
+            return '';
+        case 1:
+            return items[0];
+        default:
+            return items.slice(0, -1).join(', ') +
+                ' and ' + items[items.length-1];
+    }
+}

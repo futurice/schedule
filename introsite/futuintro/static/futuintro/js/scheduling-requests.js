@@ -38,6 +38,14 @@ var SchedulingRequestsList = React.createClass({
             return <div><span className="status-waiting">Loading…</span></div>;
         }
 
+        if (!this.state.sReq.length) {
+            return <div>
+                <span className="info">
+                    There are no requests to make schedules.
+                </span>
+            </div>;
+        }
+
         return <ul>
             {this.state.sReq.map((function(r) {
                 return <li key={r.id}>

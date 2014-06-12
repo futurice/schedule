@@ -596,6 +596,7 @@ var EventTemplate = (function() {
                     <td><label>Summary:</label></td>
                     <td>
                         <input type="text"
+                            className="event-summary"
                             disabled={this.props.disabled}
                             value={this.props.model.summary}
                             onChange={this.handleChange.bind(
@@ -608,6 +609,7 @@ var EventTemplate = (function() {
                     <td><label>Description:</label></td>
                     <td>
                         <textarea
+                            className="event-description"
                             disabled={this.props.disabled}
                             value={this.props.model.description}
                             onChange={this.handleChange.bind(
