@@ -271,9 +271,12 @@ var MultiSelect = React.createClass({
         onAdd: React.PropTypes.func.isRequired,
         disabled: React.PropTypes.bool.isRequired
     },
-    handleAdd: function() {
-        var val = this.refs.newItem.getDOMNode().value;
-        val = Number.parseInt(val) || 0;
+    handleSelectChange: function(ev) {
+        var val = getTargetValue(ev);
+        if (val === null) {
+            return;
+        }
+        var val = Number.parseInt(val) || 0;
         this.props.onAdd(val);
     },
     handleRemove: function(id, ev) {
@@ -295,16 +298,22 @@ var MultiSelect = React.createClass({
                     </li>;
                 }).bind(this))}
             </ul>
-            <select ref="newItem" disabled={this.props.disabled}>
+            <select
+                // value='null' makes it always jump back to the ‘Add…’ line.
+                // Comment-out if you don't want this to happen.
+                value='null'
+                disabled={this.props.disabled}
+                onChange={this.handleSelectChange}
+                >
+                <option value='null'>
+                    Add an item…
+                </option>
                 {this.props.sortedIds.map((function(id) {
                     return <option value={id} key={id}>
                         {this.props.itemTextById[id]}
                     </option>;
                 }).bind(this))}
             </select>
-            <button type="button"
-                disabled={this.props.disabled}
-                onClick={this.handleAdd}>+ Add</button>
         </div>;
     }
 });
