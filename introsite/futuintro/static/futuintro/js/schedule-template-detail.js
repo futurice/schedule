@@ -402,8 +402,8 @@ var ScheduleTemplateDetail = React.createClass({
 
         var hasUnsavedChanges = this.hasUnsavedChanges();
 
-        return <div>
-            <div id="schedule-template-status">
+        var makeSaveBox = (function() {
+            return <div className="schedule-template-status">
                 <span className={hasUnsavedChanges ? 'warn' : 'info'}>
                     {hasUnsavedChanges ?
                         'There are unsaved changes' :
@@ -426,7 +426,11 @@ var ScheduleTemplateDetail = React.createClass({
                 </button>
 
                 {statusBox}
-            </div>
+            </div>;
+        }).bind(this);
+
+        return <div>
+            {makeSaveBox()}
 
             <div id="schedule-template-fields">
                 <h1>Schedule Template</h1>
@@ -504,7 +508,8 @@ var ScheduleTemplateDetail = React.createClass({
                 </ul>
             </div>
 
-            </div>;
+            {makeSaveBox()}
+        </div>;
     }
 });
 

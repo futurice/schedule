@@ -39,7 +39,7 @@ ul#schedule-template-list {
 
 /* Schedule Template Detail */
 
-div#schedule-template-status {
+div.schedule-template-status {
 	background-color: HoneyDew;
 	padding: 1em;
 	border: 1px solid;

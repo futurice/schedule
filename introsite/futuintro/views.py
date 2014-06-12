@@ -72,12 +72,17 @@ def createSchedules(request):
     }
     """
 
-    schedReq = models.SchedulingRequest.objects.create(
-            json=json.load(request),
-            requestedBy=request.user,
-            status=models.SchedulingRequest.IN_PROGRESS)
-    tasksched.enqueue(tasksched.SCHED_REQ, schedReq.id)
-    return HttpResponse('')
+    if request.method == 'POST':
+        schedReq = models.SchedulingRequest.objects.create(
+                json=json.load(request),
+                requestedBy=request.user,
+                status=models.SchedulingRequest.IN_PROGRESS)
+        tasksched.enqueue(tasksched.SCHED_REQ, schedReq.id)
+        return HttpResponse('', status=202)
+
+    return HttpResponse(json.dumps({'error': 'Method ' + request.method +
+        ' not allowed. Use POST instead.'}),
+        content_type="application/json", status=405)
 
 def schedulingRequests(request):
     return render(request, 'futuintro/scheduling-requests.html')

@@ -8,7 +8,7 @@ var NewSchedule;
 (function() {
     // app stage while creating a new schedule.
     // These can be anything comparable via ‘==’ (strings, unique objects).
-    var STAGE_PREPARE = {}, STAGE_EDIT = {};
+    var STAGE_PREPARE = {}, STAGE_EDIT = {}, STAGE_SUBMITTED = {};
 
     function fmtLocalDate(date) {
         var y = date.getFullYear(), m = (date.getMonth() + 1),
@@ -120,6 +120,19 @@ var NewSchedule;
                 stage: STAGE_PREPARE
             });
         },
+        gotoSubmitted: function() {
+            this.setState({
+                stage: STAGE_SUBMITTED
+            });
+        },
+        startOver: function() {
+            this.setState({
+                stage: STAGE_PREPARE,
+                selectedSchedTempl: null,
+                selectedUsers: [],
+                startDate: fmtLocalDate(new Date())
+            });
+        },
         render: function() {
             var err = this.state.sTemplErr || this.state.usersErr;
             if (err) {
@@ -149,23 +162,28 @@ var NewSchedule;
                     onStartDateChange={this.setField.bind(this, 'startDate')}
                     onAdvance={this.gotoEdit}
                 />;
+            } else if (this.state.stage == STAGE_EDIT) {
+                var schedTemplObj;
+                this.state.sTempl.forEach((function(st) {
+                    if (st.id == this.state.selectedSchedTempl) {
+                        schedTemplObj = st;
+                    }
+                }).bind(this));
+                return <NewSchedEdit
+                    scheduleTemplate={schedTemplObj}
+                    startDate={this.state.startDate}
+                    users={this.state.users}
+                    userTextById={this.state.userTextById}
+                    alphabeticalUserIds={this.state.alphabeticalUserIds}
+                    selectedUsers={this.state.selectedUsers}
+                    onCancel={this.gotoPrepare}
+                    onSuccess={this.gotoSubmitted}
+                    />;
+            } else {
+                return <NewSchedSubmitted
+                    onCreateAnother={this.startOver}
+                    />;
             }
-
-            var schedTemplObj;
-            this.state.sTempl.forEach((function(st) {
-                if (st.id == this.state.selectedSchedTempl) {
-                    schedTemplObj = st;
-                }
-            }).bind(this));
-            return <NewSchedEdit
-                scheduleTemplate={schedTemplObj}
-                startDate={this.state.startDate}
-                users={this.state.users}
-                userTextById={this.state.userTextById}
-                alphabeticalUserIds={this.state.alphabeticalUserIds}
-                selectedUsers={this.state.selectedUsers}
-                onCancel={this.gotoPrepare}
-                />;
         }
     });
 
@@ -279,7 +297,8 @@ var NewSchedule;
             userTextById: React.PropTypes.object.isRequired,
             alphabeticalUserIds: React.PropTypes.array.isRequired,
             selectedUsers: React.PropTypes.array.isRequired,
-            onCancel: React.PropTypes.func.isRequired
+            onCancel: React.PropTypes.func.isRequired,
+            onSuccess: React.PropTypes.func.isRequired
         },
         componentDidMount: function() {
             compFetchRest.bind(this)('/futuintro/api/calendarresources/',
@@ -499,7 +518,7 @@ var NewSchedule;
                     }).bind(this)()
                 }),
                 complete: (function(data) {
-                    this.setState({
+                    this.isMounted() && this.setState({
                         ajaxInFlight: ''
                     });
                 }).bind(this),
@@ -507,11 +526,10 @@ var NewSchedule;
                     this.isMounted() && this.setState({
                         ajaxErr: ''
                     });
-                    alert('it worked');
+                    this.props.onSuccess();
                 }).bind(this),
                 error: (function(xhr, txtStatus, saveErr) {
                     this.setState({ajaxErr: getAjaxErr.apply(this, arguments)});
-                    alert('error');
                 }).bind(this)
             });
         },
@@ -580,7 +598,9 @@ var NewSchedule;
                                 return <li key={j}>
                                     <b>Event for {fullName}</b>
                                     <button type="button"
-                                        onClick={this.deleteIndividualEvent.bind(this, idx, j)}>
+                                        onClick={this.deleteIndividualEvent.bind(this, idx, j)}
+                                        disabled={this.shouldDisable()}
+                                        >
                                         Delete
                                     </button>
                                     <EventEditor
@@ -629,7 +649,7 @@ var NewSchedule;
                 <button type="button"
                     disabled={this.shouldDisable()}
                     onClick={this.props.onCancel}>
-                CANCEL
+                    Cancel
                 </button>
                 {statusBox}
             </div>;
@@ -784,6 +804,21 @@ var NewSchedule;
                     </td>
                 </tr>
                 </table>
+            </div>;
+        }
+    });
+
+    var NewSchedSubmitted = React.createClass({
+        propTypes: {
+            onCreateAnother: React.PropTypes.func.isRequired
+        },
+        render: function() {
+            return <div>
+                The schedule has been submitted and will be created shortly.
+                <br/>
+                <button onClick={this.props.onCreateAnother}>
+                    Create another schedule
+                </button>
             </div>;
         }
     });
