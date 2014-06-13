@@ -1,0 +1,11 @@
+{% extends "futuintro/base.html" %}
+
+{% block title %}Schedules{% endblock %}
+
+{% block body %}
+<script type="text/jsx">
+/** @jsx React.DOM */
+React.renderComponent(<SchedulesList/>,
+  document.getElementById('main-content'));
+</script>
+{% endblock %}

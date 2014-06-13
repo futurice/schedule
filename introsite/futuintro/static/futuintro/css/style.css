@@ -24,8 +24,11 @@ abbr {
 
 div.preview-expand-box {
 	cursor: pointer;
-	background: lightgray;
+	background: silver;
 	white-space: pre-wrap;
+}
+div.preview-expand-box:hover {
+	background: lightgray;
 }
 
 input.event-summary {

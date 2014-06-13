@@ -101,3 +101,10 @@ def schedulingRequestDetail(request, sr_id):
     else:
         return HttpResponse(json.dumps({'error': 'Method ' + request.method +
             ' not allowed.'}), content_type="application/json", status=405)
+
+def schedules(request):
+    return render(request, 'futuintro/schedules.html')
+
+def scheduleDetail(request, s_id):
+    context = {'s_id': s_id}
+    return render(request, 'futuintro/schedule-detail.html', context)

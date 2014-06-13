@@ -1,9 +1,6 @@
 /** @jsx React.DOM */
 
-var SchedulingRequestDetail = React.createClass({
-    propTypes: {
-        id: React.PropTypes.number.isRequired
-    },
+var SchedulesList = React.createClass({
     mixins: [
         getRestLoaderMixin('/futuintro/api/users/',
             'users', 'usersLoaded', 'usersErr', function() {
@@ -14,34 +11,25 @@ var SchedulingRequestDetail = React.createClass({
                 this.setState({
                     usersById: usersById
                 });
-            })
+            }),
+        getRestLoaderMixin('/futuintro/api/schedules/?ordering=-createdAt',
+            'schedules', 'schedulesLoaded', 'schedulesErr')
     ],
-    componentDidMount: function() {
-        compFetchItemRest.bind(this)(
-            '/futuintro/api/schedulingrequests/' + this.props.id,
-            'schedReq', 'schedReqErr');
-        compFetchRest.bind(this)(
-            '/futuintro/api/schedules/?schedulingRequest=' + this.props.id,
-            'schedules', 'schedulesLoaded', 'schedulesErr');
-    },
     getInitialState: function() {
         return {
-            schedReq: null,
-            schedReqErr: '',
-
-            schedules: null,
-            schedulesLoaded: false,
-            schedulesErr: '',
-
             users: null,
             usersLoaded: false,
             usersErr: '',
-            usersById: null
+            usersById: null,
+
+            schedules: null,
+            schedulesLoaded: false,
+            schedulesErr: ''
         };
     },
     render: function() {
         var err;
-        ['schedReqErr', 'schedulesErr', 'usersErr'].forEach((function(fName) {
+        ['usersErr', 'schedulesErr'].forEach((function(fName) {
             err = err || this.state[fName];
         }).bind(this));
         if (err) {
@@ -49,7 +37,7 @@ var SchedulingRequestDetail = React.createClass({
         }
 
         var loaded = true;
-        ['schedulesLoaded', 'usersLoaded', 'usersById'
+        ['usersLoaded', 'usersById', 'schedulesLoaded'
         ].forEach((function(fName) {
             loaded = loaded && Boolean(this.state[fName]);
         }).bind(this));
@@ -57,22 +45,27 @@ var SchedulingRequestDetail = React.createClass({
             return <div><span className="status-waiting">Loading…</span></div>;
         }
 
-        return <div>
-            Scheduling request submitted on {' '}
-            {new Date(this.state.schedReq.requestedAt).toString()}
-            {' '} by {getUserNameAndEmail(this.state.schedReq.requestedBy,
-                this.state.usersById)}.
+        if (!this.state.schedules.length) {
+            return <div>
+                <span className="info">
+                    There are no schedules.
+                </span>
+            </div>;
+        }
 
+        return (
             <ul>
                 {this.state.schedules.map((function(s) {
                     return <li key={s.id}>
-                        <a href={'../../schedule/' + s.id}>
-                            Schedule for {getUserName(s.forUser,
+                        <a href={'../schedule/' + s.id}>
+                            Schedule for {getUserNameAndEmail(s.forUser,
                                 this.state.usersById)}
                         </a>
+                        <br/>
+                        created {new Date(s.createdAt).toString()}.
                     </li>;
                 }).bind(this))}
             </ul>
-        </div>;
+        );
     }
 });

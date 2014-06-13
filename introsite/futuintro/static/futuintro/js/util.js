@@ -417,3 +417,22 @@ function enumSentence(items) {
                 ' and ' + items[items.length-1];
     }
 }
+
+function getUserName(userId, usersById) {
+    var user = usersById[userId];
+    if (user) {
+        return user.first_name + ' ' + user.last_name;
+    } else {
+        return 'Unknown User';
+    }
+}
+
+function getUserNameAndEmail(userId, usersById) {
+    var user = usersById[userId];
+    if (user) {
+        return user.first_name + ' ' + user.last_name + ' (' +
+                user.email + ')';
+    } else {
+        return 'Unknown User';
+    }
+}

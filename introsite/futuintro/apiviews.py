@@ -26,6 +26,8 @@ class CalendarResourcesViewSet(viewsets.ModelViewSet):
 
 class ScheduleViewSet(viewsets.ModelViewSet):
     model = models.Schedule
+    filter_fields = ('schedulingRequest',)
+    ordering_fields = ('createdAt',)
 
 class EventViewSet(viewsets.ModelViewSet):
     model = models.Event

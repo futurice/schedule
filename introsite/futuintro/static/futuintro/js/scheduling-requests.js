@@ -4,6 +4,8 @@ var SchedulingRequestsList = React.createClass({
     mixins: [
         getRestLoaderMixin('/futuintro/api/schedulingrequests/?ordering=-requestedAt',
             'sReq', 'sReqLoaded', 'sReqErr'),
+        getRestLoaderMixin('/futuintro/api/schedules/',
+            'schedules', 'schedulesLoaded', 'schedulesErr'),
         getRestLoaderMixin('/futuintro/api/users/',
             'users', 'usersLoaded', 'usersErr', function() {
                 var usersById = {};
@@ -21,21 +23,40 @@ var SchedulingRequestsList = React.createClass({
             sReqLoaded: false,
             sReqErr: '',
 
+            schedules: null,
+            schedulesLoaded: false,
+            schedulesErr: '',
+
             users: null,
             usersLoaded: false,
             usersErr: '',
-            usersById: null,
+            usersById: null
         };
     },
     render: function() {
-        var err = this.state.sReqErr || this.state.usersErr;
+        var err;
+        ['sReqErr', 'schedulesErr', 'usersErr'].forEach((function(field) {
+            err = err || this.state[field];
+        }).bind(this));
         if (err) {
             return <div><span className="status-error">{err}</span></div>;
         }
-        var loaded = this.state.sReqLoaded && this.state.usersLoaded &&
-            this.state.usersById;
+
+        var loaded = true;
+        ['sReqLoaded', 'schedulesLoaded', 'usersLoaded', 'usersById'].forEach(
+                (function(field) {
+            loaded = loaded && Boolean(this.state[field]);
+        }).bind(this));
         if (!loaded) {
             return <div><span className="status-waiting">Loading…</span></div>;
+        }
+
+        if (!this.state.sReq.length) {
+            return <div>
+                <span className="info">
+                    There are no requests to make schedules.
+                </span>
+            </div>;
         }
 
         if (!this.state.sReq.length) {
@@ -52,6 +73,9 @@ var SchedulingRequestsList = React.createClass({
                     <SchedulingRequest
                         model={r}
                         usersById={this.state.usersById}
+                        schedules={this.state.schedules.filter(function(s) {
+                            return s.schedulingRequest == r.id;
+                        })}
                     />
                 </li>;
             }).bind(this))}
@@ -62,7 +86,8 @@ var SchedulingRequestsList = React.createClass({
 var SchedulingRequest = React.createClass({
     propTypes: {
         model: React.PropTypes.object.isRequired,
-        usersById: React.PropTypes.object.isRequired
+        usersById: React.PropTypes.object.isRequired,
+        schedules: React.PropTypes.array.isRequired
     },
     getInitialState: function() {
         return {
@@ -101,12 +126,8 @@ var SchedulingRequest = React.createClass({
         }
     },
     render: function() {
-        var user = this.props.usersById[this.props.model.requestedBy];
-        var userText = "Unknown user";
-        if (user) {
-            userText = user.first_name + ' ' + user.last_name + ' (' +
-                user.email + ')';
-        }
+        var userText = getUserNameAndEmail(this.props.model.requestedBy,
+                this.props.usersById);
         var deleteBox;
         if (this.state.showDeleteBtn) {
             deleteBox = <div>
@@ -128,11 +149,27 @@ var SchedulingRequest = React.createClass({
             </div>;
         }
 
+        var status = this.props.model.status;
+
+        var link = <span>
+                For {enumSentence(this.props.schedules.map((function(s){
+                    return getUserName(s.forUser, this.props.usersById);
+                }).bind(this)))}
+            </span>;
+        if (status == 'SUCCESS') {
+            link = <a href={'../scheduling-request/' + this.props.model.id}>
+                    {link}
+                </a>;
+        }
         return <div>
-            Submitted on {new Date(this.props.model.requestedAt).toString()}
-            {' '} by {userText}.
+            {link}
             <br/>
-            Status: {this.props.model.status}.
+            Submitted on {new Date(this.props.model.requestedAt).toString()}
+            {' '} by {userText}
+
+            {status != 'SUCCESS' ? <br/> : ''}
+            {status != 'SUCCESS' ? 'Status: ' + this.props.model.status : ''}
+
             {this.props.model.status == 'ERROR' ?
                 <PreviewExpandBox text={this.props.model.error}/> : ''}
             {deleteBox}
