@@ -357,8 +357,8 @@ function makeRoomMultiSelectModel(roomObjects) {
         }
 
         function compareRoomNames(r1, r2) {
-            r1 = getRoomName(r1);
-            r2 = getRoomName(r2);
+            r1 = getRoomName(r1).toLowerCase();
+            r2 = getRoomName(r2).toLowerCase();
             if (r1 == r2) {
                 return 0;
             }
