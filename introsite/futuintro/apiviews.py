@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+import django_filters
 from rest_framework import viewsets, routers
 from futuintro import models
 
@@ -29,8 +30,13 @@ class ScheduleViewSet(viewsets.ModelViewSet):
     filter_fields = ('schedulingRequest',)
     ordering_fields = ('createdAt',)
 
+class EventFilterSet(django_filters.FilterSet):
+    class Meta:
+        model = models.Event
+
 class EventViewSet(viewsets.ModelViewSet):
     model = models.Event
+    filter_class = EventFilterSet
 
 class SchedulingRequestViewSet(viewsets.ModelViewSet):
     model = models.SchedulingRequest
