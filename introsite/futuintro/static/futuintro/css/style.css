@@ -6,7 +6,7 @@
 }
 
 .warn {
-	background-color: orange;
+	background-color: gold;
 }
 
 .status-waiting {
@@ -56,22 +56,27 @@ ul#schedule-template-list {
 /* Schedule Template Detail */
 
 div.schedule-template-status {
-	background-color: HoneyDew;
 	padding: 1em;
 	border: 1px solid;
 	margin-top: 1em;
 	margin-bottom: 1em;
 }
+div.schedule-template-status-saved {
+	background-color: HoneyDew;
+}
+div.schedule-template-status-not-saved {
+	background-color: HotPink;
+}
 
 div#schedule-template-fields {
-	background-color: Beige;
+	background-color: FloralWhite;
 	padding: 0.5em;
 	border: 1px solid;
 	margin-bottom: 1em;
 }
 
 div#event-templates-container {
-	background-color: MistyRose;
+	background-color: LavenderBlush;
 	padding: 0.5em;
 	border: 1px solid;
 	margin-bottom: 1em;

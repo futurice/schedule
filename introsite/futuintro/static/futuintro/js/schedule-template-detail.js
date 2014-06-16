@@ -403,7 +403,12 @@ var ScheduleTemplateDetail = React.createClass({
                 </div>;
             }
 
-            return <div className="schedule-template-status">
+            // avoid getting the experimental React.addons.classSet() for now.
+            var boxClassStr = ['schedule-template-status',
+                hasUnsavedChanges ?
+                'schedule-template-status-not-saved' :
+                'schedule-template-status-saved'].join(' ');
+            return <div className={boxClassStr}>
                 <span className={hasUnsavedChanges ? 'warn' : 'info'}>
                     {hasUnsavedChanges ?
                         'There are unsaved changes' :
