@@ -13,7 +13,7 @@ from futuintro import models, tasksched
 
 class GoogleCalendarTest(TestCase):
 
-    def test_create_and_delete_event(self):
+    def testCreateAndDeleteEvent(self):
         calId = calendar.futuintroCalId
         tzName = calendar.berlinTz
 
@@ -22,6 +22,8 @@ class GoogleCalendarTest(TestCase):
                 9, 45)
         endDt = startDt + datetime.timedelta(minutes=30)
         attendingEmails = [testutil.Alice_email, testutil.Brad_email]
+
+        tasksched.sleepForRateLimit()
         ev = calendar.createEvent(calId, False, 'TEST: sample event',
                 'Test: create & delete a simple event', 'Reception',
                 startDt, endDt, tzName, attendingEmails)
@@ -36,7 +38,9 @@ class GoogleCalendarTest(TestCase):
                     and dt1.day == dt2.day and dt1.hour == dt2.hour
                     and dt1.minute == dt2.minute and dt1.second == dt2.second)
 
-        print(json.dumps(ev, indent=2))
+        # This is a handy way to quickly see what the returned JSON looks like
+        #print(json.dumps(ev, indent=2))
+
         # Google returns an ISO dateTime string which includes a UTC offset
         # (apparently the local offset for you). Convert to local time for the
         # timezone we requested above, and check the date&time.
@@ -49,6 +53,62 @@ class GoogleCalendarTest(TestCase):
         self.assertTrue({x for x in attendingEmails}
                 == {x['email'] for x in ev['attendees']})
 
+        tasksched.sleepForRateLimit()
+        calendar.deleteEvent(calId, ev['id'])
+
+
+    def testEmptyEventSummaryDescriptionLocation(self):
+        calId = calendar.futuintroCalId
+        tzName = calendar.berlinTz
+
+        startDt = datetime.datetime.today() + datetime.timedelta(days=1)
+        startDt = datetime.datetime(startDt.year, startDt.month, startDt.day,
+                7, 30)
+        endDt = startDt + datetime.timedelta(minutes=30)
+        attendingEmails = [testutil.Alice_email, testutil.Brad_email]
+
+        tasksched.sleepForRateLimit()
+        ev = calendar.createEvent(calId, False, '', '', '',
+                startDt, endDt, tzName, attendingEmails)
+
+        for fName in ('summary', 'description', 'location'):
+            # The empty fields are missing from the response
+            self.assertFalse(fName in ev)
+
+        tasksched.sleepForRateLimit()
+        calendar.deleteEvent(calId, ev['id'])
+
+
+    def testGoogleCalendarFieldSizes(self):
+        """
+        Test some large field sizes (e.g. summary, description).
+
+        If this test passes, Google Calendar supports those fields up to the
+        size we're testing here, and the tests documents them.
+        If it fails, it just means we have to reduce that maximum size.
+        """
+        calId = calendar.futuintroCalId
+        tzName = calendar.berlinTz
+
+        startDt = datetime.datetime.today() + datetime.timedelta(days=1)
+        startDt = datetime.datetime(startDt.year, startDt.month, startDt.day,
+                9, 45)
+        endDt = startDt + datetime.timedelta(minutes=30)
+        attendingEmails = [testutil.Alice_email, testutil.Brad_email]
+
+        longSummary = 'ab c' * 256
+        longDescription = 'ef gh' * 1000
+        longLocation = 'ij k' * 256
+
+        tasksched.sleepForRateLimit()
+        ev = calendar.createEvent(calId, False, longSummary, longDescription,
+                longLocation, startDt, endDt, tzName, attendingEmails)
+
+        self.assertEqual(ev['summary'], longSummary)
+        self.assertEqual(ev['description'], longDescription)
+        self.assertEqual(ev['location'], longLocation)
+
+        tasksched.sleepForRateLimit()
         calendar.deleteEvent(calId, ev['id'])
 
 
