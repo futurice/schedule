@@ -14,6 +14,17 @@ var SchedulingRequestDetail = React.createClass({
                 this.setState({
                     usersById: usersById
                 });
+            }),
+        getRestLoaderMixin('/futuintro/api/scheduletemplates/',
+            'scheduleTemplates', 'scheduleTemplLoaded', 'scheduleTemplErr',
+            function() {
+                var scheduleTemplById = {};
+                this.state.scheduleTemplates.forEach(function(s) {
+                    scheduleTemplById[s.id] = s;
+                });
+                this.setState({
+                    scheduleTemplById: scheduleTemplById
+                });
             })
     ],
     componentDidMount: function() {
@@ -33,6 +44,11 @@ var SchedulingRequestDetail = React.createClass({
             schedulesLoaded: false,
             schedulesErr: '',
 
+            scheduleTemplates: null,
+            scheduleTemplLoaded: false,
+            scheduleTemplErr: '',
+            scheduleTemplById: null,
+
             users: null,
             usersLoaded: false,
             usersErr: '',
@@ -41,7 +57,8 @@ var SchedulingRequestDetail = React.createClass({
     },
     render: function() {
         var err;
-        ['schedReqErr', 'schedulesErr', 'usersErr'].forEach((function(fName) {
+        ['schedReqErr', 'schedulesErr', 'scheduleTemplErr', 'usersErr'
+        ].forEach((function(fName) {
             err = err || this.state[fName];
         }).bind(this));
         if (err) {
@@ -49,7 +66,8 @@ var SchedulingRequestDetail = React.createClass({
         }
 
         var loaded = true;
-        ['schedulesLoaded', 'usersLoaded', 'usersById'
+        ['schedulesLoaded', 'scheduleTemplLoaded', 'scheduleTemplById',
+            'usersLoaded', 'usersById'
         ].forEach((function(fName) {
             loaded = loaded && Boolean(this.state[fName]);
         }).bind(this));
@@ -57,11 +75,20 @@ var SchedulingRequestDetail = React.createClass({
             return <div><span className="status-waiting">Loading…</span></div>;
         }
 
+        var templName = 'Unknown',
+            srJson = JSON.parse(this.state.schedReq.json),
+            templId = srJson.scheduleTemplate;
+        if (templId in this.state.scheduleTemplById) {
+            templName = this.state.scheduleTemplById[templId].name;
+        }
         return <div>
-            Scheduling request submitted on {' '}
+            Scheduling request
+            <br/>
+            From template: {templName}
+            <br/>Submitted on {' '}
             {new Date(this.state.schedReq.requestedAt).toString()}
             {' '} by {getUserNameAndEmail(this.state.schedReq.requestedBy,
-                this.state.usersById)}.
+                this.state.usersById)}
 
             <ul>
                 {this.state.schedules.map((function(s) {

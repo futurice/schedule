@@ -6,6 +6,17 @@ var SchedulingRequestsList = React.createClass({
             'sReq', 'sReqLoaded', 'sReqErr'),
         getRestLoaderMixin('/futuintro/api/schedules/',
             'schedules', 'schedulesLoaded', 'schedulesErr'),
+        getRestLoaderMixin('/futuintro/api/scheduletemplates/',
+            'scheduleTemplates', 'scheduleTemplLoaded', 'scheduleTemplErr',
+            function() {
+                var scheduleTemplById = {};
+                this.state.scheduleTemplates.forEach(function(s) {
+                    scheduleTemplById[s.id] = s;
+                });
+                this.setState({
+                    scheduleTemplById: scheduleTemplById
+                });
+            }),
         getRestLoaderMixin('/futuintro/api/users/',
             'users', 'usersLoaded', 'usersErr', function() {
                 var usersById = {};
@@ -27,6 +38,11 @@ var SchedulingRequestsList = React.createClass({
             schedulesLoaded: false,
             schedulesErr: '',
 
+            scheduleTemplates: null,
+            scheduleTemplLoaded: false,
+            scheduleTemplErr: '',
+            scheduleTemplById: null,
+
             users: null,
             usersLoaded: false,
             usersErr: '',
@@ -35,7 +51,8 @@ var SchedulingRequestsList = React.createClass({
     },
     render: function() {
         var err;
-        ['sReqErr', 'schedulesErr', 'usersErr'].forEach((function(field) {
+        ['sReqErr', 'schedulesErr', 'scheduleTemplErr', 'usersErr'
+        ].forEach((function(field) {
             err = err || this.state[field];
         }).bind(this));
         if (err) {
@@ -43,7 +60,8 @@ var SchedulingRequestsList = React.createClass({
         }
 
         var loaded = true;
-        ['sReqLoaded', 'schedulesLoaded', 'usersLoaded', 'usersById'].forEach(
+        ['sReqLoaded', 'schedulesLoaded', 'scheduleTemplLoaded',
+        'scheduleTemplById', 'usersLoaded', 'usersById'].forEach(
                 (function(field) {
             loaded = loaded && Boolean(this.state[field]);
         }).bind(this));
@@ -76,6 +94,7 @@ var SchedulingRequestsList = React.createClass({
                         schedules={this.state.schedules.filter(function(s) {
                             return s.schedulingRequest == r.id;
                         })}
+                        scheduleTemplById={this.state.scheduleTemplById}
                     />
                 </li>;
             }).bind(this))}
@@ -87,7 +106,8 @@ var SchedulingRequest = React.createClass({
     propTypes: {
         model: React.PropTypes.object.isRequired,
         usersById: React.PropTypes.object.isRequired,
-        schedules: React.PropTypes.array.isRequired
+        schedules: React.PropTypes.array.isRequired,
+        scheduleTemplById: React.PropTypes.object.isRequired
     },
     getInitialState: function() {
         return {
@@ -161,8 +181,18 @@ var SchedulingRequest = React.createClass({
                     {link}
                 </a>;
         }
+
+        var templName = 'Unknown',
+            modelJson = JSON.parse(this.props.model.json),
+            templId = modelJson.scheduleTemplate;
+        if (templId in this.props.scheduleTemplById) {
+            templName = this.props.scheduleTemplById[templId].name;
+        }
+
         return <div>
             {link}
+            <br/>
+            From template: {templName}
             <br/>
             Submitted on {new Date(this.props.model.requestedAt).toString()}
             {' '} by {userText}

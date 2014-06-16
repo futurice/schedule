@@ -72,21 +72,30 @@ var ScheduleDetail;
                 return <div><span className="status-waiting">Loading…</span></div>;
             }
 
+            var eventsBox;
             if (!this.state.eventsParsed.length) {
-                return <div>
+                eventsBox = <div>
                     <span className="info">
                         There are no events.
                     </span>
                 </div>;
+            } else {
+                eventsBox = <ul>
+                    {this.state.eventsParsed.map(function(e) {
+                        return <li key={e.id}>
+                            <GoogleCalendarEvent model={e}/>
+                        </li>;
+                    })}
+                </ul>;
             }
 
-            return <ul>
-                {this.state.eventsParsed.map(function(e) {
-                    return <li key={e.id}>
-                        <GoogleCalendarEvent model={e}/>
-                    </li>;
-                })}
-            </ul>;
+            return <div>
+                <h1>
+                    Schedule for {getUserNameAndEmail(
+                            this.state.schedule.forUser, this.state.usersById)}
+                </h1>
+                {eventsBox}
+            </div>;
         }
     });
 

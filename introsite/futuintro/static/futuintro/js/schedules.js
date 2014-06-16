@@ -13,7 +13,18 @@ var SchedulesList = React.createClass({
                 });
             }),
         getRestLoaderMixin('/futuintro/api/schedules/?ordering=-createdAt',
-            'schedules', 'schedulesLoaded', 'schedulesErr')
+            'schedules', 'schedulesLoaded', 'schedulesErr'),
+        getRestLoaderMixin('/futuintro/api/scheduletemplates/',
+            'scheduleTemplates', 'scheduleTemplLoaded', 'scheduleTemplErr',
+            function() {
+                var scheduleTemplById = {};
+                this.state.scheduleTemplates.forEach(function(s) {
+                    scheduleTemplById[s.id] = s;
+                });
+                this.setState({
+                    scheduleTemplById: scheduleTemplById
+                });
+            })
     ],
     getInitialState: function() {
         return {
@@ -24,12 +35,18 @@ var SchedulesList = React.createClass({
 
             schedules: null,
             schedulesLoaded: false,
-            schedulesErr: ''
+            schedulesErr: '',
+
+            scheduleTemplates: null,
+            scheduleTemplLoaded: false,
+            scheduleTemplErr: '',
+            scheduleTemplById: null
         };
     },
     render: function() {
         var err;
-        ['usersErr', 'schedulesErr'].forEach((function(fName) {
+        ['usersErr', 'schedulesErr', 'scheduleTemplErr'
+        ].forEach((function(fName) {
             err = err || this.state[fName];
         }).bind(this));
         if (err) {
@@ -37,7 +54,8 @@ var SchedulesList = React.createClass({
         }
 
         var loaded = true;
-        ['usersLoaded', 'usersById', 'schedulesLoaded'
+        ['usersLoaded', 'usersById', 'schedulesLoaded', 'scheduleTemplLoaded',
+            'scheduleTemplById'
         ].forEach((function(fName) {
             loaded = loaded && Boolean(this.state[fName]);
         }).bind(this));
@@ -56,13 +74,20 @@ var SchedulesList = React.createClass({
         return (
             <ul>
                 {this.state.schedules.map((function(s) {
+                    var templateName = 'Unknown';
+                    if (s.template in this.state.scheduleTemplById) {
+                        templateName =
+                            this.state.scheduleTemplById[s.template].name;
+                    }
                     return <li key={s.id}>
                         <a href={'../schedule/' + s.id}>
                             Schedule for {getUserNameAndEmail(s.forUser,
                                 this.state.usersById)}
                         </a>
                         <br/>
-                        created {new Date(s.createdAt).toString()}.
+                        From template: {templateName}
+                        <br/>
+                        created {new Date(s.createdAt).toString()}
                     </li>;
                 }).bind(this))}
             </ul>

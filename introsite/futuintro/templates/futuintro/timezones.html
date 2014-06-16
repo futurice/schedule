@@ -3,9 +3,20 @@
 {% block title %}TimeZones{% endblock %}
 
 {% block body %}
+<h1>TimeZones</h1>
+<p>
+To schedule events we need a date, time and timezone.
+You should ask an administrator if you need to make changes here, because
+they must be in a certain format
+(e.g. Europe/Brussels, America/Los_Angeles).
+</p>
+
+<div id="timezones-main-content">
+</div>
+
 <script type="text/jsx">
 /** @jsx React.DOM */
 React.renderComponent(<TimeZoneListComp />,
-  document.getElementById('main-content'));
+  document.getElementById('timezones-main-content'));
 </script>
 {% endblock %}

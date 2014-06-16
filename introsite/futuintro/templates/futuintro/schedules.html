@@ -3,9 +3,14 @@
 {% block title %}Schedules{% endblock %}
 
 {% block body %}
+<h1>Schedules created by the system</h1>
+
+<div id="schedules-main-content">
+</div>
+
 <script type="text/jsx">
 /** @jsx React.DOM */
 React.renderComponent(<SchedulesList/>,
-  document.getElementById('main-content'));
+  document.getElementById('schedules-main-content'));
 </script>
 {% endblock %}
