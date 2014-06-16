@@ -97,3 +97,6 @@ def schedules(request):
 def scheduleDetail(request, s_id):
     context = {'s_id': s_id}
     return render(request, 'futuintro/schedule-detail.html', context)
+
+def test(request):
+    return render(request, 'futuintro/test')

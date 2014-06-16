@@ -22,4 +22,5 @@ urlpatterns = patterns('',
     url(r'^schedules/$', views.schedules, name='schedules'),
     url(r'^schedule/(?P<s_id>\d+)/$', views.scheduleDetail,
         name='schedule-detail'),
+    url(r'^test/', views.test, name='test'),
 )

@@ -124,7 +124,6 @@ function clone(obj) {
  * Keep this similar to clone().
  */
 function sameModels(a, b) {
-    // TODO: unittest sameModels() and clone()
     var result = true, i;
 
     if (Array.isArray(a)) {

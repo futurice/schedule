@@ -1,0 +1,16 @@
+{% extends "futuintro/base.html" %}
+{% load staticfiles %}
+
+{% block title %}Tests{% endblock %}
+
+{% block head_extra %}
+<link rel="stylesheet" href="https://code.jquery.com/qunit/qunit-1.14.0.css">
+{% endblock %}
+
+{% block body %}
+<div id="qunit"></div>
+<div id="qunit-fixture"></div>
+
+<script src="https://code.jquery.com/qunit/qunit-1.14.0.js"></script>
+<script src="{% static 'futuintro/js/test.js' %}"></script>
+{% endblock %}
