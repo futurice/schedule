@@ -4,7 +4,6 @@ from futuintro import views, apiviews
 
 urlpatterns = patterns('',
     url(r'^$', views.root, name='root'),
-    url(r'^ajax/$', views.ajax, name='ajax'),
     url(r'^api/', include(apiviews.router.urls)),
     url(r'^timezones/', views.timezones, name='timezones'),
     url(r'^schedule-templates/', views.scheduleTemplates,
