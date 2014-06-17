@@ -63,7 +63,7 @@ def createSchedules(request):
 
     if request.method == 'POST':
         schedReq = models.SchedulingRequest.objects.create(
-                json=json.load(request),
+                json=json.dumps(json.load(request)),
                 requestedBy=request.user,
                 status=models.SchedulingRequest.IN_PROGRESS)
         tasksched.enqueue(tasksched.SCHED_REQ, schedReq.id)

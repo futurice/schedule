@@ -127,7 +127,7 @@ def processSchedulingRequest(modelId):
     try:
         UM = get_user_model()
         schedReq = SchedulingRequest.objects.get(id=modelId)
-        body = schedReq.json
+        body = json.loads(schedReq.json)
         schedTempl = ScheduleTemplate.objects.get(
             id=body['scheduleTemplate'])
         schedules = makeSchedules()
@@ -170,7 +170,8 @@ def processEventTask(modelId):
                 evTask.summary, evTask.description,
                 locTxt, evTask.startDt, evTask.endDt,
                 schedTempl.timezone.name, attendingEmails)
-        newEv = Event.objects.create(json=gCalJson, template=evTask.template)
+        newEv = Event.objects.create(json=json.dumps(gCalJson),
+                template=evTask.template)
         newEv.schedules.add(*schedules)
     except:
         logging.error(traceback.format_exc())
@@ -208,7 +209,8 @@ def processCleanupSchedulingRequest(modelId):
         for event in schedule.event_set.all():
             sleepForRateLimit()
             try:
-                calendar.deleteEvent(calendar.futuintroCalId, event.json['id'])
+                calendar.deleteEvent(calendar.futuintroCalId,
+                        json.loads(event.json)['id'])
             except:
                 logging.error(traceback.format_exc())
             event.delete()

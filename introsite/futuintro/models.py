@@ -1,7 +1,6 @@
 from django.conf import settings
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 from django.db import models
-from jsonfield import JSONField
 
 
 class FutuUserManager(BaseUserManager):
@@ -151,7 +150,7 @@ class SchedulingRequest(models.Model):
     """
 
     # the JSON format is documented in views.createSchedules
-    json = JSONField()
+    json = models.TextField()
     requestedBy = models.ForeignKey(settings.AUTH_USER_MODEL, null=True,
             blank=True, on_delete=models.SET_NULL)
     requestedAt = models.DateTimeField(auto_now_add=True)
@@ -195,7 +194,7 @@ class Event(models.Model):
 
     It may belong to several Schedules (e.g. a collective event).
     """
-    json = JSONField()
+    json = models.TextField()
     schedules = models.ManyToManyField(Schedule)
 
     # Be able to group events by the template they came from (e.g. you didn't

@@ -6,4 +6,3 @@ gdata
 python-dateutil
 pytz
 django-extensions
-jsonfield
