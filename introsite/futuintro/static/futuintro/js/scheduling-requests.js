@@ -4,8 +4,6 @@ var SchedulingRequestsList = React.createClass({
     mixins: [
         getRestLoaderMixin('/futuintro/api/schedulingrequests/?ordering=-requestedAt',
             'sReq', 'sReqLoaded', 'sReqErr'),
-        getRestLoaderMixin('/futuintro/api/schedules/',
-            'schedules', 'schedulesLoaded', 'schedulesErr'),
         getRestLoaderMixin('/futuintro/api/scheduletemplates/',
             'scheduleTemplates', 'scheduleTemplLoaded', 'scheduleTemplErr',
             function() {
@@ -34,10 +32,6 @@ var SchedulingRequestsList = React.createClass({
             sReqLoaded: false,
             sReqErr: '',
 
-            schedules: null,
-            schedulesLoaded: false,
-            schedulesErr: '',
-
             scheduleTemplates: null,
             scheduleTemplLoaded: false,
             scheduleTemplErr: '',
@@ -51,7 +45,7 @@ var SchedulingRequestsList = React.createClass({
     },
     render: function() {
         var err;
-        ['sReqErr', 'schedulesErr', 'scheduleTemplErr', 'usersErr'
+        ['sReqErr', 'scheduleTemplErr', 'usersErr'
         ].forEach((function(field) {
             err = err || this.state[field];
         }).bind(this));
@@ -60,7 +54,7 @@ var SchedulingRequestsList = React.createClass({
         }
 
         var loaded = true;
-        ['sReqLoaded', 'schedulesLoaded', 'scheduleTemplLoaded',
+        ['sReqLoaded', 'scheduleTemplLoaded',
         'scheduleTemplById', 'usersLoaded', 'usersById'].forEach(
                 (function(field) {
             loaded = loaded && Boolean(this.state[field]);
@@ -91,9 +85,6 @@ var SchedulingRequestsList = React.createClass({
                     <SchedulingRequest
                         model={r}
                         usersById={this.state.usersById}
-                        schedules={this.state.schedules.filter(function(s) {
-                            return s.schedulingRequest == r.id;
-                        })}
                         scheduleTemplById={this.state.scheduleTemplById}
                     />
                 </li>;
@@ -106,7 +97,6 @@ var SchedulingRequest = React.createClass({
     propTypes: {
         model: React.PropTypes.object.isRequired,
         usersById: React.PropTypes.object.isRequired,
-        schedules: React.PropTypes.array.isRequired,
         scheduleTemplById: React.PropTypes.object.isRequired
     },
     getInitialState: function() {
@@ -169,11 +159,11 @@ var SchedulingRequest = React.createClass({
             </div>;
         }
 
-        var status = this.props.model.status;
-
-        var link = <span>
-                For {enumSentence(this.props.schedules.map((function(s){
-                    return getUserName(s.forUser, this.props.usersById);
+        var status = this.props.model.status,
+            modelJson = JSON.parse(this.props.model.json),
+            link = <span>
+                For {enumSentence(modelJson.users.map((function(uid) {
+                    return getUserName(uid, this.props.usersById);
                 }).bind(this)))}
             </span>;
         if (status == 'SUCCESS') {
@@ -183,11 +173,26 @@ var SchedulingRequest = React.createClass({
         }
 
         var templName = 'Unknown',
-            modelJson = JSON.parse(this.props.model.json),
             templId = modelJson.scheduleTemplate;
         if (templId in this.props.scheduleTemplById) {
             templName = this.props.scheduleTemplById[templId].name;
         }
+
+        var statusLine = (function() {
+            var clsName, txt;
+            switch (this.props.model.status) {
+                case 'SUCCESS':
+                    return null;
+                case 'ERROR':
+                    clsName = 'error';
+                    txt = 'Status: ' + this.props.model.status;
+                    break;
+                default:
+                    clsName = 'info';
+                    txt = 'Status: ' + this.props.model.status;
+            }
+            return <span className={clsName}>{txt}</span>;
+        }).bind(this)();
 
         return <div>
             {link}
@@ -197,8 +202,8 @@ var SchedulingRequest = React.createClass({
             Submitted on {new Date(this.props.model.requestedAt).toString()}
             {' '} by {userText}
 
-            {status != 'SUCCESS' ? <br/> : ''}
-            {status != 'SUCCESS' ? 'Status: ' + this.props.model.status : ''}
+            <br/>
+            {statusLine}
 
             {this.props.model.status == 'ERROR' ?
                 <PreviewExpandBox text={this.props.model.error}/> : ''}

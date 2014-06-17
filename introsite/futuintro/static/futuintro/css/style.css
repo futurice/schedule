@@ -9,6 +9,10 @@
 	background-color: gold;
 }
 
+.error {
+	background-color: DeepPink;
+}
+
 .status-waiting {
 	background-color: AliceBlue;
 }
