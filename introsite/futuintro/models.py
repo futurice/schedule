@@ -23,7 +23,7 @@ class FutuUserManager(BaseUserManager):
 
 class FutuUser(AbstractBaseUser):
     username = models.CharField(max_length=40, unique=True, db_index=True)
-    email = models.CharField(max_length=40, unique=True)
+    email = models.CharField(max_length=100, unique=True)
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
     is_active = models.BooleanField(default=True)
@@ -159,7 +159,8 @@ class SchedulingRequest(models.Model):
     IN_PROGRESS = 'IN_PROGRESS'
     SUCCESS = 'SUCCESS'
     ERROR = 'ERROR'
-    status = models.CharField(max_length=10,
+    status = models.CharField(
+            max_length=max(map(len, (IN_PROGRESS, SUCCESS, ERROR))),
             choices = (
                 (IN_PROGRESS, 'In progress'),
                 (SUCCESS, 'Successfully completed'),
