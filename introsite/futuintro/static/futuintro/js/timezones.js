@@ -5,8 +5,8 @@
  */
 var TimeZoneListComp = React.createClass({
     mixins: [
-        getRestLoaderMixin('/futuintro/api/timezones/', 'timezones',
-            'tzLoaded', 'tzErr'),
+        getRestLoaderMixin('/futuintro/api/timezones/?ordering=name',
+            'timezones', 'tzLoaded', 'tzErr'),
     ],
     getInitialState: function() {
         return {

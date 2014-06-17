@@ -14,7 +14,7 @@ var ScheduleTemplatesList = React.createClass({
     },
     fetchData: function() {
         var f = compFetchRest.bind(this);
-        f('/futuintro/api/scheduletemplates/', 'schedTempl',
+        f('/futuintro/api/scheduletemplates/?ordering=name', 'schedTempl',
             'schedTemplLoaded', 'schedTemplErr');
         f('/futuintro/api/timezones/', 'timezones',
             'tzLoaded', 'tzErr');

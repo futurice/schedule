@@ -25,7 +25,7 @@ var NewSchedule;
 
     NewSchedule = React.createClass({
         mixins: [
-            getRestLoaderMixin('/futuintro/api/scheduletemplates/',
+            getRestLoaderMixin('/futuintro/api/scheduletemplates/?ordering=name',
                 'sTempl', 'sTemplLoaded', 'sTemplErr'),
             getRestLoaderMixin(
                 '/futuintro/api/users/?ordering=first_name,last_name',
@@ -308,7 +308,9 @@ var NewSchedule;
                         roomMSModel: makeRoomMultiSelectModel(this.state.rooms)
                     });
                 });
-            compFetchRest.bind(this)('/futuintro/api/eventtemplates/?scheduleTemplate=' + this.props.scheduleTemplate.id,
+            compFetchRest.bind(this)('/futuintro/api/eventtemplates/' +
+                '?scheduleTemplate=' + this.props.scheduleTemplate.id +
+                '&ordering=dayOffset,startTime',
                 'evTempl', 'evTemplLoaded', 'evTemplErr',
                 function() {
                     // format 'YYYY-MM-DD' guarantees midnight in UTC timezone.

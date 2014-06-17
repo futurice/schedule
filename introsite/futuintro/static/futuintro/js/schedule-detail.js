@@ -47,6 +47,10 @@ var ScheduleDetail;
                                 eventsParsed: this.state.events.map(
                                         function(e) {
                                     return JSON.parse(e.json);
+                                }).sort(function(a, b) {
+                                    var ta = new Date(a.start.dateTime).valueOf(),
+                                        tb = new Date(b.start.dateTime).valueOf();
+                                    return ta - tb;
                                 })
                             });
                         }

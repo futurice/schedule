@@ -50,7 +50,9 @@ var ScheduleTemplateDetail = React.createClass({
     ],
     componentDidMount: function() {
         compFetchRest.bind(this)(
-            '/futuintro/api/eventtemplates/?scheduleTemplate=' + this.props.id,
+            '/futuintro/api/eventtemplates/' +
+            '?scheduleTemplate=' + this.props.id +
+            '&ordering=dayOffset,startTime',
             'evTempl', 'etLoaded', 'etErr',
             function() {
                 // drop seconds. 11:00:00 → 11:00, 08:00:00 → 8:00

@@ -13,9 +13,11 @@ class UserViewSet(viewsets.ModelViewSet):
 
 class TimeZoneViewSet(viewsets.ModelViewSet):
     model = models.TimeZone
+    ordering_fields = ('name',)
 
 class ScheduleTemplateViewSet(viewsets.ModelViewSet):
     model = models.ScheduleTemplate
+    ordering_fields = ('name',)
 
 class EventTemplateViewSet(viewsets.ModelViewSet):
     model = models.EventTemplate
