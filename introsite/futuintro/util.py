@@ -66,7 +66,7 @@ def createUsers(jsonDumpFile):
         newUser = UM.objects.create_user(u['username'], u['email'],
                 u['first_name'], u['last_name'])
         # TODO: make HC and IT admins
-        if u['username'] == 'mbor':
+        if False:
             newUser.is_admin = True
         newUser.save()
 

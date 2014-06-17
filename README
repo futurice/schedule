@@ -2,6 +2,11 @@ Automate setting calendar invites for new employees
 
 Setup:
 =====
+Database (choose which database backend you use in settings.py):
+If you use PostgreSQL, create the database on the server, e.g.:
+bin/createdb futuintro
+If you use SQLite you don't need to do anything.
+
 Make a Python virtual environment however you prefer, then:
 pip install -r req.txt
 
@@ -24,13 +29,6 @@ go run dump-fum-users.go -o users.json «AccessToken»
 ./introsite/manage.py shell
 import futuintro.util
 futuintro.util.createUsers('users.json')
-
-Now you can type in the shell:
-from django.contrib.auth import get_user_model
-UM = get_user_model()
-u = UM.objects.get(username='mbor')
-s = u.supervisor
-s.supervisor_of.count()
 
 Populate your DB with Meeting Rooms (it asks the password for Google Admin):
 ./introsite/manage.py shell

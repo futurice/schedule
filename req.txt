@@ -6,3 +6,4 @@ gdata
 python-dateutil
 pytz
 django-extensions
+psycopg2
