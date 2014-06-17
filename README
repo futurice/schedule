@@ -40,7 +40,7 @@ Running:
 =======
 
 Start the webserver:
-REMOTE_USER=myusername ./introsite/manage.py shell runserver
+REMOTE_USER=myusername ./introsite/manage.py runserver
 
 Start the task-processor:
 ./introsite/manage.py shell
