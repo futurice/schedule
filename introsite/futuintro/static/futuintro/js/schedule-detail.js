@@ -106,14 +106,14 @@ var ScheduleDetail;
         render: function() {
             var m = this.props.model;
             return <div>
-                <a href={m.htmlLink}>{m.summary}</a>
+                <a href={m.htmlLink}>{m.summary || '(No title)'}</a>
                 <br/>
-                {m.description}
+                {m.description || '(No description)'}
                 <br/>
                 {new Date(m.start.dateTime).toString() + ' → ' +
                     new Date(m.end.dateTime).toString()}
                 <br/>
-                Where: {m.location}
+                Where: {m.location || '—'}
                 <br/>
                 Attendees:
                 <ul>
