@@ -1,0 +1,113 @@
+For some steps, you might need to log in to Google as
+email: futuschedule.admin@futurice.com
+FUM username: futuschedule
+
+Go to FUM, set the user's phone number to your own and set some password,
+then log in to Google.
+
+
+Linux User:
+==========
+Make a ‘futuschedule’ user.
+It will own the source code and have access to postgresql.
+
+
+Database:
+========
+Install PostgreSQL from package manager (maybe allow all local users access in
+pg_hba.conf).
+sudo su postgres
+createuser futuschedule
+createdb futuschedule
+
+syncdb as described in README.
+
+
+Source code:
+===========
+Check out the source code, e.g. in /home/futuschedule/futuschedule
+The app needs a few files (e.g. Google API Tokens) stored in your
+current working directory. To avoid accidentally deleting these when updating
+the source code, make a separate directory e.g. $HOME/config-files/ and always
+launch processes from there.
+
+Download the client-secrets.json to config-files/ as described in the README.
+Authorize the app to get a ‘a_credentials_file’ as described in the README,
+logging in to Google as the futuschedule user.
+
+Populate the FUM users as described in README.
+
+Populate the Meeting Rooms as described in README.
+
+
+Apache setup:
+============
+The wiki describes most of the Apache setup (e.g. for requiring FUM login).
+Access only via HTTPS.
+
+/etc/apache2/sites-available/default-ssl
+https://docs.djangoproject.com/en/dev/howto/deployment/wsgi/modwsgi/
+
+Alias /static/ /home/futuschedule/futuschedule/schedulesite/futuschedule/static/
+<Directory /home/futuschedule/futuschedule/schedulesite/futuschedule/static>
+# For Apache 2.4 or newer:
+#Require all granted
+
+# For Apache older than 2.4:
+#Order deny,allow
+#Allow from all
+</Directory>
+
+WSGIScriptAlias / /home/futuschedule/futuschedule/schedulesite/schedulesite/wsgi.py
+WSGIDaemonProcess futuschedule user=futuschedule group=futuschedule home=/home/futuschedule/config-files python-path=/home/futuschedule/futuschedule/schedulesite:/home/futuschedule/venv/lib/python2.7/site-packages
+WSGIProcessGroup futuschedule
+<Directory /home/futuschedule/futuschedule/schedulesite/schedulesite>
+        <Files wsgi.py>
+		# For Apache 2.4 or newer:
+		#Require all granted
+
+		# For Apache older than 2.4:
+		#Order deny,allow
+		#Allow from all
+        </Files>
+</Directory>
+
+
+Start the task-processor via Supervisor:
+=======================================
+apt-get install supervisor
+
+Remember to set startsecs=0 or it will behave weirdly.
+If you changed your config file and want the program to run again,
+use start then stop, don't use restart:
+sudo service supervisor stop
+sudo service supervisor start
+
+Create /home/futuschedule/config-files/run-task-processor.sh:
+---------------------------------------
+#! /usr/bin/env bash
+. /home/futuschedule/venv/bin/activate
+exec /home/futuschedule/futuschedule/schedulesite/manage.py shell <<<'
+from futuschedule.tasksched import loop
+loop()
+'
+---------------------------------------
+chmod u+x /home/futuschedule/config-files/run-task-processor.sh
+
+/etc/supervisor/supervisord.conf
+[program:task-processor]
+command=/home/futuschedule/config-files/run-task-processor.sh
+startsecs=0
+user=futuschedule
+directory=/home/futuschedule/config-files/
+autostart=true
+autorestart=true
+stdout_logfile=/home/futuschedule/config-files/task-processor-stdout
+stderr_logfile=/home/futuschedule/config-files/task-processor-stderr
+
+Stop&start the supervisor service (see above).
+
+When you redeploy, you can also just do:
+sudo supervisorctl stop task-processor
+# deploy new code
+sudo supervisorctl start task-processor

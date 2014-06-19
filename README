@@ -13,6 +13,9 @@ If you use SQLite you don't need to do anything.
 Make a Python virtual environment however you prefer, then:
 pip install -r req.txt
 
+Create all db tables (you may answer ‘no’ when asked to create an admin user):
+./schedulesite/manage.py syncdb
+
 You need a project in the Google Developers Console. Download its
 ‘client-secrets.json’ from there.
 
@@ -22,9 +25,6 @@ an access token in the URL fragment at the end.
 Credentials are stored in ‘a_credentials_file’ in your current dir.
 Trigger this e.g. with:
 ./schedulesite/manage.py test futuschedule
-
-Create all db tables (you may answer ‘no’ when asked to create an admin user):
-./schedulesite/manage.py syncdb
 
 Populate your DB with FUM users:
 ― Get a JSON dump of FUM users (you need an API token for FUM)
