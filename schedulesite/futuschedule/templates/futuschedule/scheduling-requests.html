@@ -1,0 +1,25 @@
+{% extends "futuschedule/base.html" %}
+
+{% block title %}Submitted Scheduling Requests{% endblock %}
+
+{% block body %}
+<h1>Scheduling Requests</h1>
+
+<p>
+Every time you select a group of one or more people and request new schedules
+to be created, your request is added to this list.
+After all the calendar events are created, it will link to the individual
+schedules.
+<br>
+Refresh this page to see any changes.
+</p>
+
+<div id="scheduling-requests-main-content">
+</div>
+
+<script type="text/jsx">
+/** @jsx React.DOM */
+React.renderComponent(<SchedulingRequestsList />,
+  document.getElementById('scheduling-requests-main-content'));
+</script>
+{% endblock %}

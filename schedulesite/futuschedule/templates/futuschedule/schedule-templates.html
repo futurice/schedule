@@ -1,0 +1,19 @@
+{% extends "futuschedule/base.html" %}
+
+{% block title %}Schedule Templates{% endblock %}
+
+{% block body %}
+<h1>Schedule Templates</h1>
+<p>
+A schedule template contains a series of events.
+</p>
+
+<div id="schedule-templates-main-content">
+</div>
+
+<script type="text/jsx">
+/** @jsx React.DOM */
+React.renderComponent(<ScheduleTemplatesList />,
+  document.getElementById('schedule-templates-main-content'));
+</script>
+{% endblock %}

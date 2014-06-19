@@ -1,48 +1,52 @@
-Automate setting calendar invites for new employees
+Create schedule templates and make Google Calendar Events for selected users.
+
+This file explains how to set up and run the project by hand.
+See the DEPLOY file for a suggested way of doing this on a remote server.
 
 Setup:
 =====
 Database (choose which database backend you use in settings.py):
 If you use PostgreSQL, create the database on the server, e.g.:
-bin/createdb futuintro
+createdb futuschedule
 If you use SQLite you don't need to do anything.
 
 Make a Python virtual environment however you prefer, then:
 pip install -r req.txt
 
-Download ‘client-secrets.json’ from Google Dev Console (currently a test app).
+You need a project in the Google Developers Console. Download its
+‘client-secrets.json’ from there.
 
 The first time the code needs Google OAuth, it looks for client-secrets.json
 in your current directory, prints a URL for you to authorize the app and get
 an access token in the URL fragment at the end.
 Credentials are stored in ‘a_credentials_file’ in your current dir.
 Trigger this e.g. with:
-./introsite/manage.py test futuintro
+./schedulesite/manage.py test futuschedule
 
-Create all db tables (and optionally add an admin user):
-./introsite/manage.py syncdb
+Create all db tables (you may answer ‘no’ when asked to create an admin user):
+./schedulesite/manage.py syncdb
 
 Populate your DB with FUM users:
 ― Get a JSON dump of FUM users (you need an API token for FUM)
 go run dump-fum-users.go -o users.json «AccessToken»
 ― Create Django users from this dump:
-./introsite/manage.py shell
-import futuintro.util
-futuintro.util.createUsers('users.json')
+./schedulesite/manage.py shell
+import futuschedule.util
+futuschedule.util.createUsers('users.json')
 
 Populate your DB with Meeting Rooms (it asks the password for Google Admin):
-./introsite/manage.py shell
-import futuintro.util
-futuintro.util.createMeetingRooms()
+./schedulesite/manage.py shell
+import futuschedule.util
+futuschedule.util.createMeetingRooms()
 
 
 Running:
 =======
 
 Start the webserver:
-REMOTE_USER=myusername ./introsite/manage.py runserver
+REMOTE_USER=myusername ./schedulesite/manage.py runserver
 
 Start the task-processor:
-./introsite/manage.py shell
-from futuintro.tasksched import loop
+./schedulesite/manage.py shell
+from futuschedule.tasksched import loop
 loop()
