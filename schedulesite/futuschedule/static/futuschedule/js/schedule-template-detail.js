@@ -5,9 +5,9 @@ var ScheduleTemplateDetail = React.createClass({
         id: React.PropTypes.number.isRequired
     },
     mixins: [
-        getRestLoaderMixin(apiRoot + 'timezones/', 'timezones',
+        getRestLoaderMixin(apiRoot + 'timezones/?ordering=name', 'timezones',
             'tzLoaded', 'tzErr'),
-        getRestLoaderMixin(apiRoot + 'calendars/', 'calendars',
+        getRestLoaderMixin(apiRoot + 'calendars/?ordering=email', 'calendars',
             'calLoaded', 'calErr'),
         getRestLoaderMixin(apiRoot + 'users/?ordering=first_name,last_name',
             'users', 'usersLoaded', 'usersErr',

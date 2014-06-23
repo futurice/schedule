@@ -20,9 +20,9 @@ var ScheduleTemplatesList = React.createClass({
         var f = compFetchRest.bind(this);
         f(apiRoot + 'scheduletemplates/?ordering=name', 'schedTempl',
             'schedTemplLoaded', 'schedTemplErr');
-        f(apiRoot + 'timezones/', 'timezones',
+        f(apiRoot + 'timezones/?ordering=name', 'timezones',
             'tzLoaded', 'tzErr');
-        f(apiRoot + 'calendars/', 'calendars',
+        f(apiRoot + 'calendars/?ordering=email', 'calendars',
             'calLoaded', 'calErr');
     },
     refresh: function() {
