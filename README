@@ -34,10 +34,10 @@ go run dump-fum-users.go -o users.json «AccessToken»
 import futuschedule.util
 futuschedule.util.updateUsers('users.json')
 
-Populate your DB with Meeting Rooms (it asks the password for Google Admin):
+Populate your DB with Meeting Rooms (you need the Google Admin password):
 ./schedulesite/manage.py shell
 import futuschedule.util
-futuschedule.util.createMeetingRooms()
+futuschedule.util.updateMeetingRooms('google.admin@futurice.com', '«pass»')
 
 
 Running:

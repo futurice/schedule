@@ -7,7 +7,6 @@ from oauth2client.file import Storage
 from django.contrib.auth import get_user_model
 from futuschedule.models import CalendarResource
 
-import getpass
 import httplib2
 import json
 
@@ -83,21 +82,22 @@ def updateUsers(jsonDumpFile):
                     username=userById[u['supervisor']]['username'])
             a.save()
 
-def createMeetingRooms():
-    username = 'google.admin@futurice.com'
-    psw = getpass.getpass('Password for ' + username + ': ')
+def updateMeetingRooms(email, password):
     client = CalendarResourceClient(domain='futurice.com')
-    client.ClientLogin(email=username, password=psw, source='test-futuschedule')
+    client.ClientLogin(email=email, password=password,
+            source='futuschedule')
     # TODO: pagination
     # In May 2014 only getting a single page of results and can't figure out
     # how to request few (e.g. 5) results per page to test pagination.
     calendar_resources = client.GetResourceFeed()
     for r in calendar_resources.get_elements():
         if r.tag == 'entry':
-            CalendarResource(
-                    resourceId=r.GetResourceId(),
-                    email=r.GetResourceEmail(),
-                    resourceType=r.GetResourceType() or '',
-                    name=r.GetResourceCommonName(),
-                    description=r.GetResourceDescription() or '',
-            ).save()
+            try:
+                obj = CalendarResource.objects.get(resourceId=r.GetResourceId())
+            except CalendarResource.DoesNotExist as e:
+                obj = CalendarResource(resourceId=r.GetResourceId)
+            obj.email=r.GetResourceEmail()
+            obj.resourceType=r.GetResourceType() or ''
+            obj.name=r.GetResourceCommonName()
+            obj.description=r.GetResourceDescription() or ''
+            obj.save()

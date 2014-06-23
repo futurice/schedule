@@ -18,8 +18,9 @@ Install PostgreSQL from package manager (maybe allow all local users access in
 pg_hba.conf).
 sudo su postgres
 createuser futuschedule
-createdb futuschedule
 
+# switch to futuschedule user
+createdb futuschedule
 syncdb as described in README.
 
 
@@ -58,7 +59,20 @@ Make a cron entry:
 
 Regularly update meeting rooms:
 ==============================
-Populate the Meeting Rooms as described in README.
+Create /home/futuschedule/config-files/update-meeting-rooms.sh:
+---------------------------------------
+#! /usr/bin/env bash
+cd /home/futuschedule/config-files/
+. /home/futuschedule/venv/bin/activate
+exec /home/futuschedule/futuschedule/schedulesite/manage.py shell <<<'
+import futuschedule.util
+futuschedule.util.updateMeetingRooms('google.admin@futurice.com', '«pass»')
+'
+---------------------------------------
+chmod u+x /home/futuschedule/config-files/update-meeting-rooms.sh
+
+Make a cron entry:
+*/15 * * * *	/home/futuschedule/config-files/update-meeting-rooms.sh >/home/futuschedule/config-files/update-meeting-rooms-out 2>/home/futuschedule/config-files/update-meeting-rooms-err
 
 
 Apache setup:
