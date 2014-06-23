@@ -87,10 +87,8 @@ Create /home/futuschedule/config-files/run-task-processor.sh:
 ---------------------------------------
 #! /usr/bin/env bash
 . /home/futuschedule/venv/bin/activate
-exec /home/futuschedule/futuschedule/schedulesite/manage.py shell <<<'
-from futuschedule.tasksched import loop
-loop()
-'
+cd /home/futuschedule/futuschedule/
+exec ./schedulesite/manage.py shell < task-processor.py
 ---------------------------------------
 chmod u+x /home/futuschedule/config-files/run-task-processor.sh
 

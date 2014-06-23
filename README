@@ -46,7 +46,5 @@ Running:
 Start the webserver:
 REMOTE_USER=myusername ./schedulesite/manage.py runserver
 
-Start the task-processor:
-./schedulesite/manage.py shell
-from futuschedule.tasksched import loop
-loop()
+Start the task-processor (kill with Ctrl+C (SIGINT) or SIGTERM):
+./schedulesite/manage.py shell < task-processor.py

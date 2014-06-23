@@ -16,6 +16,7 @@ from django.db import models
 from django.utils.timezone import utc
 import json
 import logging
+import signal
 import sys
 import time
 import traceback
@@ -49,21 +50,34 @@ def process(taskType, modelId):
     handler(modelId)
 
 
+_exitLoop = False
 def loop():
     """
     Loop forever looking for tasks and processing them in order.
     """
+    global _exitLoop
+    _exitLoop = False
+
+    def sigtermHandler(signum, frame):
+        global _exitLoop
+        logging.info('Received signal, ' +
+                'will end processing after current task completes')
+        _exitLoop = True
+    signal.signal(signal.SIGTERM, sigtermHandler)
+    signal.signal(signal.SIGINT, sigtermHandler)
+
     while True:
         try:
+            if _exitLoop:
+                logging.info('Task processing loop exiting')
+                return
             if not Task.objects.count():
-                time.sleep(1)
+                time.sleep(3)
                 continue
             minId = Task.objects.aggregate(models.Min('id'))['id__min']
             t = Task.objects.get(id=minId)
             t.delete()
             process(t.taskType, t.modelId)
-        except KeyboardInterrupt as e:
-            raise
         except:
             # recover from an unexpected exception thrown by the task processor
             logging.error(traceback.format_exc())
