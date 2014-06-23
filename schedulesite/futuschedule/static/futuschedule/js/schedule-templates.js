@@ -9,7 +9,11 @@ var ScheduleTemplatesList = React.createClass({
 
             timezones: [],
             tzLoaded: false,
-            tzErr: ''
+            tzErr: '',
+
+            calendars: [],
+            calLoaded: false,
+            calErr: ''
         };
     },
     fetchData: function() {
@@ -18,6 +22,8 @@ var ScheduleTemplatesList = React.createClass({
             'schedTemplLoaded', 'schedTemplErr');
         f(apiRoot + 'timezones/', 'timezones',
             'tzLoaded', 'tzErr');
+        f(apiRoot + 'calendars/', 'calendars',
+            'calLoaded', 'calErr');
     },
     refresh: function() {
         this.setState(this.getInitialState());
@@ -49,15 +55,21 @@ var ScheduleTemplatesList = React.createClass({
         });
     },
     render: function() {
-        if (this.state.schedTemplErr || this.state.tzErr) {
+        var errTxt;
+        ['schedTemplErr', 'tzErr', 'calErr'].forEach(function(f) {
+            errTxt = errTxt || this.state[f];
+        }, this);
+        if (errTxt) {
             return <div>
-                <span className="status-error">
-                    {this.state.schedTemplErr || this.state.tzErr}
-                </span>
+                <span className="status-error">{errTxt}</span>
             </div>;
         }
 
-        if (!(this.state.schedTemplLoaded && this.state.tzLoaded)) {
+        var loaded = true;
+        ['schedTemplLoaded', 'tzLoaded', 'calLoaded'].forEach(function(f) {
+            loaded = loaded && this.state[f];
+        }, this);
+        if (!loaded) {
             return <div>
                 <span className="status-waiting">Loading…</span>
             </div>;
@@ -74,6 +86,7 @@ var ScheduleTemplatesList = React.createClass({
                         <ScheduleTemplateSummary
                             model={st}
                             allTimezones={this.state.timezones}
+                            allCalendars={this.state.calendars}
                             onDelete={this.onDelete}
                             onUpdate={this.onUpdate}
                             />
@@ -83,6 +96,7 @@ var ScheduleTemplatesList = React.createClass({
                     <ScheduleTemplateSummary
                         model={null}
                         allTimezones={this.state.timezones}
+                        allCalendars={this.state.calendars}
                         onCreate={this.onCreate}
                         />
                 </li>
@@ -102,12 +116,14 @@ var ScheduleTemplateSummary = React.createClass({
         getPropModelClonerMixin({
             id: null,
             name: '',
-            timezone: null
+            timezone: null,
+            calendar: null
         }),
     ],
     propTypes: {
         model: React.PropTypes.object,
         allTimezones: React.PropTypes.array.isRequired,
+        allCalendars: React.PropTypes.array.isRequired,
 
         onCreate: React.PropTypes.func,
         onUpdate: React.PropTypes.func,
@@ -130,16 +146,6 @@ var ScheduleTemplateSummary = React.createClass({
         }
         return state;
     },
-    getTimezoneName: function(tzId) {
-        for (var i = 0; i < this.props.allTimezones.length; i++) {
-            var crt = this.props.allTimezones[i];
-            if (crt.id == tzId) {
-                return crt.name;
-            }
-        }
-        console.log('Unknown timezone ID', tzId);
-        return 'UNKONWN!';
-    },
     edit: function() {
         this.setState({
             editing: true,
@@ -154,8 +160,11 @@ var ScheduleTemplateSummary = React.createClass({
             ajaxErr: ''
         });
     },
-    handleChange: function(modelFieldName, event) {
+    handleChange: function(modelFieldName, convertToInt, event) {
         var val = getTargetValue(event);
+        if (convertToInt && typeof(val) == 'string') {
+            val = Number.parseInt(val) || 0;
+        }
 
         var m = clone(this.state.editModel);
         m[modelFieldName] = val;
@@ -257,8 +266,7 @@ var ScheduleTemplateSummary = React.createClass({
         if (!this.state.editing) {
             return <div>
                 <a href={'../schedule-template/' + this.props.model.id}>
-                    {this.props.model.name} {' '}
-                    ({this.getTimezoneName(this.props.model.timezone)})
+                    {this.props.model.name}
                 </a>
                 <button type="button"
                     onClick={this.edit}
@@ -278,18 +286,31 @@ var ScheduleTemplateSummary = React.createClass({
             <input type="text"
                 placeholder="Template Name…"
                 value={this.state.editModel.name}
-                onChange={this.handleChange.bind(this, 'name')}
+                onChange={this.handleChange.bind(this, 'name', false)}
                 disabled={this.state.ajaxInFlight}
                 />
             <select
                 value={this.state.editModel.timezone || 'null'}
-                onChange={this.handleChange.bind(this, 'timezone')}
+                onChange={this.handleChange.bind(this, 'timezone', true)}
                 disabled={this.state.ajaxInFlight}
                 >
                 <option value='null'>–</option>
                 {this.props.allTimezones.map(function(tz) {
                     // Don't need the key here, just silencing React warning
                     return <option key={tz.id} value={tz.id}>{tz.name}</option>;
+                })}
+            </select>
+            <select
+                value={this.state.editModel.calendar || 'null'}
+                onChange={this.handleChange.bind(this, 'calendar', true)}
+                disabled={this.state.ajaxInFlight}
+                >
+                <option value='null'>–</option>
+                {this.props.allCalendars.map(function(cal) {
+                    // Don't need the key here, just silencing React warning
+                    return <option key={cal.id} value={cal.id}>
+                        {cal.email}
+                    </option>;
                 })}
             </select>
             <button type="submit" disabled={this.state.ajaxInFlight}>

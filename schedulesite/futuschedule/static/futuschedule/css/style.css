@@ -50,6 +50,13 @@ ul#timezone-list {
 }
 
 
+/* Calendars */
+
+ul#calendar-list {
+	list-style-type: none;
+}
+
+
 /* Schedule Template List */
 
 ul#schedule-template-list {

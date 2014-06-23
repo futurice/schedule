@@ -14,8 +14,8 @@ from futuschedule import models, tasksched
 class GoogleCalendarTest(TestCase):
 
     def testCreateAndDeleteEvent(self):
-        calId = calendar.futuintroCalId
-        tzName = calendar.berlinTz
+        calId = 'futuintro@futurice.com'
+        tzName = 'Europe/Berlin'
 
         startDt = datetime.datetime.today() + datetime.timedelta(days=1)
         startDt = datetime.datetime(startDt.year, startDt.month, startDt.day,
@@ -58,8 +58,8 @@ class GoogleCalendarTest(TestCase):
 
 
     def testEmptyEventSummaryDescriptionLocation(self):
-        calId = calendar.futuintroCalId
-        tzName = calendar.berlinTz
+        calId = 'futuintro@futurice.com'
+        tzName = 'Europe/Berlin'
 
         startDt = datetime.datetime.today() + datetime.timedelta(days=1)
         startDt = datetime.datetime(startDt.year, startDt.month, startDt.day,
@@ -87,8 +87,8 @@ class GoogleCalendarTest(TestCase):
         size we're testing here, and the tests documents them.
         If it fails, it just means we have to reduce that maximum size.
         """
-        calId = calendar.futuintroCalId
-        tzName = calendar.berlinTz
+        calId = 'futuintro@futurice.com'
+        tzName = 'Europe/Berlin'
 
         startDt = datetime.datetime.today() + datetime.timedelta(days=1)
         startDt = datetime.datetime(startDt.year, startDt.month, startDt.day,
@@ -152,9 +152,10 @@ class ForeignKeyDeleteTest(TestCase):
         stras.save()
         damascus = models.TimeZone(name='Asia/Damascus')
         damascus.save()
+        cal = models.Calendar.objects.create(email='mycal@company.com')
 
         schedTempl = models.ScheduleTemplate(name='My SchedTempl',
-                timezone=stras)
+                timezone=stras, calendar=cal)
         schedTempl.save()
 
         damascus.delete()
@@ -162,10 +163,23 @@ class ForeignKeyDeleteTest(TestCase):
             stras.delete()
         schedTempl.delete()
 
+    def testDeleteCalendarUsedByScheduleTemplate(self):
+        tz = models.TimeZone.objects.create(name='Europe/Helsinki')
+        cal = models.Calendar.objects.create(email='mycal@company.com')
+        schedTempl = models.ScheduleTemplate(name='My SchedTempl',
+                timezone=tz, calendar=cal)
+        schedTempl.save()
+
+        with self.assertRaises(ProtectedError):
+            cal.delete()
+        schedTempl.delete()
+        cal.delete()
+
     def testDeleteScheduleTemplateDeletesEventTemplates(self):
         tz = models.TimeZone.objects.create(name='Europe/Helsinki')
+        cal = models.Calendar.objects.create(email='mycal@company.com')
         schedTempl = models.ScheduleTemplate.objects.create(name='My SchedT',
-                timezone=tz)
+                timezone=tz, calendar=cal)
         nowT = datetime.datetime.now().time()
         et = models.EventTemplate.objects.create(dayOffset=0,
                 startTime=nowT, endTime=nowT, scheduleTemplate=schedTempl)
@@ -176,8 +190,9 @@ class ForeignKeyDeleteTest(TestCase):
 
     def testCanDeleteRoomUsedByEventTemplate(self):
         tz = models.TimeZone.objects.create(name='Europe/Helsinki')
+        cal = models.Calendar.objects.create(email='mycal@company.com')
         schedTempl = models.ScheduleTemplate.objects.create(name='My SchedT',
-                timezone=tz)
+                timezone=tz, calendar=cal)
         room = models.CalendarResource.objects.create(name='basement')
         nowT = datetime.datetime.now().time()
         et = models.EventTemplate.objects.create(dayOffset=0,
@@ -188,8 +203,9 @@ class ForeignKeyDeleteTest(TestCase):
 
     def testDeleteUserInvitedToEventTemplate(self):
         tz = models.TimeZone.objects.create(name='Europe/Helsinki')
+        cal = models.Calendar.objects.create(email='mycal@company.com')
         schedTempl = models.ScheduleTemplate.objects.create(name='My SchedT',
-                timezone=tz)
+                timezone=tz, calendar=cal)
         nowT = datetime.datetime.now().time()
         et = models.EventTemplate.objects.create(dayOffset=0,
                 startTime=nowT, endTime=nowT, scheduleTemplate=schedTempl)

@@ -16,6 +16,9 @@ def root(request):
 def timezones(request):
     return render(request, 'futuschedule/timezones.html')
 
+def calendars(request):
+    return render(request, 'futuschedule/calendars.html')
+
 def scheduleTemplateDetail(request, st_id):
     context = {'st_id': st_id}
     return render(request, 'futuschedule/schedule-template-detail.html', context)

@@ -15,6 +15,10 @@ class TimeZoneViewSet(viewsets.ModelViewSet):
     model = models.TimeZone
     ordering_fields = ('name',)
 
+class CalendarViewSet(viewsets.ModelViewSet):
+    model = models.Calendar
+    ordering_fields = ('email',)
+
 class ScheduleTemplateViewSet(viewsets.ModelViewSet):
     model = models.ScheduleTemplate
     ordering_fields = ('name',)
@@ -50,6 +54,7 @@ router = routers.DefaultRouter()
 for prefix, viewset in {
         r'users': UserViewSet,
         r'timezones': TimeZoneViewSet,
+        r'calendars': CalendarViewSet,
         r'scheduletemplates': ScheduleTemplateViewSet,
         r'eventtemplates': EventTemplateViewSet,
         r'calendarresources': CalendarResourcesViewSet,

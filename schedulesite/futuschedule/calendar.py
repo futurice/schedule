@@ -2,13 +2,6 @@ import datetime
 from futuschedule import util
 
 
-# Calendar ID
-futuintroCalId = 'futuintro@futurice.com'
-
-helsinkiTz = 'Europe/Helsinki'
-berlinTz = 'Europe/Berlin'
-londonTz = 'Europe/London'
-
 def createEvent(calendarId, sendNotifications, summary, description, location,
         startDt, endDt, tzName, attendingEmails):
     """

@@ -7,6 +7,8 @@ var ScheduleTemplateDetail = React.createClass({
     mixins: [
         getRestLoaderMixin(apiRoot + 'timezones/', 'timezones',
             'tzLoaded', 'tzErr'),
+        getRestLoaderMixin(apiRoot + 'calendars/', 'calendars',
+            'calLoaded', 'calErr'),
         getRestLoaderMixin(apiRoot + 'users/?ordering=first_name,last_name',
             'users', 'usersLoaded', 'usersErr',
             function() {
@@ -89,6 +91,10 @@ var ScheduleTemplateDetail = React.createClass({
             timezones: [],
             tzLoaded: false,
             tzErr: '',
+
+            calendars: [],
+            calLoaded: false,
+            calErr: '',
 
             users: [],
             usersLoaded: false,
@@ -364,7 +370,8 @@ var ScheduleTemplateDetail = React.createClass({
         var v, i, fName;
 
         // check for error on initial load
-        v = ['tzErr', 'usersErr', 'roomsErr', 'etErr', 'schedTemplErr'];
+        v = ['tzErr', 'calErr', 'usersErr', 'roomsErr', 'etErr',
+          'schedTemplErr'];
         for (i = 0; i < v.length; i++) {
             fName = v[i];
             if (this.state[fName]) {
@@ -377,7 +384,7 @@ var ScheduleTemplateDetail = React.createClass({
         }
 
         // check if initial loading completed
-        v = ['tzLoaded', 'usersLoaded', 'roomsLoaded', 'etLoaded',
+        v = ['tzLoaded', 'calLoaded', 'usersLoaded', 'roomsLoaded', 'etLoaded',
           'schedTempl',
           'usersById', 'userTextById', 'alphabeticalUserIds', 'roomMSModel',
           'editEvTempl', 'evTemplAjaxErrors', 'editSchedTempl'];
@@ -469,6 +476,25 @@ var ScheduleTemplateDetail = React.createClass({
                             {this.state.timezones.map(function(tz) {
                                 return <option key={tz.id} value={tz.id}>
                                     {tz.name}
+                                </option>;
+                            })}
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <label>Calendar:</label>
+                    </td>
+                    <td>
+                        <select
+                            value={this.state.editSchedTempl.calendar}
+                            disabled={Boolean(this.state.ajaxInFlight)}
+                            onChange={this.handleSchedTemplateChange.bind(
+                                    this, 'calendar', true)}
+                            >
+                            {this.state.calendars.map(function(cal) {
+                                return <option key={cal.id} value={cal.id}>
+                                    {cal.email}
                                 </option>;
                             })}
                         </select>

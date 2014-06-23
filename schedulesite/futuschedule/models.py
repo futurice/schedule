@@ -89,12 +89,23 @@ class TimeZone(models.Model):
         ordering = ('name',)
 
 
+class Calendar(models.Model):
+    email = models.EmailField(max_length=300, unique=True)
+
+    def __unicode__(self):
+        return self.email
+
+    class Meta:
+        ordering = ('email',)
+
+
 class ScheduleTemplate(models.Model):
     """
     A set of event templates, e.g. 'New Employee Onboarding in Berlin'.
     """
-    name = models.CharField(max_length=200)
+    name = models.CharField(max_length=200, unique=True)
     timezone = models.ForeignKey(TimeZone, on_delete=models.PROTECT)
+    calendar = models.ForeignKey(Calendar, on_delete=models.PROTECT)
 
     def __unicode__(self):
         return self.name + ' (' + self.timezone.name + ')'

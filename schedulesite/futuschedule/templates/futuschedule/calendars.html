@@ -1,0 +1,22 @@
+{% extends "futuschedule/base.html" %}
+
+{% block title %}Calendars{% endblock %}
+
+{% block body %}
+<h1>Calendars</h1>
+<p>
+To create events on a calendar, we need the calendar's email address and we
+must authorize this app's Google Account on that calendar.
+<br>
+You may ask an administrator for help if you are not sure.
+</p>
+
+<div id="calendars-main-content">
+</div>
+
+<script type="text/jsx">
+/** @jsx React.DOM */
+React.renderComponent(<CalendarList />,
+  document.getElementById('calendars-main-content'));
+</script>
+{% endblock %}
