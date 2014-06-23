@@ -32,7 +32,7 @@ go run dump-fum-users.go -o users.json «AccessToken»
 ― Create Django users from this dump:
 ./schedulesite/manage.py shell
 import futuschedule.util
-futuschedule.util.createUsers('users.json')
+futuschedule.util.updateUsers('users.json')
 
 Populate your DB with Meeting Rooms (it asks the password for Google Admin):
 ./schedulesite/manage.py shell

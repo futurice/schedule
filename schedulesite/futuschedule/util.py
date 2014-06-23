@@ -44,11 +44,10 @@ def buildCalendarSvc():
     return build(serviceName='calendar', version='v3', http=http,
             developerKey='YOUR_DEVELOPER_KEY')
 
-def createUsers(jsonDumpFile):
+def updateUsers(jsonDumpFile):
     """
-    Create Users from a .json file dumped from FUM (see README).
+    Create or Update Users from a .json file dumped from FUM (see README).
 
-    This is a helper for DEV.
     The users we create will have different IDs than the json dump.
     """
     UM = get_user_model()
@@ -58,13 +57,20 @@ def createUsers(jsonDumpFile):
     userById = {u['id']: u for u in dump}
 
     for u in userById.values():
-        userById[u['id']] = u
         if not (u['username'] and u['email'] and u['first_name'] and u['last_name']):
             print('Skipping', u['username'], 'because of invalid fields')
             del userById[u['id']]
             continue
-        newUser = UM.objects.create_user(u['username'], u['email'],
-                u['first_name'], u['last_name'])
+
+        try:
+            newUser = UM.objects.get(username=u['username'])
+            newUser.email = u['email']
+            newUser.first_name = u['first_name']
+            newUser.last_name = u['last_name']
+        except UM.DoesNotExist as e:
+            newUser = UM.objects.create_user(u['username'], u['email'],
+                    u['first_name'], u['last_name'])
+
         # TODO: make HC and IT admins
         if False:
             newUser.is_admin = True

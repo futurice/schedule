@@ -35,8 +35,29 @@ Download the client-secrets.json to config-files/ as described in the README.
 Authorize the app to get a ‘a_credentials_file’ as described in the README,
 logging in to Google as the futuschedule user.
 
-Populate the FUM users as described in README.
 
+Regularly update FUM users:
+==========================
+Create /home/futuschedule/config-files/update-users.sh:
+---------------------------------------
+#! /usr/bin/env bash
+cd /home/futuschedule/config-files/
+go run /home/futuschedule/futuschedule/dump-fum-users.go \
+	-o users.json «FUM-API-Token»
+. /home/futuschedule/venv/bin/activate
+exec /home/futuschedule/futuschedule/schedulesite/manage.py shell <<<'
+import futuschedule.util
+futuschedule.util.updateUsers("users.json")
+'
+---------------------------------------
+chmod u+x /home/futuschedule/config-files/update-users.sh
+
+Make a cron entry:
+*/15 * * * *    /home/futuschedule/config-files/update-users.sh >/home/futuschedule/config-files/update-users-out 2>/home/futuschedule/config-files/update-users-err
+
+
+Regularly update meeting rooms:
+==============================
 Populate the Meeting Rooms as described in README.
 
 
@@ -87,8 +108,9 @@ Create /home/futuschedule/config-files/run-task-processor.sh:
 ---------------------------------------
 #! /usr/bin/env bash
 . /home/futuschedule/venv/bin/activate
-cd /home/futuschedule/futuschedule/
-exec ./schedulesite/manage.py shell < task-processor.py
+cd /home/futuschedule/config-files/
+exec /home/futuschedule/futuschedule/schedulesite/manage.py shell \
+	< /home/futuschedule/futuschedule/task-processor.py
 ---------------------------------------
 chmod u+x /home/futuschedule/config-files/run-task-processor.sh
 
