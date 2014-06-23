@@ -109,3 +109,10 @@ When you redeploy, you can also just do:
 sudo supervisorctl stop task-processor
 # deploy new code
 sudo supervisorctl start task-processor
+
+Warning: from the supervisor logs (with loglevel=debug) we see that
+supervisor stops monitoring the stdout/stderr file descriptors before sending
+SIGTERM to the correct child process ID, so the graceful exit message printed
+by the task processor doesn't show up in the text files.
+When we send that signal by hand we see the graceful exit message, so shutdown
+should happen ok this way.
