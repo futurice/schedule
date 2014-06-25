@@ -7,3 +7,4 @@ python-dateutil
 pytz
 django-extensions
 psycopg2
+fabric

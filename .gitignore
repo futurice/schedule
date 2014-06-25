@@ -2,3 +2,4 @@
 /a_credentials_file
 /users.json
 /env
+*.pyc

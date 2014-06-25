@@ -1,3 +1,15 @@
+This file has 2 sections:
+1. How to re-deploy the app to an existing server
+2. How to install on a new server
+
+1. How to re-deploy the app to an existing server
+=================================================
+fab [-u «your-ssh-username»] [-H «server.name»] deploy
+If you don't override them, your local username and the server in fabfile.py
+are used.
+
+2. How to install on a new server
+=================================
 For some steps, you might need to log in to Google as
 email: futuschedule.admin@futurice.com
 FUM username: futuschedule
