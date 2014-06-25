@@ -182,7 +182,9 @@ var SchedulingRequest = React.createClass({
             var clsName, txt;
             switch (this.props.model.status) {
                 case 'SUCCESS':
-                    return null;
+                    clsName = 'success';
+                    txt = 'Status: ' + this.props.model.status;
+                    break;
                 case 'ERROR':
                     clsName = 'error';
                     txt = 'Status: ' + this.props.model.status;

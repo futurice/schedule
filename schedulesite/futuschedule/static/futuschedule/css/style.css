@@ -13,6 +13,10 @@
 	background-color: DeepPink;
 }
 
+.success {
+	background-color: AquaMarine;
+}
+
 .status-waiting {
 	background-color: AliceBlue;
 }
