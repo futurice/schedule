@@ -111,9 +111,9 @@ var ScheduleDetail;
             var m = this.props.model;
             return <div>
                 <a href={m.htmlLink}>{m.summary || '(No title)'}</a>
-                <br/>
-                {m.description || '(No description)'}
-                <br/>
+                <div className="event-description">
+                    {m.description || '(No description)'}
+                </div>
                 {new Date(m.start.dateTime).toString() + ' → ' +
                     new Date(m.end.dateTime).toString()}
                 <br/>

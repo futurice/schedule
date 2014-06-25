@@ -152,3 +152,10 @@ ul.individual-events-list > li {
 table.new-event-fields td {
 	vertical-align: top;
 }
+
+
+/* Schedule Detail */
+
+div.event-description {
+	white-space: pre-wrap;
+}
