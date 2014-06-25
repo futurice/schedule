@@ -594,6 +594,23 @@ var EventTemplate = React.createClass({
             }).concat(addId)
         );
     },
+    shouldComponentUpdate: function(nextProps, nextState) {
+        // {k1: whatever, k2: function, k3: whatever} →
+        // {k1: whatever, k3: whatever}
+        function stripFuncProps(obj) {
+            var result = {};
+            Object.keys(obj).forEach(function(k) {
+                var v = obj[k];
+                if (typeof(v) == 'function') {
+                    return;
+                }
+                result[k] = v;
+            });
+            return result;
+        }
+        return !sameModels(nextState, this.state) ||
+            !sameModels(stripFuncProps(nextProps), stripFuncProps(this.props));
+    },
     render: function() {
         var errBox;
         if (this.props.errTxt) {

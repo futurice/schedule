@@ -126,6 +126,11 @@ function clone(obj) {
  * Keep this similar to clone().
  */
 function sameModels(a, b) {
+    // this ‘===’ test is meant as a shortcut way out
+    if (a === b) {
+        return true;
+    }
+
     var result = true, i;
 
     if (Array.isArray(a)) {
@@ -146,8 +151,8 @@ function sameModels(a, b) {
         return false;
     }
 
-    if (a == null || b == null) {
-        return a == b;
+    if (a === null || b === null) {
+        return a === b;
     }
 
     switch (typeof(a)) {
@@ -155,7 +160,7 @@ function sameModels(a, b) {
         case 'number':
         case 'string':
         case 'boolean':
-            return a == b;
+            return a === b;
 
         default:
             var aKeys = Object.keys(a).sort(), bKeys = Object.keys(b).sort();
