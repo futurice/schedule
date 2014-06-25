@@ -266,7 +266,22 @@ var ScheduleTemplateSummary = React.createClass({
         if (!this.state.editing) {
             return <div>
                 <a href={'../schedule-template/' + this.props.model.id}>
-                    {this.props.model.name}
+                    {(function() {
+                        var tzName = 'Unknown TimeZone';
+                        this.props.allTimezones.forEach(function(tz) {
+                            if (tz.id == this.props.model.timezone) {
+                                tzName = tz.name;
+                            }
+                        }, this);
+                        var calEmail = 'Unknown Calendar';
+                        this.props.allCalendars.forEach(function(cal) {
+                            if (cal.id == this.props.model.calendar) {
+                                calEmail = cal.email;
+                            }
+                        }, this);
+                        return this.props.model.name +
+                            ' (' + tzName + ', ' + calEmail + ')';
+                    }).bind(this)()}
                 </a>
                 <button type="button"
                     onClick={this.edit}

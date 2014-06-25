@@ -506,15 +506,31 @@ var ScheduleTemplateDetail = React.createClass({
                     }).bind(this))}
 
                     <li>
+                        {
+                            /*
+                            Help the user save more often, and reduce confusion
+                            about what's saved and what's not, by requiring
+                            them to save their changes before adding a new
+                            event template.
+                            */
+                        }
                         <form id="add-event-template"
                             onSubmit={this.createEventTemplate}>
+                            {hasUnsavedChanges ?
+                                <div><span className="info">
+                                    Please save your changes (or undo them)
+                                    before adding a new Event Template
+                                </span></div>
+                            : ''}
                             <label>Add an event template:</label>
                             <input type="text" placeholder="Event Summary…"
                                 value={this.state.newEventSummary}
                                 onChange={this.handleChangeNewEvent}
-                                disabled={this.state.ajaxInFlight} />
+                                disabled={this.state.ajaxInFlight ||
+                                    hasUnsavedChanges} />
                             <button type="submit"
-                                disabled={this.state.ajaxInFlight}>
+                                disabled={this.state.ajaxInFlight ||
+                                    hasUnsavedChanges}>
                                 + Add
                             </button>
                         </form>
@@ -648,6 +664,27 @@ var EventTemplate = React.createClass({
             </tr>
 
             <tr>
+                <td><label>Event Type:</label></td>
+                <td>
+                    <select
+                        disabled={this.props.disabled}
+                        value={this.props.model.isCollective ? 'true' :
+                            'false'}
+                        onChange={this.handleChange.bind(this,
+                                'isCollective', false)}
+                        >
+                        <option value='true'>
+                            Common (invite all employees to the same event)
+                        </option>
+                        <option value='false'>
+                            Individual (one separate event for each
+                                    employee)
+                        </option>
+                    </select>
+                </td>
+            </tr>
+
+            <tr>
                 <td><label>Locations:</label></td>
                 <td>
                     <MultiSelect
@@ -699,27 +736,6 @@ var EventTemplate = React.createClass({
                         value={this.props.model.endTime}
                         onChange={this.handleChange.bind(this, 'endTime', false)}
                         />
-                </td>
-            </tr>
-
-            <tr>
-                <td><label>Event Type:</label></td>
-                <td>
-                    <select
-                        disabled={this.props.disabled}
-                        value={this.props.model.isCollective ? 'true' :
-                            'false'}
-                        onChange={this.handleChange.bind(this,
-                                'isCollective', false)}
-                        >
-                        <option value='true'>
-                            Common (invite all employees to the same event)
-                        </option>
-                        <option value='false'>
-                            Individual (one separate event for each
-                                    employee)
-                        </option>
-                    </select>
                 </td>
             </tr>
 
