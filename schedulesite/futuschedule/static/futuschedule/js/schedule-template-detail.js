@@ -180,27 +180,12 @@ var ScheduleTemplateDetail = React.createClass({
             }).bind(this)
         });
     },
-    getEditModelIdx: function(model) {
-        var i, v = this.state.editEvTempl;
-        for (i = 0; i < v.length; i++) {
-            if (v[i] == model) {
-                return i;
-            }
-        }
-        return -1;
-    },
-    deleteEventTemplate: function(model) {
-        var i = this.getEditModelIdx(model);
-        if (i == -1) {
-            console.error('Model to delete not found', model);
-            return;
-        }
-
+    deleteEventTemplate: function(idx) {
         this.setState({
             ajaxInFlight: 'Deleting…'
         });
         $.ajax({
-            url: apiRoot + 'eventtemplates/' + model.id + '/',
+            url: apiRoot + 'eventtemplates/' + this.state.evTempl[idx].id + '/',
             type: 'DELETE',
             headers: {'X-CSRFToken': $.cookie('csrftoken')},
             complete: (function(data) {
@@ -213,7 +198,7 @@ var ScheduleTemplateDetail = React.createClass({
                     editEvTempl = this.state.editEvTempl.concat(),
                     evTemplAjaxErrors = this.state.evTemplAjaxErrors.concat();
                 [evTempl, editEvTempl, evTemplAjaxErrors].forEach(function(a) {
-                    a.splice(i, 1);
+                    a.splice(idx, 1);
                 });
 
                 this.setState({
@@ -227,7 +212,7 @@ var ScheduleTemplateDetail = React.createClass({
             error: (function(xhr, txtStatus, saveErr) {
                 var errTxt = getAjaxErr.apply(this, arguments);
                 var evTemplAjaxErrors = this.state.evTemplAjaxErrors.concat();
-                evTemplAjaxErrors[i] = errTxt;
+                evTemplAjaxErrors[idx] = errTxt;
 
                 this.setState({
                     ajaxErr: errTxt,
@@ -250,15 +235,9 @@ var ScheduleTemplateDetail = React.createClass({
         }
         this.schedTemplFieldEdit(fieldName, val);
     },
-    evTemplFieldEdit: function(model, fieldName, newValue) {
-        var i = this.getEditModelIdx(model);
-        if (i == -1) {
-            console.error('Model not found', model);
-            return;
-        }
-
+    evTemplFieldEdit: function(idx, fieldName, newValue) {
         var editEvTempl = clone(this.state.editEvTempl);
-        editEvTempl[i][fieldName] = newValue;
+        editEvTempl[idx][fieldName] = newValue;
         this.setState({
             editEvTempl: editEvTempl
         });
@@ -518,8 +497,10 @@ var ScheduleTemplateDetail = React.createClass({
                                 roomMSModel={this.state.roomMSModel}
                                 disabled={Boolean(this.state.ajaxInFlight)}
                                 errTxt={this.state.evTemplAjaxErrors[i]}
-                                onDelete={this.deleteEventTemplate}
-                                onFieldEdit={this.evTemplFieldEdit}
+                                onDelete={this.deleteEventTemplate.bind(
+                                    this, i)}
+                                onFieldEdit={this.evTemplFieldEdit.bind(
+                                    this, i)}
                             />
                         </li>;
                     }).bind(this))}
@@ -547,247 +528,242 @@ var ScheduleTemplateDetail = React.createClass({
 });
 
 
-var EventTemplate = (function() {
-    var EventTemplate = React.createClass({
-        propTypes: {
-            model: React.PropTypes.object.isRequired,
+var EventTemplate = React.createClass({
+    propTypes: {
+        model: React.PropTypes.object.isRequired,
 
-            // needed by <MultiSelect/>
-            userTextById: React.PropTypes.object.isRequired,
-            alphabeticalUserIds: React.PropTypes.array.isRequired,
+        // needed by <MultiSelect/>
+        userTextById: React.PropTypes.object.isRequired,
+        alphabeticalUserIds: React.PropTypes.array.isRequired,
 
-            roomMSModel: React.PropTypes.object.isRequired,
-            // disable all input fields and buttons, e.g. during the parent's
-            // ajax requests
-            disabled: React.PropTypes.bool.isRequired,
-            errTxt: React.PropTypes.string.isRequired,
-            // onDelete(model)
-            onDelete: React.PropTypes.func.isRequired,
-            // onFieldEdit(model, fieldName, newValue)
-            onFieldEdit: React.PropTypes.func.isRequired
-        },
-        handleDelete: function() {
-            this.props.onDelete(this.props.model);
-        },
-        handleChange: function(fieldName, convertToInt, ev) {
-            var val = getTargetValue(ev);
-            if (convertToInt && typeof(val) == 'string') {
-                val = Number.parseInt(val) || 0;
-            }
-            this.props.onFieldEdit(this.props.model, fieldName, val);
-        },
-        handleIntBlur: function(fieldName, ev) {
-            var val = Number.parseInt(ev.target.value) || 0;
-            this.props.onFieldEdit(this.props.model, fieldName, val);
-        },
-        removeInvitee: function(removeId) {
-            this.props.onFieldEdit(this.props.model, 'otherInvitees',
-                    this.props.model.otherInvitees.filter(function(id) {
-                        return id != removeId;
-                    })
-                );
-        },
-        addInvitee: function(addId) {
-            for (var i = 0; i < this.props.model.otherInvitees.length; i++) {
-                if (this.props.model.otherInvitees[i] == addId) {
-                    // person already invited
-                    return;
-                }
-            }
-            if (!(addId in this.props.userTextById)) {
-                console.error('No user with id', addId);
-                return;
-            }
-            this.props.onFieldEdit(this.props.model, 'otherInvitees',
-                    this.props.model.otherInvitees.concat(addId));
-        },
-        removeRoom: function(removeId) {
-            this.props.onFieldEdit(this.props.model, 'locations',
-                this.props.model.locations.filter(function(id) {
+        roomMSModel: React.PropTypes.object.isRequired,
+        // disable all input fields and buttons, e.g. during the parent's
+        // ajax requests
+        disabled: React.PropTypes.bool.isRequired,
+        errTxt: React.PropTypes.string.isRequired,
+        onDelete: React.PropTypes.func.isRequired,
+        // onFieldEdit(fieldName, newValue)
+        onFieldEdit: React.PropTypes.func.isRequired
+    },
+    handleDelete: function() {
+        this.props.onDelete();
+    },
+    handleChange: function(fieldName, convertToInt, ev) {
+        var val = getTargetValue(ev);
+        if (convertToInt && typeof(val) == 'string') {
+            val = Number.parseInt(val) || 0;
+        }
+        this.props.onFieldEdit(fieldName, val);
+    },
+    handleIntBlur: function(fieldName, ev) {
+        var val = Number.parseInt(ev.target.value) || 0;
+        this.props.onFieldEdit(fieldName, val);
+    },
+    removeInvitee: function(removeId) {
+        this.props.onFieldEdit('otherInvitees',
+                this.props.model.otherInvitees.filter(function(id) {
                     return id != removeId;
                 })
             );
-        },
-        addRoom: function(addId) {
-            this.props.onFieldEdit(this.props.model, 'locations',
-                this.props.model.locations.filter(function(id) {
-                    return id != addId;
-                }).concat(addId)
-            );
-        },
-        render: function() {
-            var errBox;
-            if (this.props.errTxt) {
-                errBox = <div>
-                    <span className="status-error">{this.props.errTxt}</span>
-                </div>;
+    },
+    addInvitee: function(addId) {
+        for (var i = 0; i < this.props.model.otherInvitees.length; i++) {
+            if (this.props.model.otherInvitees[i] == addId) {
+                // person already invited
+                return;
             }
-
-            return <div>
-                <table className="event-template-fields">
-                <tr>
-                    <td><label>Summary:</label></td>
-                    <td>
-                        <input type="text"
-                            className="event-summary"
-                            disabled={this.props.disabled}
-                            value={this.props.model.summary}
-                            onChange={this.handleChange.bind(
-                                    this, 'summary', false)}
-                            />
-                    </td>
-                </tr>
-
-                <tr>
-                    <td><label>Description:</label></td>
-                    <td>
-                        <textarea
-                            className="event-description"
-                            disabled={this.props.disabled}
-                            value={this.props.model.description}
-                            onChange={this.handleChange.bind(
-                                    this, 'description', false)}
-                            />
-                    </td>
-                </tr>
-
-                <tr>
-                    <td><label>Locations:</label></td>
-                    <td>
-                        <MultiSelect
-                            disabled={this.props.disabled}
-                            itemTextById={this.props.roomMSModel.itemTextById}
-                            sortedIds={this.props.roomMSModel.sortedIds}
-                            selectedIds={this.props.model.locations}
-                            onRemove={this.removeRoom}
-                            onAdd={this.addRoom}
-                        />
-                    </td>
-                </tr>
-
-                <tr>
-                    <td>
-                        <abbr title={'How many calendar days ' +
-                            'to add or subtract from the start date.\n' +
-                            '0 = the start date\n' +
-                            '1 = the day after the start date\n' +
-                            '-7 = one week before the start date'}>
-                            Day offset
-                        </abbr>:
-                    </td>
-                    <td>
-                        <input type="number"
-                            disabled={this.props.disabled}
-                            value={this.props.model.dayOffset}
-                            onChange={this.handleChange.bind(
-                                    this, 'dayOffset', false)}
-                            // If the user types 'hello' or '-' for '-3'
-                            // only convert it to a number (0 for invalid
-                            // strings) on blur
-                            onBlur={this.handleIntBlur.bind(this, 'dayOffset')}
-                            />
-                    </td>
-                </tr>
-
-                <tr>
-                    <td><label>From:</label></td>
-                    <td>
-                        <input type="time"
-                            disabled={this.props.disabled}
-                            value={this.props.model.startTime}
-                            onChange={this.handleChange.bind(this, 'startTime', false)}
-                            />
-                        to
-                        <input type="time"
-                            disabled={this.props.disabled}
-                            value={this.props.model.endTime}
-                            onChange={this.handleChange.bind(this, 'endTime', false)}
-                            />
-                    </td>
-                </tr>
-
-                <tr>
-                    <td><label>Event Type:</label></td>
-                    <td>
-                        <select
-                            disabled={this.props.disabled}
-                            value={this.props.model.isCollective ? 'true' :
-                                'false'}
-                            onChange={this.handleChange.bind(this,
-                                    'isCollective', false)}
-                            >
-                            <option value='true'>
-                                Common (invite all employees to the same event)
-                            </option>
-                            <option value='false'>
-                                Individual (one separate event for each
-                                        employee)
-                            </option>
-                        </select>
-                    </td>
-                </tr>
-
-                <tr>
-                    <td>Participants:</td>
-                    <td>
-                        <input type="checkbox"
-                            disabled={this.props.disabled}
-                            checked={this.props.model.inviteEmployees}
-                            onChange={this.handleChange.bind(this,
-                                    'inviteEmployees', false)}
-                            />
-                            Invite employee{this.props.model.isCollective ?
-                                's' : ''}
-                    </td>
-                </tr>
-
-                <tr>
-                    <td></td>
-                    <td>
-                        <input type="checkbox"
-                            disabled={this.props.disabled}
-                            checked={this.props.model.inviteSupervisors}
-                            onChange={this.handleChange.bind(this,
-                                    'inviteSupervisors', false)}
-                            />
-                            Invite supervisor{this.props.model.isCollective ?
-                                's' : ''}
-                    </td>
-                </tr>
-
-                <tr>
-                    <td><label>Other participants:</label></td>
-                    <td>
-                        <MultiSelect
-                            itemTextById={this.props.userTextById}
-                            sortedIds={this.props.alphabeticalUserIds}
-                            selectedIds={this.props.model.otherInvitees}
-                            onRemove={this.removeInvitee}
-                            onAdd={this.addInvitee}
-                            disabled={this.props.disabled}
-                            />
-                    </td>
-                </tr>
-
-                <tr>
-                    <td></td>
-                    <td>
-                    </td>
-                </tr>
-                </table>
-
-                <br/>
-
-                <button type="button"
-                    onClick={this.handleDelete}
-                    disabled={this.props.disabled}
-                    >
-                    Delete
-                </button>
-                {errBox}
+        }
+        if (!(addId in this.props.userTextById)) {
+            console.error('No user with id', addId);
+            return;
+        }
+        this.props.onFieldEdit('otherInvitees',
+                this.props.model.otherInvitees.concat(addId));
+    },
+    removeRoom: function(removeId) {
+        this.props.onFieldEdit('locations',
+            this.props.model.locations.filter(function(id) {
+                return id != removeId;
+            })
+        );
+    },
+    addRoom: function(addId) {
+        this.props.onFieldEdit('locations',
+            this.props.model.locations.filter(function(id) {
+                return id != addId;
+            }).concat(addId)
+        );
+    },
+    render: function() {
+        var errBox;
+        if (this.props.errTxt) {
+            errBox = <div>
+                <span className="status-error">{this.props.errTxt}</span>
             </div>;
         }
-    });
 
-    return EventTemplate;
-})();
+        return <div>
+            <table className="event-template-fields">
+            <tr>
+                <td><label>Summary:</label></td>
+                <td>
+                    <input type="text"
+                        className="event-summary"
+                        disabled={this.props.disabled}
+                        value={this.props.model.summary}
+                        onChange={this.handleChange.bind(
+                                this, 'summary', false)}
+                        />
+                </td>
+            </tr>
+
+            <tr>
+                <td><label>Description:</label></td>
+                <td>
+                    <textarea
+                        className="event-description"
+                        disabled={this.props.disabled}
+                        value={this.props.model.description}
+                        onChange={this.handleChange.bind(
+                                this, 'description', false)}
+                        />
+                </td>
+            </tr>
+
+            <tr>
+                <td><label>Locations:</label></td>
+                <td>
+                    <MultiSelect
+                        disabled={this.props.disabled}
+                        itemTextById={this.props.roomMSModel.itemTextById}
+                        sortedIds={this.props.roomMSModel.sortedIds}
+                        selectedIds={this.props.model.locations}
+                        onRemove={this.removeRoom}
+                        onAdd={this.addRoom}
+                    />
+                </td>
+            </tr>
+
+            <tr>
+                <td>
+                    <abbr title={'How many calendar days ' +
+                        'to add or subtract from the start date.\n' +
+                        '0 = the start date\n' +
+                        '1 = the day after the start date\n' +
+                        '-7 = one week before the start date'}>
+                        Day offset
+                    </abbr>:
+                </td>
+                <td>
+                    <input type="number"
+                        disabled={this.props.disabled}
+                        value={this.props.model.dayOffset}
+                        onChange={this.handleChange.bind(
+                                this, 'dayOffset', false)}
+                        // If the user types 'hello' or '-' for '-3'
+                        // only convert it to a number (0 for invalid
+                        // strings) on blur
+                        onBlur={this.handleIntBlur.bind(this, 'dayOffset')}
+                        />
+                </td>
+            </tr>
+
+            <tr>
+                <td><label>From:</label></td>
+                <td>
+                    <input type="time"
+                        disabled={this.props.disabled}
+                        value={this.props.model.startTime}
+                        onChange={this.handleChange.bind(this, 'startTime', false)}
+                        />
+                    to
+                    <input type="time"
+                        disabled={this.props.disabled}
+                        value={this.props.model.endTime}
+                        onChange={this.handleChange.bind(this, 'endTime', false)}
+                        />
+                </td>
+            </tr>
+
+            <tr>
+                <td><label>Event Type:</label></td>
+                <td>
+                    <select
+                        disabled={this.props.disabled}
+                        value={this.props.model.isCollective ? 'true' :
+                            'false'}
+                        onChange={this.handleChange.bind(this,
+                                'isCollective', false)}
+                        >
+                        <option value='true'>
+                            Common (invite all employees to the same event)
+                        </option>
+                        <option value='false'>
+                            Individual (one separate event for each
+                                    employee)
+                        </option>
+                    </select>
+                </td>
+            </tr>
+
+            <tr>
+                <td>Participants:</td>
+                <td>
+                    <input type="checkbox"
+                        disabled={this.props.disabled}
+                        checked={this.props.model.inviteEmployees}
+                        onChange={this.handleChange.bind(this,
+                                'inviteEmployees', false)}
+                        />
+                        Invite employee{this.props.model.isCollective ?
+                            's' : ''}
+                </td>
+            </tr>
+
+            <tr>
+                <td></td>
+                <td>
+                    <input type="checkbox"
+                        disabled={this.props.disabled}
+                        checked={this.props.model.inviteSupervisors}
+                        onChange={this.handleChange.bind(this,
+                                'inviteSupervisors', false)}
+                        />
+                        Invite supervisor{this.props.model.isCollective ?
+                            's' : ''}
+                </td>
+            </tr>
+
+            <tr>
+                <td><label>Other participants:</label></td>
+                <td>
+                    <MultiSelect
+                        itemTextById={this.props.userTextById}
+                        sortedIds={this.props.alphabeticalUserIds}
+                        selectedIds={this.props.model.otherInvitees}
+                        onRemove={this.removeInvitee}
+                        onAdd={this.addInvitee}
+                        disabled={this.props.disabled}
+                        />
+                </td>
+            </tr>
+
+            <tr>
+                <td></td>
+                <td>
+                </td>
+            </tr>
+            </table>
+
+            <br/>
+
+            <button type="button"
+                onClick={this.handleDelete}
+                disabled={this.props.disabled}
+                >
+                Delete
+            </button>
+            {errBox}
+        </div>;
+    }
+});
