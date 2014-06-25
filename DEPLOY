@@ -54,7 +54,7 @@ futuschedule.util.updateUsers("users.json")
 chmod u+x /home/futuschedule/config-files/update-users.sh
 
 Make a cron entry:
-*/15 * * * *    /home/futuschedule/config-files/update-users.sh >/home/futuschedule/config-files/update-users-out 2>/home/futuschedule/config-files/update-users-err
+*/15 * * * *    bash --login /home/futuschedule/config-files/update-users.sh >/home/futuschedule/config-files/update-users-out 2>/home/futuschedule/config-files/update-users-err
 
 
 Regularly update meeting rooms:
