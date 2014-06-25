@@ -95,7 +95,7 @@ def updateMeetingRooms(email, password):
             try:
                 obj = CalendarResource.objects.get(resourceId=r.GetResourceId())
             except CalendarResource.DoesNotExist as e:
-                obj = CalendarResource(resourceId=r.GetResourceId)
+                obj = CalendarResource(resourceId=r.GetResourceId())
             obj.email=r.GetResourceEmail()
             obj.resourceType=r.GetResourceType() or ''
             obj.name=r.GetResourceCommonName()
