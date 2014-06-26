@@ -173,6 +173,7 @@ var NewSchedule;
                     scheduleTemplate={schedTemplObj}
                     startDate={this.state.startDate}
                     users={this.state.users}
+                    usersById={this.state.usersById}
                     userTextById={this.state.userTextById}
                     alphabeticalUserIds={this.state.alphabeticalUserIds}
                     selectedUsers={this.state.selectedUsers}
@@ -294,6 +295,7 @@ var NewSchedule;
             scheduleTemplate: React.PropTypes.object.isRequired,
             startDate: React.PropTypes.string.isRequired,
             users: React.PropTypes.array.isRequired,
+            usersById: React.PropTypes.object.isRequired,
             userTextById: React.PropTypes.object.isRequired,
             alphabeticalUserIds: React.PropTypes.array.isRequired,
             selectedUsers: React.PropTypes.array.isRequired,
@@ -317,7 +319,7 @@ var NewSchedule;
                     var startDate = new Date(this.props.startDate);
                     var dayMillis = 1000*60*60*24;
 
-                    function eventFromTemplate(et, forUsers) {
+                    var eventFromTemplate = (function (et, forUsers) {
                         var result = clone(et);
 
                         delete result.scheduleTemplate;
@@ -358,6 +360,7 @@ var NewSchedule;
                         }
                         delete result.inviteEmployees;
 
+                        var userIdsWithoutSupervisor = [];
                         if (result.inviteSupervisors) {
                             forUsers.forEach(function(u) {
                                 var s_id = u.supervisor;
@@ -371,15 +374,27 @@ var NewSchedule;
                                     if (!existing) {
                                         result.invitees.push(s_id);
                                     }
+                                } else {
+                                    userIdsWithoutSupervisor.push(u.id);
                                 }
                             });
                         }
                         delete result.inviteSupervisors;
 
+                        result.supervisorWarning = '';
+                        if (userIdsWithoutSupervisor.length) {
+                            result.supervisorWarning = 'The template invites ' +
+                                'supervisors, but there\'s no supervisor for ' +
+                                enumSentence(
+                                        userIdsWithoutSupervisor.map(function(uid) {
+                                            return getUserName(uid, this.props.usersById);
+                                        }, this)) + '.';
+                        }
+
                         delete result.isCollective;
 
                         return result;
-                    }
+                    }).bind(this);
 
                     // create event groups
                     var evGroups = this.state.evTempl.map((function(et) {
@@ -481,8 +496,17 @@ var NewSchedule;
                 ajaxInFlight: 'Creating…'
             });
 
-            // TODO: disable buttons during AJAX call and handle errors
-
+            // The items in evGroups have extra fields, like the warning about
+            // a missing supervisor, which we don't send to the endpoint.
+            function getDataToSend(evGrp) {
+                var result = {};
+                ['summary', 'description', 'locations', 'date', 'startTime',
+                    'endTime', 'invitees', 'eventTemplate'
+                ].forEach(function(fName) {
+                    result[fName] = clone(evGrp);
+                });
+                return result;
+            }
             $.ajax({
                 url: '/futuschedule/create-schedules/',
                 type: 'POST',
@@ -507,7 +531,7 @@ var NewSchedule;
                                     meta: {
                                         isCollective: true
                                     },
-                                    data: clone(this.state.evGroups[idx])
+                                    data: getDataToSend(this.state.evGroups[idx])
                                 });
                             } else {
                                 this.props.selectedUsers.forEach((function(u, j) {
@@ -517,7 +541,7 @@ var NewSchedule;
                                                 isCollective: false,
                                                 forUser: u.id
                                             },
-                                            data: clone(this.state.evGroups[idx][j])
+                                            data: getDataToSend(this.state.evGroups[idx][j])
                                         });
                                     }
                                 }).bind(this));
@@ -789,7 +813,7 @@ var NewSchedule;
                             value={this.props.model.startTime}
                             onChange={this.handleChange.bind(this, 'startTime', false)}
                             />
-                        to
+                        {' to '}
                         <input type="time"
                             disabled={this.props.disabled}
                             value={this.props.model.endTime}
@@ -802,6 +826,11 @@ var NewSchedule;
                         <label>People to invite:</label>
                     </td>
                     <td>
+                        {this.props.model.supervisorWarning ?
+                            <span className="warn">
+                                {this.props.model.supervisorWarning}
+                            </span>
+                        : ''}
                         <MultiSelect
                             itemTextById={this.props.userTextById}
                             sortedIds={this.props.alphabeticalUserIds}
