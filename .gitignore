@@ -3,3 +3,4 @@
 /users.json
 /env
 *.pyc
+/schedulesite/schedulesite/ext_settings.py
