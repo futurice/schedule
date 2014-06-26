@@ -606,12 +606,6 @@ var NewSchedule;
                                 }
                                 return <li key={j}>
                                     <b>Event for {fullName}</b>
-                                    <button type="button"
-                                        onClick={this.deleteIndividualEvent.bind(this, idx, j)}
-                                        disabled={this.shouldDisable()}
-                                        >
-                                        Delete
-                                    </button>
                                     <EventEditor
                                         disabled={this.shouldDisable()}
                                         model={ev}
@@ -623,6 +617,12 @@ var NewSchedule;
                                             this.handleEventFieldEdit.bind(
                                                 this, idx, j)}
                                     />
+                                    <button type="button"
+                                        onClick={this.deleteIndividualEvent.bind(this, idx, j)}
+                                        disabled={this.shouldDisable()}
+                                        >
+                                        ✗ Delete
+                                    </button>
                                 </li>;
                             }).bind(this))}
                         </ul>;
@@ -642,7 +642,7 @@ var NewSchedule;
                         <button type="button"
                             disabled={this.shouldDisable()}
                             onClick={this.deleteEventAndGroup.bind(this, idx)}>
-                            Delete
+                            ✗ Delete
                         </button>
                     </li>;
                 }).bind(this))}

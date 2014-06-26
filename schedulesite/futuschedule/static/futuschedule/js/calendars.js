@@ -165,6 +165,10 @@ var Calendar = React.createClass({
         });
     },
     delete: function() {
+        if (!confirm('Delete ' + this.props.model.email + '?')) {
+            return;
+        }
+
         this.setState({
             reqInFlight: 'Deleting…'
         });

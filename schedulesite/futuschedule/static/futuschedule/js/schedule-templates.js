@@ -309,7 +309,7 @@ var ScheduleTemplateSummary = React.createClass({
                 onChange={this.handleChange.bind(this, 'timezone', true)}
                 disabled={this.state.ajaxInFlight}
                 >
-                <option value='null'>–</option>
+                <option value='null'>TimeZone…</option>
                 {this.props.allTimezones.map(function(tz) {
                     // Don't need the key here, just silencing React warning
                     return <option key={tz.id} value={tz.id}>{tz.name}</option>;
@@ -320,7 +320,7 @@ var ScheduleTemplateSummary = React.createClass({
                 onChange={this.handleChange.bind(this, 'calendar', true)}
                 disabled={this.state.ajaxInFlight}
                 >
-                <option value='null'>–</option>
+                <option value='null'>Calendar…</option>
                 {this.props.allCalendars.map(function(cal) {
                     // Don't need the key here, just silencing React warning
                     return <option key={cal.id} value={cal.id}>

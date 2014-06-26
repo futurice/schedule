@@ -253,6 +253,12 @@ var ScheduleTemplateDetail = React.createClass({
             editEvTempl: clone(this.state.evTempl)
         });
     },
+    confirmUndoChanges: function() {
+        if (!confirm('Undo your changes?')) {
+            return;
+        }
+        this.undoChanges();
+    },
     saveAll: function() {
         // save the Schedule template, then each event template
         var eventTemplIndex;
@@ -413,7 +419,7 @@ var ScheduleTemplateDetail = React.createClass({
                 <button type="button"
                     disabled={this.state.ajaxInFlight ||
                         !hasUnsavedChanges}
-                    onClick={this.undoChanges}
+                    onClick={this.confirmUndoChanges}
                     >
                     Undo changes
                 </button>
@@ -562,6 +568,9 @@ var EventTemplate = React.createClass({
         onFieldEdit: React.PropTypes.func.isRequired
     },
     handleDelete: function() {
+        if (!confirm('Delete ' + this.props.model.summary + '?')) {
+            return;
+        }
         this.props.onDelete();
     },
     handleChange: function(fieldName, convertToInt, ev) {
@@ -794,7 +803,7 @@ var EventTemplate = React.createClass({
                 onClick={this.handleDelete}
                 disabled={this.props.disabled}
                 >
-                Delete
+                ✗ Delete
             </button>
             {errBox}
         </div>;

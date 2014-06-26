@@ -180,6 +180,10 @@ var TimeZoneComp = React.createClass({
         });
     },
     delete: function() {
+        if (!confirm('Delete ' + this.props.model.name + '?')) {
+            return;
+        }
+
         this.setState({
             reqInFlight: 'Deleting…'
         });
