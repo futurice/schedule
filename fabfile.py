@@ -7,11 +7,13 @@ code_dir = '/home/futuschedule/futuschedule'
 code_dir_user = 'futuschedule'
 venv_dir = '/home/futuschedule/venv'
 
-def stopServices():
+@task
+def stop_services():
     sudo('supervisorctl stop task-processor')
     sudo('service apache2 stop')
 
-def startServices():
+@task
+def start_services():
     sudo('supervisorctl start task-processor')
     sudo('service apache2 start')
 
@@ -23,6 +25,6 @@ def updateCode():
 
 @task
 def deploy():
-    stopServices()
+    stop_services()
     updateCode()
-    startServices()
+    start_services()
