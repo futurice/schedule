@@ -6,3 +6,10 @@ Setup:
 =====
 Make a Python virtual environment however you prefer, then:
 pip install -r req.txt
+
+Download ‘client-secrets.json’ from Google Dev Console (currently a test app).
+
+The first time the code needs Google OAuth, it looks for client-secrets.json
+in your current directory, prints a URL for you to authorize the app and get
+an access token.
+Credentials are stored in ‘a_credentials_file’ in your current dir.
