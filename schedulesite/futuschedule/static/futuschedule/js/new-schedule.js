@@ -503,7 +503,7 @@ var NewSchedule;
                 ['summary', 'description', 'locations', 'date', 'startTime',
                     'endTime', 'invitees', 'eventTemplate'
                 ].forEach(function(fName) {
-                    result[fName] = clone(evGrp);
+                    result[fName] = clone(evGrp[fName]);
                 });
                 return result;
             }
