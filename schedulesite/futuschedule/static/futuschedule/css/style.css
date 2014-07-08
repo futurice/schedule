@@ -46,6 +46,10 @@ textarea.event-description {
 	width: 50em;
 }
 
+span.expand-collapse {
+	cursor: pointer;
+}
+
 
 /* TimeZones */
 
@@ -101,7 +105,7 @@ ul#event-templates-list {
 	list-style-type: none;
 }
 
-ul#event-templates-list li.event-template {
+div.event-template {
 	background-color: Lavender;
 	padding: 0.5em;
 	border: 1px solid;

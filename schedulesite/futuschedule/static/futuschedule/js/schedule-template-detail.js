@@ -100,7 +100,7 @@ var ScheduleTemplateDetail = React.createClass({
             usersLoaded: false,
             usersErr: '',
             // Computed fields
-            usersById: null,            // [user-obj1, …]
+            usersById: null,            // {id1: user-obj1, …}
             userTextById: null,         // {id1: 'name and email', …}
             alphabeticalUserIds: null,  // [id1, id2, …] ordered by user name
 
@@ -495,9 +495,10 @@ var ScheduleTemplateDetail = React.createClass({
 
                 <ul id="event-templates-list">
                     {this.state.editEvTempl.map((function(et, i) {
-                        return <li key={et.id} className="event-template">
+                        return <li key={et.id}>
                             <EventTemplate
                                 model={et}
+                                usersById={this.state.usersById}
                                 userTextById={this.state.userTextById}
                                 alphabeticalUserIds={this.state.alphabeticalUserIds}
                                 roomMSModel={this.state.roomMSModel}
@@ -554,6 +555,8 @@ var EventTemplate = React.createClass({
     propTypes: {
         model: React.PropTypes.object.isRequired,
 
+        usersById: React.PropTypes.object.isRequired,
+
         // needed by <MultiSelect/>
         userTextById: React.PropTypes.object.isRequired,
         alphabeticalUserIds: React.PropTypes.array.isRequired,
@@ -566,6 +569,16 @@ var EventTemplate = React.createClass({
         onDelete: React.PropTypes.func.isRequired,
         // onFieldEdit(fieldName, newValue)
         onFieldEdit: React.PropTypes.func.isRequired
+    },
+    getInitialState: function() {
+        return {
+            collapsed: true
+        };
+    },
+    toggleCollapsed: function() {
+        this.setState({
+            collapsed: !this.state.collapsed
+        });
     },
     handleDelete: function() {
         if (!confirm('Delete ' + this.props.model.summary + '?')) {
@@ -644,7 +657,51 @@ var EventTemplate = React.createClass({
             </div>;
         }
 
-        return <div>
+        if (this.state.collapsed) {
+            return <div className="event-template">
+                <span onClick={this.toggleCollapsed}
+                    className="expand-collapse"
+                    title="Click to Expand">
+                    ▶ {this.props.model.summary}
+                    {!this.props.model.isCollective && ' (individual event)'}
+                </span>
+                <br/>
+                {this.props.model.dayOffset >= 0 && '+'}
+                {this.props.model.dayOffset} days,{' '}
+                {this.props.model.startTime} → {this.props.model.endTime}
+                {' '}{this.props.model.locations.length ?
+                    'in ' + enumSentence(this.props.model.locations.map((function(x) {
+                        return this.props.roomMSModel.itemTextById[x];
+                    }).bind(this))) :
+                    <span className="info">no location</span>}
+                <br/>
+                {(function() {
+                    var p = [];
+                    if (this.props.model.inviteEmployees) {
+                        p.push('employees');
+                    }
+                    if (this.props.model.inviteSupervisors) {
+                        p.push('supervisors');
+                    }
+                    this.props.model.otherInvitees.forEach((function(i) {
+                        p.push(getUserName(i, this.props.usersById));
+                    }).bind(this));
+
+                    if (p.length) {
+                        return 'Invite: ' + enumSentence(p) + '.';
+                    }
+                    return <span className="warn">Invite: Nobody</span>;
+                }).bind(this)()}
+                {errBox}
+            </div>;
+        }
+
+        return <div className="event-template">
+            <span onClick={this.toggleCollapsed}
+                className="expand-collapse"
+                title="Click to Collapse">
+                ▼
+            </span>
             <table className="event-template-fields">
             <tr>
                 <td><label>Summary:</label></td>

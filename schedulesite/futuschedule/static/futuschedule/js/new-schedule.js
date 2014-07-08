@@ -608,6 +608,8 @@ var NewSchedule;
                     var eventsBox;
                     if (et.isCollective) {
                         eventsBox = <EventEditor
+                            title={et.summary + ' (common event)'}
+                            usersById={this.props.usersById}
                             disabled={this.shouldDisable()}
                             model={this.state.evGroups[idx]}
                             roomMSModel={this.state.roomMSModel}
@@ -629,8 +631,9 @@ var NewSchedule;
                                     </li>;
                                 }
                                 return <li key={j}>
-                                    <b>Event for {fullName}</b>
                                     <EventEditor
+                                        title={'Event for ' + fullName}
+                                        usersById={this.props.usersById}
                                         disabled={this.shouldDisable()}
                                         model={ev}
                                         roomMSModel={this.state.roomMSModel}
@@ -654,13 +657,8 @@ var NewSchedule;
 
                     return <li key={et.id} className={'event-group-' +
                         (et.isCollective ? 'collective' : 'individual')}>
-                        <b>
-                        {et.summary} {' ('}
-                        {et.isCollective ?
-                            'common event' : 'individual events'}
-                        {')'}
-                        </b>
-
+                        {et.isCollective ? '' :
+                            <b>{et.summary} (individual events)</b>}
                         {eventsBox}
 
                         <button type="button"
@@ -689,6 +687,8 @@ var NewSchedule;
 
     var EventEditor = React.createClass({
         propTypes: {
+            title: React.PropTypes.string.isRequired,
+
             model: React.PropTypes.object.isRequired,
             roomMSModel: React.PropTypes.object.isRequired,
             users: React.PropTypes.array.isRequired,
@@ -696,8 +696,20 @@ var NewSchedule;
             alphabeticalUserIds: React.PropTypes.array.isRequired,
             disabled: React.PropTypes.bool.isRequired,
 
+            usersById: React.PropTypes.object.isRequired,
+
             // onFieldEdit(fieldName, newValue)
             onFieldEdit: React.PropTypes.func.isRequired
+        },
+        getInitialState: function() {
+            return {
+                collapsed: true
+            };
+        },
+        toggleCollapsed: function() {
+            this.setState({
+                collapsed: !this.state.collapsed
+            });
         },
         handleChange: function(fieldName, convertToInt, ev) {
             var val = getTargetValue(ev);
@@ -746,7 +758,49 @@ var NewSchedule;
             );
         },
         render: function() {
+            if (this.state.collapsed) {
+                return <div>
+                    <b>
+                        <span onClick={this.toggleCollapsed}
+                            className="expand-collapse"
+                            title="Click to Expand">
+                            ▶ {this.props.title}
+                        </span>
+                    </b>
+                    <br/>
+
+                    {this.props.model.summary}
+                    <br/>
+                    {this.props.model.date} at {' '}
+                    {this.props.model.startTime} → {this.props.model.endTime}
+                    {' '}{this.props.model.locations.length ?
+                        'in ' + enumSentence(this.props.model.locations.map((function(x) {
+                            return this.props.roomMSModel.itemTextById[x];
+                        }).bind(this))) + '.':
+                        <span className="info">no location</span>}
+                    {this.props.model.supervisorWarning ?
+                        <span className="warn">
+                            <br/>
+                            {this.props.model.supervisorWarning}
+                        </span>
+                    : ''}
+                    <br/>
+                    {this.props.model.invitees.length ?
+                        'Invite: ' + enumSentence(this.props.model.invitees.map((function(x) {
+                            return getUserName(x, this.props.usersById);
+                        }).bind(this))) + '.' :
+                        <span className="warn">Invite: Nobody</span>}
+                </div>;
+            }
+
             return <div>
+                <b>
+                    <span onClick={this.toggleCollapsed}
+                        className="expand-collapse"
+                        title="Click to Collapse">
+                        ▼ {this.props.title}
+                    </span>
+                </b>
                 <table className="new-event-fields">
                 <tr>
                     <td>
