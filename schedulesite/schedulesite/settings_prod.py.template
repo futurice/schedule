@@ -2,6 +2,10 @@ from schedulesite.settings_base import *
 
 #SECRET_KEY = 'TODO'
 
+ALLOWED_HOSTS = [
+    'schedule.futurice.com',
+]
+
 
 # Database
 # https://docs.djangoproject.com/en/1.6/ref/settings/#databases
