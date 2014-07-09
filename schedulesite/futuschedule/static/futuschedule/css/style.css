@@ -46,10 +46,6 @@ textarea.event-description {
 	width: 50em;
 }
 
-span.expand-collapse {
-	cursor: pointer;
-}
-
 
 /* TimeZones */
 
@@ -112,6 +108,15 @@ div.event-template {
 	margin-bottom: 1em;
 }
 
+div.event-template.collapsed:hover {
+	cursor: pointer;
+	background-color: Plum;
+}
+
+div.event-template.expanded span.collapse-symbol:hover {
+	cursor: pointer;
+}
+
 table.event-template-fields td {
 	vertical-align: top;
 }
@@ -132,11 +137,20 @@ ul#new-schedule-events {
 	list-style-type: none;
 }
 
-ul#new-schedule-events li.event-group-collective {
+ul#new-schedule-events li.event-group-collective div.event-editor {
 	background-color: Azure;
 	margin-bottom: 1em;
 	padding: 1em;
 	border: solid 1px;
+}
+
+ul#new-schedule-events li.event-group-collective div.event-editor.collapsed:hover {
+	cursor: pointer;
+	background-color: PaleTurquoise;
+}
+
+ul#new-schedule-events li.event-group-collective div.event-editor.expanded span.collapse-symbol {
+	cursor: pointer;
 }
 
 ul#new-schedule-events li.event-group-individual {
@@ -150,11 +164,20 @@ ul.individual-events-list {
 	list-style-type: none;
 }
 
-ul.individual-events-list > li {
+ul.individual-events-list div.event-editor {
 	background-color: MistyRose;
 	margin-bottom: 1em;
 	padding: 1em;
 	border: solid 1px;
+}
+
+ul.individual-events-list div.event-editor.collapsed:hover {
+	cursor: pointer;
+	background-color: Pink;
+}
+
+ul.individual-events-list div.event-editor.expanded span.collapse-symbol {
+	cursor: pointer;
 }
 
 table.new-event-fields td {

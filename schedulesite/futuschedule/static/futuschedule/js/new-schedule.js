@@ -608,7 +608,6 @@ var NewSchedule;
                     var eventsBox;
                     if (et.isCollective) {
                         eventsBox = <EventEditor
-                            title={et.summary + ' (common event)'}
                             usersById={this.props.usersById}
                             disabled={this.shouldDisable()}
                             model={this.state.evGroups[idx]}
@@ -618,6 +617,7 @@ var NewSchedule;
                             alphabeticalUserIds={this.props.alphabeticalUserIds}
                             onFieldEdit={this.handleEventFieldEdit.bind(this,
                                 idx, null)}
+                            onDelete={this.deleteEventAndGroup.bind(this, idx)}
                         />;
                     } else {
                         eventsBox = <ul className="individual-events-list">
@@ -626,13 +626,14 @@ var NewSchedule;
                                     this.props.selectedUsers[j]);
 
                                 if (ev == null) {
-                                    return <li key={j}>Deleted event for {' '}
-                                        {fullName}
+                                    return <li key={j}>
+                                        <div className="event-editor">
+                                            Deleted event for {fullName}.
+                                        </div>
                                     </li>;
                                 }
                                 return <li key={j}>
                                     <EventEditor
-                                        title={'Event for ' + fullName}
                                         usersById={this.props.usersById}
                                         disabled={this.shouldDisable()}
                                         model={ev}
@@ -643,13 +644,8 @@ var NewSchedule;
                                         onFieldEdit={
                                             this.handleEventFieldEdit.bind(
                                                 this, idx, j)}
+                                        onDelete={this.deleteIndividualEvent.bind(this, idx, j)}
                                     />
-                                    <button type="button"
-                                        onClick={this.deleteIndividualEvent.bind(this, idx, j)}
-                                        disabled={this.shouldDisable()}
-                                        >
-                                        ✗ Delete
-                                    </button>
                                 </li>;
                             }).bind(this))}
                         </ul>;
@@ -661,11 +657,12 @@ var NewSchedule;
                             <b>{et.summary} (individual events)</b>}
                         {eventsBox}
 
-                        <button type="button"
-                            disabled={this.shouldDisable()}
-                            onClick={this.deleteEventAndGroup.bind(this, idx)}>
-                            ✗ Delete
-                        </button>
+                        {et.isCollective ? '' :
+                            <button type="button"
+                                disabled={this.shouldDisable()}
+                                onClick={this.deleteEventAndGroup.bind(this, idx)}>
+                                ✗ Delete
+                            </button>}
                     </li>;
                 }).bind(this))}
                 </ul>
@@ -687,8 +684,6 @@ var NewSchedule;
 
     var EventEditor = React.createClass({
         propTypes: {
-            title: React.PropTypes.string.isRequired,
-
             model: React.PropTypes.object.isRequired,
             roomMSModel: React.PropTypes.object.isRequired,
             users: React.PropTypes.array.isRequired,
@@ -699,7 +694,8 @@ var NewSchedule;
             usersById: React.PropTypes.object.isRequired,
 
             // onFieldEdit(fieldName, newValue)
-            onFieldEdit: React.PropTypes.func.isRequired
+            onFieldEdit: React.PropTypes.func.isRequired,
+            onDelete: React.PropTypes.func.isRequired
         },
         getInitialState: function() {
             return {
@@ -759,18 +755,14 @@ var NewSchedule;
         },
         render: function() {
             if (this.state.collapsed) {
-                return <div>
+                return <div className="event-editor collapsed"
+                        title="Click to Expand"
+                        onClick={this.toggleCollapsed}>
                     <b>
-                        <span onClick={this.toggleCollapsed}
-                            className="expand-collapse"
-                            title="Click to Expand">
-                            ▶ {this.props.title}
-                        </span>
+                        ▶ {this.props.model.summary}
                     </b>
                     <br/>
 
-                    {this.props.model.summary}
-                    <br/>
                     {this.props.model.date} at {' '}
                     {this.props.model.startTime} → {this.props.model.endTime}
                     {' '}{this.props.model.locations.length ?
@@ -790,15 +782,22 @@ var NewSchedule;
                             return getUserName(x, this.props.usersById);
                         }).bind(this))) + '.' :
                         <span className="warn">Invite: Nobody</span>}
+                    <br/>
+                    <button type="button"
+                        disabled={this.props.disabled}
+                        title="Delete"
+                        onClick={this.props.onDelete}>
+                        ✗ Delete
+                    </button>
                 </div>;
             }
 
-            return <div>
+            return <div className="event-editor expanded">
                 <b>
                     <span onClick={this.toggleCollapsed}
-                        className="expand-collapse"
+                        className="collapse-symbol"
                         title="Click to Collapse">
-                        ▼ {this.props.title}
+                        ▼
                     </span>
                 </b>
                 <table className="new-event-fields">
@@ -896,6 +895,12 @@ var NewSchedule;
                     </td>
                 </tr>
                 </table>
+
+                <button type="button"
+                    disabled={this.props.disabled}
+                    onClick={this.props.onDelete}>
+                    ✗ Delete
+                </button>
             </div>;
         }
     });

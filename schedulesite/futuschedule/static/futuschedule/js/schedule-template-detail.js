@@ -658,13 +658,11 @@ var EventTemplate = React.createClass({
         }
 
         if (this.state.collapsed) {
-            return <div className="event-template">
-                <span onClick={this.toggleCollapsed}
-                    className="expand-collapse"
-                    title="Click to Expand">
-                    ▶ {this.props.model.summary}
-                    {!this.props.model.isCollective && ' (individual event)'}
-                </span>
+            return <div className="event-template collapsed"
+                    title="Click to Expand"
+                    onClick={this.toggleCollapsed}>
+                ▶ {this.props.model.summary}
+                {!this.props.model.isCollective && ' (individual event)'}
                 <br/>
                 {this.props.model.dayOffset >= 0 && '+'}
                 {this.props.model.dayOffset} days,{' '}
@@ -696,9 +694,9 @@ var EventTemplate = React.createClass({
             </div>;
         }
 
-        return <div className="event-template">
+        return <div className="event-template expanded">
             <span onClick={this.toggleCollapsed}
-                className="expand-collapse"
+                className="collapse-symbol"
                 title="Click to Collapse">
                 ▼
             </span>
