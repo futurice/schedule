@@ -20,9 +20,6 @@ BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 # see README for how to set a SECRET_KEY
 #SECRET_KEY = 'dummy'
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
 TEMPLATE_DEBUG = True
 
 ALLOWED_HOSTS = []
@@ -62,24 +59,6 @@ ROOT_URLCONF = 'schedulesite.urls'
 
 WSGI_APPLICATION = 'schedulesite.wsgi.application'
 
-
-# Database
-# https://docs.djangoproject.com/en/1.6/ref/settings/#databases
-
-DATABASES = {
-    # SQLite
-    #'default': {
-    #    'ENGINE': 'django.db.backends.sqlite3',
-    #    'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
-    #}
-
-    # PostgreSQL
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'futuschedule',
-        'HOST': 'localhost',
-    }
-}
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.6/topics/i18n/

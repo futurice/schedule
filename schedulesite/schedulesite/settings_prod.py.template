@@ -1,0 +1,16 @@
+from schedulesite.settings_base import *
+
+#SECRET_KEY = 'TODO'
+
+
+# Database
+# https://docs.djangoproject.com/en/1.6/ref/settings/#databases
+
+DATABASES = {
+    # PostgreSQL
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'futuschedule',
+        'HOST': 'localhost',
+    }
+}

@@ -1,2 +1,0 @@
-from schedulesite.settings import *
-#SECRET_KEY = 'TODO'

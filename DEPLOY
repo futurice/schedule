@@ -44,18 +44,7 @@ current working directory. To avoid accidentally deleting these when updating
 the source code, make a separate directory e.g. $HOME/config-files/ and always
 launch processes from there.
 
-Set up a secret key for django:
-
-put some random string
-(e.g. from a new, throw-away ‘django-admin.py startproject x’) in:
-~/config-files/django-secret-key
-
-cd ~/futuschedule/schedulesite/schedulesite
-echo >ext_settings.py \
-"from schedulesite.settings import *
-import os
-SECRET_KEY = open(os.path.expanduser('~/config-files/django-secret-key')).read().strip()
-"
+Set up Django settings.py and the SECRET_KEY as explained in the README.
 
 Download the client-secrets.json to config-files/ as described in the README.
 Authorize the app to get a ‘a_credentials_file’ as described in the README,
@@ -71,7 +60,7 @@ cd /home/futuschedule/config-files/
 go run /home/futuschedule/futuschedule/dump-fum-users.go \
 	-o users.json «FUM-API-Token»
 . /home/futuschedule/venv/bin/activate
-DJANGO_SETTINGS_MODULE=schedulesite.ext_settings exec /home/futuschedule/futuschedule/schedulesite/manage.py shell <<<'
+exec /home/futuschedule/futuschedule/schedulesite/manage.py shell <<<'
 import futuschedule.util
 futuschedule.util.updateUsers("users.json")
 '
@@ -89,7 +78,7 @@ Create /home/futuschedule/config-files/update-meeting-rooms.sh:
 #! /usr/bin/env bash
 cd /home/futuschedule/config-files/
 . /home/futuschedule/venv/bin/activate
-DJANGO_SETTINGS_MODULE=schedulesite.ext_settings exec /home/futuschedule/futuschedule/schedulesite/manage.py shell <<<'
+exec /home/futuschedule/futuschedule/schedulesite/manage.py shell <<<'
 import futuschedule.util
 futuschedule.util.updateMeetingRooms("google.admin@futurice.com", "«pass»")
 '
@@ -118,7 +107,6 @@ Alias /static/ /home/futuschedule/futuschedule/schedulesite/futuschedule/static/
 #Allow from all
 </Directory>
 
-SetEnv DJANGO_SETTINGS_MODULE schedulesite.ext_settings
 WSGIScriptAlias / /home/futuschedule/futuschedule/schedulesite/schedulesite/wsgi.py
 WSGIDaemonProcess futuschedule user=futuschedule group=futuschedule home=/home/futuschedule/config-files python-path=/home/futuschedule/futuschedule/schedulesite:/home/futuschedule/venv/lib/python2.7/site-packages
 WSGIProcessGroup futuschedule
@@ -149,7 +137,7 @@ Create /home/futuschedule/config-files/run-task-processor.sh:
 #! /usr/bin/env bash
 . /home/futuschedule/venv/bin/activate
 cd /home/futuschedule/config-files/
-DJANGO_SETTINGS_MODULE=schedulesite.ext_settings exec /home/futuschedule/futuschedule/schedulesite/manage.py shell \
+exec /home/futuschedule/futuschedule/schedulesite/manage.py shell \
 	< /home/futuschedule/futuschedule/task-processor.py
 ---------------------------------------
 chmod u+x /home/futuschedule/config-files/run-task-processor.sh

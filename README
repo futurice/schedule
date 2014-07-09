@@ -5,15 +5,15 @@ See the DEPLOY file for a suggested way of doing this on a remote server.
 
 Setup:
 =====
-Set up a Django SECRET_KEY not under source control:
+Create settings.py for Django:
 cd schedulesite/schedulesite
-cp ext_settings.py.template ext_settings.py
-Set the SECRET_KEY in ext_settings.py to some random string.
+cp settings_dev.py.template settings.py
+Set the SECRET_KEY in settings.py to some random string.
 
-Database (choose which database backend you use in settings.py):
-If you use PostgreSQL, create the database on the server, e.g.:
+Choose your Database by editing settings.py:
+― SQLite: easier for dev, no setup
+― PostgreSQL: replicates production and will catch bugs before you deploy:
 createdb futuschedule
-If you use SQLite you don't need to do anything.
 
 Make a Python virtual environment however you prefer, then:
 pip install -r req.txt
@@ -49,7 +49,7 @@ Running:
 =======
 
 Start the webserver:
-DJANGO_SETTINGS_MODULE=schedulesite.ext_settings REMOTE_USER=myusername ./schedulesite/manage.py runserver
+REMOTE_USER=myusername ./schedulesite/manage.py runserver
 
 Start the task-processor (kill with Ctrl+C (SIGINT) or SIGTERM):
-DJANGO_SETTINGS_MODULE=schedulesite.ext_settings ./schedulesite/manage.py shell < task-processor.py
+./schedulesite/manage.py shell < task-processor.py
