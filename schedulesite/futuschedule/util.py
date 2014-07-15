@@ -51,16 +51,15 @@ def updateUsers(jsonDumpFile):
     """
     UM = get_user_model()
     with open(jsonDumpFile, 'r') as f:
-        dump = json.load(f)
+        dump = list(filter(lambda u:
+            u['username'] and u['email'] and
+            u['first_name'] and u['last_name'] and
+            u['google_status'] == 'activeperson' and u['status'] == 'active',
+            json.load(f)))
     # de-duplicate first (the dump has a duplicate)
     userById = {u['id']: u for u in dump}
 
     for u in userById.values():
-        if not (u['username'] and u['email'] and u['first_name'] and u['last_name']):
-            print('Skipping', u['username'], 'because of invalid fields')
-            del userById[u['id']]
-            continue
-
         try:
             newUser = UM.objects.get(username=u['username'])
             newUser.email = u['email']
@@ -81,6 +80,12 @@ def updateUsers(jsonDumpFile):
             a.supervisor = UM.objects.get(
                     username=userById[u['supervisor']]['username'])
             a.save()
+
+    # Delete existing DB users not present in this dump
+    keepUsernames = {u['username'] for u in dump}
+    for oldUser in UM.objects.all():
+        if oldUser.username not in keepUsernames:
+            oldUser.delete()
 
 def updateMeetingRooms(email, password):
     client = CalendarResourceClient(domain='futurice.com')
