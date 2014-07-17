@@ -3,6 +3,8 @@ Create schedule templates and make Google Calendar Events for selected users.
 This file explains how to set up and run the project by hand.
 See the DEPLOY file for a suggested way of doing this on a remote server.
 
+For licensing (BSD 3-clause), see COPYING
+
 Setup:
 =====
 Create settings.py for Django:
