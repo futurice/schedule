@@ -69,9 +69,9 @@ var ScheduleTemplateDetail = React.createClass({
                 this.setState({
                     evTempl: newEvTempl,
                     editEvTempl: clone(newEvTempl),
-                    evTemplAjaxErrors: newEvTempl.map(function() {
-                        return '';
-                    })
+                    evTemplExtra: newEvTempl.map((function() {
+                        return this.newEvTExtraItem();
+                    }).bind(this))
                 });
             });
 
@@ -83,6 +83,14 @@ var ScheduleTemplateDetail = React.createClass({
                     editSchedTempl: clone(this.state.schedTempl)
                 });
             });
+    },
+    // A new item of ‘extra data’ for an event template. This goes into the
+    // evTemplExtra array.
+    newEvTExtraItem: function() {
+        return {
+            collapsed: true,
+            ajaxErr: ''
+        };
     },
     getInitialState: function() {
         return {
@@ -122,9 +130,9 @@ var ScheduleTemplateDetail = React.createClass({
             // back to them whenever we want.
             editSchedTempl: null,
             editEvTempl: null,
-            // array with 1 item per event template, so we can print the error
-            // next to the event that caused it.
-            evTemplAjaxErrors: null,
+            // array with 1 item of ‘extra data’ (e.g. ajax error, collapsed)
+            // per event template.
+            evTemplExtra: null,
 
             ajaxInFlight: '',
             ajaxErr: '',
@@ -165,6 +173,8 @@ var ScheduleTemplateDetail = React.createClass({
                     data[fName] = dropSeconds(data[fName]);
                 });
 
+                var extraItem = this.newEvTExtraItem();
+                extraItem.collapsed = false;
                 this.setState({
                     ajaxErr: '',
 
@@ -172,7 +182,7 @@ var ScheduleTemplateDetail = React.createClass({
 
                     evTempl: this.state.evTempl.concat(data),
                     editEvTempl: this.state.editEvTempl.concat(data),
-                    evTemplAjaxErrors: this.state.evTemplAjaxErrors.concat('')
+                    evTemplExtra: clone(this.state.evTemplExtra).concat(extraItem)
                 });
             }).bind(this),
             error: (function(xhr, txtStatus, saveErr) {
@@ -196,8 +206,8 @@ var ScheduleTemplateDetail = React.createClass({
             success: (function() {
                 var evTempl = this.state.evTempl.concat(),
                     editEvTempl = this.state.editEvTempl.concat(),
-                    evTemplAjaxErrors = this.state.evTemplAjaxErrors.concat();
-                [evTempl, editEvTempl, evTemplAjaxErrors].forEach(function(a) {
+                    evTemplExtra = clone(this.state.evTemplExtra);
+                [evTempl, editEvTempl, evTemplExtra].forEach(function(a) {
                     a.splice(idx, 1);
                 });
 
@@ -206,17 +216,17 @@ var ScheduleTemplateDetail = React.createClass({
 
                     evTempl: evTempl,
                     editEvTempl: editEvTempl,
-                    evTemplAjaxErrors: evTemplAjaxErrors
+                    evTemplExtra: evTemplExtra
                 });
             }).bind(this),
             error: (function(xhr, txtStatus, saveErr) {
                 var errTxt = getAjaxErr.apply(this, arguments);
-                var evTemplAjaxErrors = this.state.evTemplAjaxErrors.concat();
-                evTemplAjaxErrors[idx] = errTxt;
+                var evTemplExtra = clone(this.state.evTemplExtra);
+                evTemplExtra[idx].ajaxErr = errTxt;
 
                 this.setState({
                     ajaxErr: errTxt,
-                    evTemplAjaxErrors: evTemplAjaxErrors
+                    evTemplExtra: evTemplExtra
                 });
             }).bind(this)
         });
@@ -240,6 +250,13 @@ var ScheduleTemplateDetail = React.createClass({
         editEvTempl[idx][fieldName] = newValue;
         this.setState({
             editEvTempl: editEvTempl
+        });
+    },
+    evTemplExtraFieldChanged: function(idx, fieldName, newValue) {
+        var evTemplExtra = clone(this.state.evTemplExtra);
+        evTemplExtra[idx][fieldName] = newValue;
+        this.setState({
+            evTemplExtra: evTemplExtra
         });
     },
     handleChangeNewEvent: function(ev) {
@@ -305,7 +322,7 @@ var ScheduleTemplateDetail = React.createClass({
                 ajaxInFlight: 'Saving Event ' + (eventTemplIndex+1)
                     + ' of ' + this.state.editEvTempl.length
             });
-            var evTemplAjaxErrors = clone(this.state.evTemplAjaxErrors);
+            var evTemplExtra = clone(this.state.evTemplExtra);
 
             $.ajax({
                 url: apiRoot + 'eventtemplates/'
@@ -319,7 +336,7 @@ var ScheduleTemplateDetail = React.createClass({
                         data[fName] = dropSeconds(data[fName]);
                     });
 
-                    evTemplAjaxErrors[eventTemplIndex] = '';
+                    evTemplExtra[eventTemplIndex].ajaxErr = '';
 
                     var evTempl = clone(this.state.evTempl);
                     evTempl[eventTemplIndex] = clone(data);
@@ -331,7 +348,7 @@ var ScheduleTemplateDetail = React.createClass({
                         ajaxErr: '',
                         evTempl: evTempl,
                         editEvTempl: editEvTempl,
-                        evTemplAjaxErrors: evTemplAjaxErrors
+                        evTemplExtra: evTemplExtra
                     });
 
                     eventTemplIndex++;
@@ -339,11 +356,11 @@ var ScheduleTemplateDetail = React.createClass({
                 }).bind(this),
                 error: (function(xhr, txtStatus, saveErr) {
                     var errTxt = getAjaxErr.apply(this, arguments);
-                    evTemplAjaxErrors[eventTemplIndex] = errTxt;
+                    evTemplExtra[eventTemplIndex].ajaxErr = errTxt;
                     this.setState({
                         ajaxInFlight: '',
                         ajaxErr: errTxt,
-                        evTemplAjaxErrors: evTemplAjaxErrors
+                        evTemplExtra: evTemplExtra
                     })
                 }).bind(this)
             });
@@ -372,7 +389,7 @@ var ScheduleTemplateDetail = React.createClass({
         v = ['tzLoaded', 'calLoaded', 'usersLoaded', 'roomsLoaded', 'etLoaded',
           'schedTempl',
           'usersById', 'userTextById', 'alphabeticalUserIds', 'roomMSModel',
-          'editEvTempl', 'evTemplAjaxErrors', 'editSchedTempl'];
+          'editEvTempl', 'evTemplExtra', 'editSchedTempl'];
         for (i = 0; i < v.length; i++) {
             fName = v[i];
             if (!this.state[fName]) {
@@ -503,11 +520,15 @@ var ScheduleTemplateDetail = React.createClass({
                                 alphabeticalUserIds={this.state.alphabeticalUserIds}
                                 roomMSModel={this.state.roomMSModel}
                                 disabled={Boolean(this.state.ajaxInFlight)}
-                                errTxt={this.state.evTemplAjaxErrors[i]}
+                                errTxt={this.state.evTemplExtra[i].ajaxErr}
                                 onDelete={this.deleteEventTemplate.bind(
                                     this, i)}
                                 onFieldEdit={this.evTemplFieldEdit.bind(
                                     this, i)}
+                                collapsed={this.state.evTemplExtra[i].collapsed}
+                                onCollapsedChanged={
+                                    this.evTemplExtraFieldChanged.bind(
+                                        this, i, 'collapsed')}
                             />
                         </li>;
                     }).bind(this))}
@@ -568,17 +589,14 @@ var EventTemplate = React.createClass({
         errTxt: React.PropTypes.string.isRequired,
         onDelete: React.PropTypes.func.isRequired,
         // onFieldEdit(fieldName, newValue)
-        onFieldEdit: React.PropTypes.func.isRequired
-    },
-    getInitialState: function() {
-        return {
-            collapsed: true
-        };
+        onFieldEdit: React.PropTypes.func.isRequired,
+
+        collapsed: React.PropTypes.bool.isRequired,
+        // onCollapsedChanged(newValue)
+        onCollapsedChanged: React.PropTypes.func.isRequired
     },
     toggleCollapsed: function() {
-        this.setState({
-            collapsed: !this.state.collapsed
-        });
+        this.props.onCollapsedChanged(!this.props.collapsed);
     },
     handleDelete: function() {
         if (!confirm('Delete ' + this.props.model.summary + '?')) {
@@ -657,7 +675,7 @@ var EventTemplate = React.createClass({
             </div>;
         }
 
-        if (this.state.collapsed) {
+        if (this.props.collapsed) {
             return <div className="event-template collapsed"
                     title="Click to Expand"
                     onClick={this.toggleCollapsed}>
