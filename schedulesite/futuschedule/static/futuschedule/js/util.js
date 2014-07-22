@@ -455,3 +455,22 @@ var monthLongNames = ['January', 'February', 'March', 'April', 'May', 'June',
 var monthShortNames = monthLongNames.map(function(n) {
     return n.substring(0, 3);
 });
+
+// 7→0, 15→1, -1→6
+function normalizeWeekdayIndex(i) {
+    if (i >= 0) {
+        return i % 7;
+    }
+    i = -(-i % 7) + 7;
+    return i % 7;
+}
+
+// [0, 6] is week offset 0. [7, 13] is offset 1. [-1, -7] is offset -1.
+function weekOffset(dayOffset) {
+    if (dayOffset >= 0) {
+        return Math.floor(dayOffset / 7);
+    }
+    dayOffset = -dayOffset;
+    dayOffset--;
+    return -Math.floor(dayOffset / 7) - 1;
+}

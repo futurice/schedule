@@ -71,3 +71,25 @@ QUnit.test('enumSentence', function(assert) {
     assert.strictEqual(enumSentence(['John', 'Paul', 'George', 'Ringo']),
         'John, Paul, George and Ringo');
 });
+
+QUnit.test('normalize weekday index', function(assert) {
+    [
+        [0, 0], [1, 1], [6, 6],
+        [7, 0], [15, 1],
+        [-1, 6], [-2, 5], [-6, 1], [-7, 0], [-8, 6],
+        [-15, 6]
+    ].forEach(function(tuple) {
+        assert.strictEqual(normalizeWeekdayIndex(tuple[0]), tuple[1]);
+    });
+});
+
+QUnit.test('week offset', function(assert) {
+    [
+        [0, 0], [1, 0], [6, 0],
+        [7, 1], [13, 1], [14, 2], [15, 2],
+        [-1, -1], [-2, -1], [-7, -1],
+        [-8, -2], [-14, -2], [-15, -3]
+    ].forEach(function(tuple) {
+        assert.strictEqual(weekOffset(tuple[0]), tuple[1]);
+    });
+});

@@ -137,7 +137,10 @@ var ScheduleTemplateDetail = React.createClass({
             ajaxInFlight: '',
             ajaxErr: '',
 
-            newEventSummary: ''
+            newEventSummary: '',
+
+            // default starting weekday for weekday computations: Monday
+            startingWeekday: 1
         };
     },
     // returns boolean telling if we have unsaved edits in the page
@@ -244,6 +247,11 @@ var ScheduleTemplateDetail = React.createClass({
             val = Number.parseInt(val) || 0;
         }
         this.schedTemplFieldEdit(fieldName, val);
+    },
+    handleStartingWeekdayChange: function(ev) {
+        this.setState({
+            startingWeekday: Number.parseInt(ev.target.value)
+        });
     },
     evTemplFieldEdit: function(idx, fieldName, newValue) {
         var editEvTempl = clone(this.state.editEvTempl);
@@ -507,31 +515,69 @@ var ScheduleTemplateDetail = React.createClass({
 
             <div id="event-templates-container">
                 <h1>Event Templates</h1>
+                <p>
+                    Show weekdays for schedule starting on: {' '}
+                    <select
+                        value={this.state.startingWeekday}
+                        disabled={Boolean(this.state.ajaxInFlight)}
+                        onChange={this.handleStartingWeekdayChange}
+                        >
+                        {weekdayLongNames.map(function(name, idx) {
+                            return <option key={idx} value={idx}>
+                                {name}
+                            </option>;
+                        })}
+                    </select>
+                </p>
                 {this.state.editEvTempl.length ? '' :
                     <span className="info">There are no event templates</span>}
 
                 <ul id="event-templates-list">
-                    {this.state.editEvTempl.map((function(et, i) {
-                        return <li key={et.id}>
-                            <EventTemplate
-                                model={et}
-                                usersById={this.state.usersById}
-                                userTextById={this.state.userTextById}
-                                alphabeticalUserIds={this.state.alphabeticalUserIds}
-                                roomMSModel={this.state.roomMSModel}
-                                disabled={Boolean(this.state.ajaxInFlight)}
-                                errTxt={this.state.evTemplExtra[i].ajaxErr}
-                                onDelete={this.deleteEventTemplate.bind(
-                                    this, i)}
-                                onFieldEdit={this.evTemplFieldEdit.bind(
-                                    this, i)}
-                                collapsed={this.state.evTemplExtra[i].collapsed}
-                                onCollapsedChanged={
-                                    this.evTemplExtraFieldChanged.bind(
-                                        this, i, 'collapsed')}
-                            />
-                        </li>;
-                    }).bind(this))}
+                    {(function() {
+                        var result = [], lastDayOffset = null;
+                        this.state.editEvTempl.forEach((function(et, i) {
+                            if (et.dayOffset != lastDayOffset) {
+                                lastDayOffset = et.dayOffset;
+                                result.push(<li key={'daychange-'+et.id}>
+                                    <h2>
+                                    {(function() {
+                                        var dayOff = Number.parseInt(et.dayOffset) || 0,
+                                            norm = normalizeWeekdayIndex(
+                                                dayOff + this.state.startingWeekday),
+                                            result = weekdayLongNames[norm],
+                                            wOff = weekOffset(dayOff);
+                                        if (wOff != 0) {
+                                            var unit = Math.abs(wOff) == 1 ? 'week' : 'weeks';
+                                            result += ', ' + (wOff > 0 ? '+' : '') + wOff + ' ' + unit;
+                                        }
+                                        return result;
+                                    }).bind(this)()}
+                                    </h2>
+                                </li>);
+                            }
+                            result.push(<li key={et.id}>
+                                <EventTemplate
+                                    model={et}
+                                    zeroWeekday={this.state.startingWeekday}
+                                    usersById={this.state.usersById}
+                                    userTextById={this.state.userTextById}
+                                    alphabeticalUserIds={this.state.alphabeticalUserIds}
+                                    roomMSModel={this.state.roomMSModel}
+                                    disabled={Boolean(this.state.ajaxInFlight)}
+                                    errTxt={this.state.evTemplExtra[i].ajaxErr}
+                                    onDelete={this.deleteEventTemplate.bind(
+                                        this, i)}
+                                    onFieldEdit={this.evTemplFieldEdit.bind(
+                                        this, i)}
+                                    collapsed={this.state.evTemplExtra[i].collapsed}
+                                    onCollapsedChanged={
+                                        this.evTemplExtraFieldChanged.bind(
+                                            this, i, 'collapsed')}
+                                />
+                            </li>)
+                        }).bind(this));
+                        return result;
+                    }).bind(this)()}
 
                     <li>
                         {
@@ -593,7 +639,9 @@ var EventTemplate = React.createClass({
 
         collapsed: React.PropTypes.bool.isRequired,
         // onCollapsedChanged(newValue)
-        onCollapsedChanged: React.PropTypes.func.isRequired
+        onCollapsedChanged: React.PropTypes.func.isRequired,
+
+        zeroWeekday: React.PropTypes.number.isRequired
     },
     toggleCollapsed: function() {
         this.props.onCollapsedChanged(!this.props.collapsed);
@@ -801,6 +849,10 @@ var EventTemplate = React.createClass({
                         // strings) on blur
                         onBlur={this.handleIntBlur.bind(this, 'dayOffset')}
                         />
+                    {' '} {weekdayLongNames[normalizeWeekdayIndex(
+                        this.props.zeroWeekday +
+                        (Number.parseInt(this.props.model.dayOffset) || 0)
+                    )]}
                 </td>
             </tr>
 
