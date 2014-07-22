@@ -870,8 +870,6 @@ var EventTemplate = React.createClass({
             </tr>
             </table>
 
-            <br/>
-
             <button type="button"
                 onClick={this.handleDelete}
                 disabled={this.props.disabled}

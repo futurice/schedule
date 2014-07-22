@@ -277,19 +277,165 @@ var MultiSelect = React.createClass({
         onAdd: React.PropTypes.func.isRequired,
         disabled: React.PropTypes.bool.isRequired
     },
-    handleSelectChange: function(ev) {
-        var val = getTargetValue(ev);
-        if (val === null) {
+    getInitialState: function() {
+        var searchText = '';
+        return {
+            searchText: searchText,
+            showSuggestions: false,
+            suggestedIds: this.getSuggestions(searchText),
+            // null if no suggestions, a valid index otherwise
+            selectedSuggestionIdx: null,
+
+            // MouseDown on suggestions list: used in handleInputBlur()
+            suggestionsMouseDown: false
+        };
+    },
+    getSuggestions: function(searchText) {
+        searchText = searchText.toLowerCase();
+        return this.props.sortedIds.filter((function(id) {
+            var itemTxt = this.props.itemTextById[id].toLowerCase();
+            return itemTxt.indexOf(searchText) != -1;
+        }).bind(this));
+    },
+    handleSearchTextChange: function(ev) {
+        var txt = getTargetValue(ev),
+            ids = this.getSuggestions(txt);
+        this.setState({
+            searchText: txt,
+            showSuggestions: true,
+            suggestedIds: ids,
+            selectedSuggestionIdx: ids.length ? 0 : null
+        });
+    },
+    handleInputKeyDown: function(ev) {
+        if (ev.keyCode == 27) {
+            // ESC key
+            this.setState({
+                showSuggestions: false
+            });
             return;
         }
-        var val = Number.parseInt(val) || 0;
-        this.props.onAdd(val);
+        var i = this.state.selectedSuggestionIdx,
+            v = this.state.suggestedIds;
+        if (!v.length) {
+            return;
+        }
+        switch (ev.keyCode) {
+            case 38:    // UP Arrow
+                i--;
+                if (i < 0) {
+                    i = v.length - 1;
+                }
+                this.setState({
+                    selectedSuggestionIdx: i,
+                    showSuggestions: true
+                });
+                break;
+
+            case 40:    // DOWN Arrow
+                i++;
+                if (i >= v.length) {
+                    i = 0;
+                }
+                this.setState({
+                    selectedSuggestionIdx: i,
+                    showSuggestions: true
+                });
+                break;
+
+            case 13:
+                // Enter key
+                if (this.state.showSuggestions) {
+                    this.props.onAdd(v[i]);
+                } else {
+                    this.setState({
+                        showSuggestions: true
+                    });
+                }
+                break;
+            default:
+                return;
+        }
+        ev.preventDefault();
+    },
+    handleInputFocus: function() {
+        this.setState({
+            showSuggestions: true
+        });
+    },
+    handleInputBlur: function() {
+        // Hide the suggestion list on blur. Except if the user tries to click
+        // on the suggestion list, this blur fires first and hides the list.
+        // Workaround: record mouseUp/mouseDown events in the suggestion list.
+        // Put a small delay here to allow that click to happen, before
+        // deciding to hide the suggestion list.
+
+        // This workaround is taken from the jquery-marcopolo plugin:
+        // https://github.com/jstayton/jquery-marcopolo
+        setTimeout((function() {
+            if (!this.state.suggestionsMouseDown) {
+                this.setState({
+                    showSuggestions: false
+                });
+            }
+        }).bind(this), 1);
+    },
+    handleSuggestionClick: function(id) {
+        this.props.onAdd(id);
+        this.refs.searchbox.getDOMNode().focus();
+    },
+    handleSuggestionMouseEnter: function(idx) {
+        this.setState({
+            selectedSuggestionIdx: idx
+        });
+    },
+    handleSuggestionListMouseDown: function() {
+        // used in handleInputBlur()
+        this.setState({
+            suggestionsMouseDown: true
+        });
+    },
+    handleSuggestionListMouseUp: function() {
+        // used in handleInputBlur()
+        this.setState({
+            suggestionsMouseDown: false
+        });
     },
     handleRemove: function(id, ev) {
         ev.preventDefault();
         this.props.onRemove(id);
     },
     render: function() {
+        var suggestionElems = <li>No matches</li>;
+        if (this.state.suggestedIds.length) {
+            suggestionElems = this.state.suggestedIds.map((function(id, idx) {
+                return <li key={id}
+                    onClick={this.handleSuggestionClick.bind(this, id)}
+                    onMouseEnter={this.handleSuggestionMouseEnter.bind(this, idx)}
+                    // avoid the experimental React.addons.classSet() for now.
+                    className={this.state.selectedSuggestionIdx == idx ?
+                        'match selected' : 'match'}
+                    >
+                    {this.props.itemTextById[id]}
+                </li>;
+            }).bind(this));
+        }
+
+        var suggestionBox;
+        if (this.state.showSuggestions) {
+            suggestionBox = <div
+                className="typeahead-suggestions-parent"
+                hidden={this.props.disabled}
+                >
+                <ul className="typeahead-suggestions"
+                    onMouseDown={this.handleSuggestionListMouseDown}
+                    onMouseUp={this.handleSuggestionListMouseUp}
+                    >
+                    {suggestionElems}
+                </ul>
+            </div>;
+        }
+
         return <div>
             {this.props.selectedIds.length ? '' :
                 <span className="info">No item selected</span>}
@@ -304,22 +450,16 @@ var MultiSelect = React.createClass({
                     </li>;
                 }).bind(this))}
             </ul>
-            <select
-                // value='null' makes it always jump back to the ‘Add…’ line.
-                // Comment-out if you don't want this to happen.
-                value='null'
+
+            <input ref="searchbox" type="text" placeholder="Type to search…"
                 disabled={this.props.disabled}
-                onChange={this.handleSelectChange}
-                >
-                <option value='null'>
-                    Add an item…
-                </option>
-                {this.props.sortedIds.map((function(id) {
-                    return <option value={id} key={id}>
-                        {this.props.itemTextById[id]}
-                    </option>;
-                }).bind(this))}
-            </select>
+                value={this.state.searchText}
+                onChange={this.handleSearchTextChange}
+                onKeyDown={this.handleInputKeyDown}
+                onFocus={this.handleInputFocus}
+                onBlur={this.handleInputBlur}
+            />
+            {suggestionBox}
         </div>;
     }
 });
