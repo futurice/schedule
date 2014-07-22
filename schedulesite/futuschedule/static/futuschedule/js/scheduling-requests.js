@@ -107,7 +107,12 @@ var SchedulingRequest = React.createClass({
         };
     },
     delete: function() {
-        if (confirm('Delete ALL events from Google Calendar?')) {
+        var users = JSON.parse(this.props.model.json).users,
+            msg = 'Delete ALL events from Google Calendar for \n' +
+                enumSentence(users.map((function(uid) {
+                    return getUserName(uid, this.props.usersById);
+                }).bind(this))) + '?';
+        if (confirm(msg)) {
             this.setState({
                 ajaxInFlight: 'Deleting…'
             });

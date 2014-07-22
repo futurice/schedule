@@ -216,8 +216,8 @@ var ScheduleTemplateSummary = React.createClass({
         });
     },
     delete: function() {
-        if (!confirm('Delete this Schedule Template ' +
-                    'and all its Event Templates?')) {
+        if (!confirm('Delete “' + this.props.model.name +
+                    '” and all its event templates?')) {
             return;
         }
 
