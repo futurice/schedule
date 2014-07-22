@@ -753,6 +753,15 @@ var NewSchedule;
                 }).concat(addId)
             );
         },
+        fmtCollapsedDate: function() {
+            var d = new Date(this.props.model.date);
+            var result = weekdayLongNames[d.getDay()] + ', ' +
+                monthLongNames[d.getMonth()] + ' ' + d.getDate();
+            if (d.getFullYear() != new Date().getFullYear()) {
+                result += ', ' + d.getFullYear();
+            }
+            return result;
+        },
         render: function() {
             if (this.state.collapsed) {
                 return <div className="event-editor collapsed"
@@ -763,7 +772,7 @@ var NewSchedule;
                     </b>
                     <br/>
 
-                    {this.props.model.date} at {' '}
+                    {this.fmtCollapsedDate()} at {' '}
                     {this.props.model.startTime} → {this.props.model.endTime}
                     {' '}{this.props.model.locations.length ?
                         'in ' + enumSentence(this.props.model.locations.map((function(x) {
@@ -854,6 +863,8 @@ var NewSchedule;
                             value={this.props.model.date}
                             onChange={this.handleChange.bind(this, 'date', false)}
                             onBlur={this.handleDateBlur}/>
+                        {' '} {weekdayLongNames[
+                                  new Date(this.props.model.date).getDay()]}
                     </td>
                 </tr>
                 <tr>

@@ -442,3 +442,16 @@ function getUserNameAndEmail(userId, usersById) {
         return 'Unknown User';
     }
 }
+
+
+// Use (new Date().getDay()) or .getMonth() as the array index
+var weekdayLongNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday',
+                        'Friday', 'Saturday'];
+var weekdayShortNames = weekdayLongNames.map(function(n) {
+    return n.substring(0, 3);
+});
+var monthLongNames = ['January', 'February', 'March', 'April', 'May', 'June',
+            'July', 'August', 'September', 'October', 'November', 'December'];
+var monthShortNames = monthLongNames.map(function(n) {
+    return n.substring(0, 3);
+});
