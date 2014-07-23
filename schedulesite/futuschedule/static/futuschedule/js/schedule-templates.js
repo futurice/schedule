@@ -163,7 +163,7 @@ var ScheduleTemplateSummary = React.createClass({
     handleChange: function(modelFieldName, convertToInt, event) {
         var val = getTargetValue(event);
         if (convertToInt && typeof(val) == 'string') {
-            val = Number.parseInt(val) || 0;
+            val = parseInt(val, 10) || 0;
         }
 
         var m = clone(this.state.editModel);

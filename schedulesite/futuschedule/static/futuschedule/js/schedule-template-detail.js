@@ -244,13 +244,13 @@ var ScheduleTemplateDetail = React.createClass({
     handleSchedTemplateChange: function(fieldName, convertToInt, ev) {
         var val = ev.target.value;
         if (convertToInt && typeof(val) == 'string') {
-            val = Number.parseInt(val) || 0;
+            val = parseInt(val, 10) || 0;
         }
         this.schedTemplFieldEdit(fieldName, val);
     },
     handleStartingWeekdayChange: function(ev) {
         this.setState({
-            startingWeekday: Number.parseInt(ev.target.value)
+            startingWeekday: parseInt(ev.target.value, 10)
         });
     },
     evTemplFieldEdit: function(idx, fieldName, newValue) {
@@ -541,7 +541,7 @@ var ScheduleTemplateDetail = React.createClass({
                                 result.push(<li key={'daychange-'+et.id}>
                                     <h2>
                                     {(function() {
-                                        var dayOff = Number.parseInt(et.dayOffset) || 0,
+                                        var dayOff = parseInt(et.dayOffset, 10) || 0,
                                             norm = normalizeWeekdayIndex(
                                                 dayOff + this.state.startingWeekday),
                                             result = weekdayLongNames[norm],
@@ -655,12 +655,12 @@ var EventTemplate = React.createClass({
     handleChange: function(fieldName, convertToInt, ev) {
         var val = getTargetValue(ev);
         if (convertToInt && typeof(val) == 'string') {
-            val = Number.parseInt(val) || 0;
+            val = parseInt(val, 10) || 0;
         }
         this.props.onFieldEdit(fieldName, val);
     },
     handleIntBlur: function(fieldName, ev) {
-        var val = Number.parseInt(ev.target.value) || 0;
+        var val = parseInt(ev.target.value, 10) || 0;
         this.props.onFieldEdit(fieldName, val);
     },
     removeInvitee: function(removeId) {
@@ -851,7 +851,7 @@ var EventTemplate = React.createClass({
                         />
                     {' '} {weekdayLongNames[normalizeWeekdayIndex(
                         this.props.zeroWeekday +
-                        (Number.parseInt(this.props.model.dayOffset) || 0)
+                        (parseInt(this.props.model.dayOffset, 10) || 0)
                     )]}
                 </td>
             </tr>
