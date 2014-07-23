@@ -710,7 +710,7 @@ var NewSchedule;
         handleChange: function(fieldName, convertToInt, ev) {
             var val = getTargetValue(ev);
             if (convertToInt && typeof(val) == 'string') {
-                val = Number.parseInt(val) || 0;
+                val = parseInt(val, 10) || 0;
             }
             this.props.onFieldEdit(fieldName, val);
         },
