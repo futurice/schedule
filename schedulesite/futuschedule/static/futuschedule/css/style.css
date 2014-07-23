@@ -47,6 +47,31 @@ textarea.event-description {
 }
 
 
+/* <MultiSelect/> */
+
+div.typeahead-suggestions-parent {
+	position: relative;
+}
+
+ul.typeahead-suggestions {
+	position: absolute;
+	list-style-type: none;
+	background-color: white;
+	border: 1px solid;
+	padding: 0.3em;
+	margin: 0;
+}
+ul.typeahead-suggestions li {
+	white-space: pre;
+}
+ul.typeahead-suggestions li.match {
+	cursor: pointer;
+}
+ul.typeahead-suggestions li.selected {
+	background-color: lightgray;
+}
+
+
 /* TimeZones */
 
 ul#timezone-list {
