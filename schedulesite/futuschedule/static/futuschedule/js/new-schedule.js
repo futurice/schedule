@@ -831,6 +831,7 @@ var NewSchedule;
                     <td>
                         <textarea
                             className="event-description"
+                            rows="3"
                             disabled={this.props.disabled}
                             value={this.props.model.description}
                             onChange={this.handleChange.bind(this,
