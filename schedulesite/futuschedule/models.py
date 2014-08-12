@@ -1,60 +1,10 @@
 from django.conf import settings
-from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
+from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.db import models
 
-
-class FutuUserManager(BaseUserManager):
-    def create_user(self, username, email, first_name, last_name,
-            password=None):
-        user = self.model(username=username, email=email,
-                first_name=first_name, last_name=last_name)
-        user.set_password(password)
-        user.save()
-        return user
-
-    def create_superuser(self, username, email, first_name, last_name,
-            password):
-        user = self.create_user(username, email, first_name, last_name,
-                password)
-        user.is_admin = True
-        user.save()
-        return user
-
-class FutuUser(AbstractBaseUser):
-    username = models.CharField(max_length=40, unique=True, db_index=True)
-    email = models.CharField(max_length=100, unique=True)
-    first_name = models.CharField(max_length=100)
-    last_name = models.CharField(max_length=100)
-    is_active = models.BooleanField(default=True)
-    is_admin = models.BooleanField(default=False)
+class FutuUser(AbstractUser):
     supervisor = models.ForeignKey(settings.AUTH_USER_MODEL, null=True,
             related_name='supervisor_of', on_delete=models.SET_NULL)
-
-    objects = FutuUserManager()
-
-    USERNAME_FIELD = 'username'
-    REQUIRED_FIELDS = ['email']
-
-    def get_short_name(self):
-        return self.first_name
-
-    def get_full_name(self):
-        return self.first_name + ' ' + self.last_name
-
-    @property
-    def is_staff(self):
-        return self.is_admin
-
-    def has_perm(self, perm, obj=None):
-        # TODO: is this ok?
-        return True
-
-    def has_module_perms(self, app_label):
-        # TODO: is this ok?
-        return True
-
-    def __unicode__(self):
-        return self.get_full_name() + ' (' + self.username + ')'
 
     class Meta:
         # TODO: this doesn't seem to work (by default)
