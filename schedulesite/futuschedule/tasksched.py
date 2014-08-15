@@ -180,7 +180,7 @@ def processEventTask(modelId):
                     'deleted and we can\'t find out the timezone')
 
         sleepForRateLimit()
-        gCalJson = calendar.createEvent(schedTempl.calendar.email, False,
+        gCalJson = calendar.createEvent(schedTempl.calendar.email, True,
                 evTask.summary, evTask.description,
                 locTxt, evTask.startDt, evTask.endDt,
                 schedTempl.timezone.name, attendingEmails)
@@ -228,7 +228,8 @@ def processCleanupSchedulingRequest(modelId):
                 # in the future we can add a foreign key from the Event to a
                 # Calendar. But for the way we're making calendar events now,
                 # jsonData.organizer.email is the calendar ID.
-                calendar.deleteEvent(evData['organizer']['email'], evData['id'])
+                calendar.deleteEvent(evData['organizer']['email'], evData['id'],
+                        True)
             except:
                 logging.error(traceback.format_exc())
             event.delete()
