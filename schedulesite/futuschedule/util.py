@@ -104,5 +104,9 @@ def updateMeetingRooms(email, password):
             obj.email=r.GetResourceEmail()
             obj.resourceType=r.GetResourceType() or ''
             obj.name=r.GetResourceCommonName()
-            obj.description=r.GetResourceDescription() or ''
+
+            descr_max_len = (CalendarResource._meta.get_field('description')
+                    .max_length)
+            obj.description=(r.GetResourceDescription() or '')[:descr_max_len]
+
             obj.save()
