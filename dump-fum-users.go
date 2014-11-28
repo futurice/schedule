@@ -45,7 +45,9 @@ func main() {
 
 func getUsers(accTok string) []interface{} {
 	var result []interface{}
-	url := "https://api.fum.futurice.com/users/"
+	url := "https://api.fum.futurice.com/users/" +
+		"?fields=id,username,email,first_name,last_name," +
+		"google_status,status,supervisor"
 
 	for url != "" {
 		func() {
