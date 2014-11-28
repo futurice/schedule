@@ -20,8 +20,7 @@ createdb futuschedule
 Make a Python virtual environment however you prefer, then:
 pip install -r req.txt
 
-Create all db tables (you may answer ‘no’ when asked to create an admin user):
-./schedulesite/manage.py syncdb
+./schedulesite/manage.py migrate
 
 You need a project in the Google Developers Console. Download its
 ‘client-secrets.json’ from there.
@@ -49,6 +48,8 @@ futuschedule.util.updateMeetingRooms('google.admin@futurice.com', '«pass»')
 
 Running:
 =======
+
+./schedulesite/manage.py migrate
 
 Start the webserver:
 REMOTE_USER=myusername ./schedulesite/manage.py runserver

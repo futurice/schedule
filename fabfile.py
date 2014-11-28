@@ -22,6 +22,7 @@ def updateCode():
         sudo('git pull')
         with prefix('source ' + venv_dir + '/bin/activate'):
             sudo('pip install -r req.txt')
+            sudo('./schedulesite/manage.py migrate')
 
 @task
 def deploy():
