@@ -17,7 +17,7 @@ class GoogleCalendarTest(TestCase):
         calId = 'futuintro@futurice.com'
         tzName = 'Europe/Berlin'
 
-        startDt = datetime.datetime.today() + datetime.timedelta(days=1)
+        startDt = datetime.datetime.today() - datetime.timedelta(days=28)
         startDt = datetime.datetime(startDt.year, startDt.month, startDt.day,
                 9, 45)
         endDt = startDt + datetime.timedelta(minutes=30)
@@ -61,7 +61,7 @@ class GoogleCalendarTest(TestCase):
         calId = 'futuintro@futurice.com'
         tzName = 'Europe/Berlin'
 
-        startDt = datetime.datetime.today() + datetime.timedelta(days=1)
+        startDt = datetime.datetime.today() - datetime.timedelta(days=28)
         startDt = datetime.datetime(startDt.year, startDt.month, startDt.day,
                 7, 30)
         endDt = startDt + datetime.timedelta(minutes=30)
@@ -90,7 +90,7 @@ class GoogleCalendarTest(TestCase):
         calId = 'futuintro@futurice.com'
         tzName = 'Europe/Berlin'
 
-        startDt = datetime.datetime.today() + datetime.timedelta(days=1)
+        startDt = datetime.datetime.today() - datetime.timedelta(days=28)
         startDt = datetime.datetime(startDt.year, startDt.month, startDt.day,
                 9, 45)
         endDt = startDt + datetime.timedelta(minutes=30)

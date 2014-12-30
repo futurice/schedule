@@ -1,0 +1,23 @@
+language: python
+python:
+  - "2.7"
+
+env:
+  matrix:
+    - TRAVIS_DB=sqlite
+    - TRAVIS_DB=postgresql
+
+addons:
+  postgresql: "9.3"
+
+install:
+  - openssl aes-256-cbc -K $encrypted_aae51290c359_key -iv $encrypted_aae51290c359_iv -in travis-secrets.sh.enc -out travis-secrets.sh -d
+  - chmod u+x travis-secrets.sh
+  - ./travis-secrets.sh # write client_secrets.json and a_credentials_file
+  - cd schedulesite/schedulesite
+  - cp settings_travis.py.template settings.py
+  - cd -
+  - pip install -r req.txt
+  - psql -c 'create database futuschedule;' -U postgres
+
+script: schedulesite/manage.py test futuschedule

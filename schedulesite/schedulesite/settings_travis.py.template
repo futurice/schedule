@@ -19,9 +19,10 @@ DBS = {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'NAME': 'futuschedule',
         'HOST': 'localhost',
+        'USER': 'postgres',
     },
 }
 
 # choose the DB
-DATABASES = {'default': DBS['sqlite']}
+DATABASES = {'default': DBS[os.environ['TRAVIS_DB']]}
 del DBS
