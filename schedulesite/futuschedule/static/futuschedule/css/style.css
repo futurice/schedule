@@ -47,6 +47,20 @@ textarea.event-description {
 }
 
 
+/* top <nav> */
+ul#main-nav-list {
+    list-style-type: none;
+    padding: initial;
+}
+
+ul#main-nav-list > li {
+    display: inline;
+}
+
+ul#main-nav-list > li + li::before {
+    content: "| ";
+}
+
 /* <MultiSelect/> */
 
 div.typeahead-suggestions-parent {
