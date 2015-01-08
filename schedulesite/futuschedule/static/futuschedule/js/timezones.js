@@ -53,25 +53,33 @@ var TimeZoneListComp = React.createClass({
 
         // tz is either an object or null (for the "add new" form).
         function createTimezoneComp(tz) {
-            return <li key={tz ? tz.id : 'add-new-tz-item'}>
-                    <TimeZoneComp
-                        model={tz}
-                        onDelete={this.onDelete}
-                        onCreate={this.onCreate}
-                        onUpdate={this.onUpdate}
-                    />
-                </li>;
+            return <TimeZoneComp
+                key={tz ? tz.id : 'add-new-tz-item'}
+                model={tz}
+                onDelete={this.onDelete}
+                onCreate={this.onCreate}
+                onUpdate={this.onUpdate}
+            />;
         }
-        return <div>
+        return <section>
             {this.state.timezones.length ? '' :
                 <span className="info">
                     You have not entered any timezones.
                 </span>}
-            <ul id="timezone-list">
-                {this.state.timezones.map(createTimezoneComp, this)}
-                {createTimezoneComp.bind(this)(null)}
-            </ul>
-        </div>;
+
+            <section className="tbl">
+                <header className="tbl-head">
+                    <div className="tbl-tr">
+                        <span className="tbl-td">Name</span>
+                        <span className="tbl-td">Actions</span>
+                    </div>
+                </header>
+                <div className="tbl-body">
+                    {this.state.timezones.map(createTimezoneComp, this)}
+                    {createTimezoneComp.bind(this)(null)}
+                </div>
+            </section>
+        </section>;
     }
 });
 
@@ -216,7 +224,10 @@ var TimeZoneComp = React.createClass({
         var statusBox;
 
         if (this.state.deleted) {
-            return <div>Deleted.</div>;
+            return <article className="tbl-tr">
+                <span className="tbl-td">Deleted.</span>
+                <span className="tbl-td"></span>
+            </article>;
         }
 
         if (this.state.reqInFlight || this.state.reqErr) {
@@ -229,8 +240,11 @@ var TimeZoneComp = React.createClass({
         }
 
         if (!this.state.editing) {
-            return <div>
+            return <article className="tbl-tr">
+                <div className="tbl-td">
                     {this.props.model.name}
+                </div>
+                <div className="tbl-td">
                     <button type="button"
                         onClick={this.edit}
                         disabled={this.state.reqInFlight}>Edit</button>
@@ -238,26 +252,29 @@ var TimeZoneComp = React.createClass({
                         onClick={this.delete}
                         disabled={this.state.reqInFlight}>Delete</button>
                     {statusBox}
-                </div>;
+                </div>
+            </article>;
         }
 
-        return <form onSubmit={this.saveOrCreate}>
+        return <form onSubmit={this.saveOrCreate} className="tbl-tr">
+            <div className="tbl-td">
                 <input type="text"
                     placeholder="Time zone name…"
                     value={this.state.editModel.name}
                     onChange={this.handleChange.bind(this, 'name')}
                     disabled={this.state.reqInFlight} />
+            </div>
+            <div className="tbl-td">
                 <button type="button"
                     onClick={this.cancelEdit}
                     disabled={this.state.reqInFlight}
                     hidden={this.isNewItem()}>Cancel</button>
                 <button type="submit"
                     disabled={this.state.reqInFlight}>
-                    {this.isNewItem() ? 'Add new' : 'Save'}
+                    {this.isNewItem() ? '+ Add' : 'Save'}
                 </button>
-
-                {this.isNewItem() ? <br/> : ''}
                 {statusBox}
-            </form>;
+            </div>
+        </form>;
     }
 });

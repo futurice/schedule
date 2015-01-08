@@ -61,6 +61,42 @@ ul#main-nav-list > li + li::before {
     content: "| ";
 }
 
+
+/*
+ * Make semantic elements behave like a table.
+ * http://css-tricks.com/complete-guide-table-element/
+ */
+.tbl {
+	display: table;
+}
+.tbl-head {
+	display: table-header-group;
+}
+.tbl-body {
+	display: table-row-group;
+}
+.tbl-tr {
+	display: table-row;
+}
+.tbl-td {
+	display: table-cell;
+}
+
+.tbl {
+	border-collapse: separate;
+	border-spacing: 0.2em;
+}
+.tbl > .tbl-head .tbl-td {
+	font-weight: bold;
+}
+.tbl-td {
+	padding: 0.2em;
+}
+.tbl-body > .tbl-tr:nth-child(odd) {
+	background-color: #eee;
+}
+
+
 /* <MultiSelect/> */
 
 div.typeahead-suggestions-parent {
@@ -88,23 +124,11 @@ ul.typeahead-suggestions li.selected {
 
 /* TimeZones */
 
-ul#timezone-list {
-	list-style-type: none;
-}
-
 
 /* Calendars */
 
-ul#calendar-list {
-	list-style-type: none;
-}
-
 
 /* Schedule Template List */
-
-ul#schedule-template-list {
-	list-style-type: none;
-}
 
 
 /* Schedule Template Detail */

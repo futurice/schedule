@@ -48,25 +48,32 @@ var CalendarList = React.createClass({
 
         // cal is either an object or null (for the "add new" form).
         function createCalComp(cal) {
-            return <li key={cal ? cal.id : 'add-new-cal-item'}>
-                    <Calendar
-                        model={cal}
-                        onDelete={this.onDelete}
-                        onCreate={this.onCreate}
-                        onUpdate={this.onUpdate}
-                    />
-                </li>;
+            return <Calendar
+                key={cal ? cal.id : 'add-new-cal-item'}
+                model={cal}
+                onDelete={this.onDelete}
+                onCreate={this.onCreate}
+                onUpdate={this.onUpdate}
+            />;
         }
-        return <div>
+        return <section>
             {this.state.calendars.length ? '' :
                 <span className="info">
                     You have not entered any calendars.
                 </span>}
-            <ul id="calendar-list">
-                {this.state.calendars.map(createCalComp, this)}
-                {createCalComp.bind(this)(null)}
-            </ul>
-        </div>;
+            <section className="tbl">
+                <header className="tbl-head">
+                    <div className="tbl-tr">
+                        <span className="tbl-td">Email</span>
+                        <span className="tbl-td">Actions</span>
+                    </div>
+                </header>
+                <div className="tbl-body">
+                    {this.state.calendars.map(createCalComp, this)}
+                    {createCalComp.bind(this)(null)}
+                </div>
+            </section>
+        </section>;
     }
 });
 
@@ -200,7 +207,10 @@ var Calendar = React.createClass({
         var statusBox;
 
         if (this.state.deleted) {
-            return <div>Deleted</div>;
+            return <article className="tbl-tr">
+                <span className="tbl-td">Deleted.</span>
+                <span className="tbl-td"></span>
+            </article>;
         }
 
         if (this.state.reqInFlight || this.state.reqErr) {
@@ -213,8 +223,11 @@ var Calendar = React.createClass({
         }
 
         if (!this.state.editing) {
-            return <div>
+            return <article className="tbl-tr">
+                <div className="tbl-td">
                     {this.props.model.email}
+                </div>
+                <div className="tbl-td">
                     <button type="button"
                         onClick={this.edit}
                         disabled={this.state.reqInFlight}>Edit</button>
@@ -222,26 +235,29 @@ var Calendar = React.createClass({
                         onClick={this.delete}
                         disabled={this.state.reqInFlight}>Delete</button>
                     {statusBox}
-                </div>;
+                </div>
+            </article>;
         }
 
-        return <form onSubmit={this.updateOrCreate}>
+        return <form onSubmit={this.updateOrCreate} className="tbl-tr">
+            <div className="tbl-td">
                 <input type="text"
                     placeholder="Calendar email…"
                     value={this.state.editModel.email}
                     onChange={this.handleChange.bind(this, 'email')}
                     disabled={this.state.reqInFlight} />
+            </div>
+            <div className="tbl-td">
                 <button type="button"
                     onClick={this.cancelEdit}
                     disabled={this.state.reqInFlight}
                     hidden={this.isNewItem()}>Cancel</button>
                 <button type="submit"
                     disabled={this.state.reqInFlight}>
-                    {this.isNewItem() ? 'Add new' : 'Save'}
+                    {this.isNewItem() ? '+ Add' : 'Save'}
                 </button>
-
-                {this.isNewItem() ? <br/> : ''}
                 {statusBox}
-            </form>;
+            </div>
+        </form>;
     }
 });

@@ -75,33 +75,43 @@ var ScheduleTemplatesList = React.createClass({
             </div>;
         }
 
-        return <div>
+        return <section>
             {this.state.schedTempl.length ? '' :
                 <span className="info">
                     There are no Schedule Templates.
                 </span>}
-            <ul id="schedule-template-list">
-                {this.state.schedTempl.map((function(st) {
-                    return <li key={st.id || 'add-new-st-item'}>
-                        <ScheduleTemplateSummary
-                            model={st}
-                            allTimezones={this.state.timezones}
-                            allCalendars={this.state.calendars}
-                            onDelete={this.onDelete}
-                            onUpdate={this.onUpdate}
-                            />
-                    </li>;
-                }).bind(this))}
-                <li>
+
+            <section className="tbl">
+                <header className="tbl-head">
+                    <div className="tbl-tr">
+                        <span className="tbl-td">Template</span>
+                        <span className="tbl-td">TimeZone</span>
+                        <span className="tbl-td">Calendar</span>
+                        <span className="tbl-td">Actions</span>
+                    </div>
+                </header>
+
+                <div className="tbl-body">
+                    {this.state.schedTempl.map((function(st) {
+                        return <ScheduleTemplateSummary
+                                key={st.id}
+                                model={st}
+                                allTimezones={this.state.timezones}
+                                allCalendars={this.state.calendars}
+                                onDelete={this.onDelete}
+                                onUpdate={this.onUpdate}
+                                />;
+                    }).bind(this))}
                     <ScheduleTemplateSummary
+                        key={'add-new-st-item'}
                         model={null}
                         allTimezones={this.state.timezones}
                         allCalendars={this.state.calendars}
                         onCreate={this.onCreate}
                         />
-                </li>
-            </ul>
-        </div>;
+                </div>
+            </section>
+        </section>;
     }
 });
 
@@ -253,7 +263,12 @@ var ScheduleTemplateSummary = React.createClass({
         var statusBox;
 
         if (this.state.deleted) {
-            return <div>Deleted.</div>;
+            return <article className="tbl-tr">
+                <span className="tbl-td">Deleted.</span>
+                <span className="tbl-td"></span>
+                <span className="tbl-td"></span>
+                <span className="tbl-td"></span>
+            </article>;
         }
         if (this.state.ajaxInFlight || this.state.ajaxErr) {
             statusBox = <span
@@ -264,8 +279,13 @@ var ScheduleTemplateSummary = React.createClass({
         }
 
         if (!this.state.editing) {
-            return <div>
-                <a href={'../schedule-template/' + this.props.model.id}>
+            return <article className="tbl-tr">
+                <div className="tbl-td">
+                    <a href={'../schedule-template/' + this.props.model.id}>
+                        {this.props.model.name}
+                    </a>
+                </div>
+                <div className="tbl-td">
                     {(function() {
                         var tzName = 'Unknown TimeZone';
                         this.props.allTimezones.forEach(function(tz) {
@@ -273,80 +293,94 @@ var ScheduleTemplateSummary = React.createClass({
                                 tzName = tz.name;
                             }
                         }, this);
+                        return tzName;
+                    }).bind(this)()}
+                </div>
+                <div className="tbl-td">
+                    {(function() {
                         var calEmail = 'Unknown Calendar';
                         this.props.allCalendars.forEach(function(cal) {
                             if (cal.id == this.props.model.calendar) {
                                 calEmail = cal.email;
                             }
                         }, this);
-                        return this.props.model.name +
-                            ' (' + tzName + ', ' + calEmail + ')';
+                        return calEmail;
                     }).bind(this)()}
-                </a>
-                <button type="button"
-                    onClick={this.edit}
-                    disabled={this.state.ajaxInFlight}>
-                    Edit
-                </button>
-                <button type="button"
-                    onClick={this.delete}
-                    disabled={this.state.ajaxInFlight}>
-                    Delete
-                </button>
-                {statusBox}
-            </div>;
+                </div>
+                <div className="tbl-td">
+                    <button type="button"
+                        onClick={this.edit}
+                        disabled={this.state.ajaxInFlight}>
+                        Edit
+                    </button>
+                    <button type="button"
+                        onClick={this.delete}
+                        disabled={this.state.ajaxInFlight}>
+                        Delete
+                    </button>
+                    {statusBox}
+                </div>
+            </article>;
         }
 
-        return <form onSubmit={this.saveOrCreate}>
-            <input type="text"
-                placeholder="Template Name…"
-                value={this.state.editModel.name}
-                onChange={this.handleChange.bind(this, 'name', false)}
-                disabled={this.state.ajaxInFlight}
-                />
-            <select
-                value={this.state.editModel.timezone || 'null'}
-                onChange={this.handleChange.bind(this, 'timezone', true)}
-                disabled={this.state.ajaxInFlight}
-                >
-                <option value='null'>TimeZone…</option>
-                {this.props.allTimezones.map(function(tz) {
-                    // Don't need the key here, just silencing React warning
-                    return <option key={tz.id} value={tz.id}>{tz.name}</option>;
-                })}
-            </select>
-            <select
-                value={this.state.editModel.calendar || 'null'}
-                onChange={this.handleChange.bind(this, 'calendar', true)}
-                disabled={this.state.ajaxInFlight}
-                >
-                <option value='null'>Calendar…</option>
-                {this.props.allCalendars.map(function(cal) {
-                    // Don't need the key here, just silencing React warning
-                    return <option key={cal.id} value={cal.id}>
-                        {cal.email}
-                    </option>;
-                })}
-            </select>
-            <button type="submit" disabled={this.state.ajaxInFlight}>
-                {this.isNewItem() ? 'Add new' : 'Save'}
-            </button>
-            <button type="button"
-                onClick={this.cancelEdit}
-                disabled={this.state.ajaxInFlight}
-                hidden={this.isNewItem()}
-                >
-                Cancel
-            </button>
-            <button type="reset"
-                disabled={this.state.ajaxInFlight}
-                hidden={!this.isNewItem()}
-                >
-                Clear fields
-            </button>
-
-            {this.isNewItem() ? <br/> : ''}
-            {statusBox}
+        return <form onSubmit={this.saveOrCreate} className="tbl-tr">
+            <div className="tbl-td">
+                <input type="text"
+                    placeholder="Template Name…"
+                    value={this.state.editModel.name}
+                    onChange={this.handleChange.bind(this, 'name', false)}
+                    disabled={this.state.ajaxInFlight}
+                    />
+            </div>
+            <div className="tbl-td">
+                <select
+                    value={this.state.editModel.timezone || 'null'}
+                    onChange={this.handleChange.bind(this, 'timezone', true)}
+                    disabled={this.state.ajaxInFlight}
+                    >
+                    <option value='null'>TimeZone…</option>
+                    {this.props.allTimezones.map(function(tz) {
+                        // Don't need key here, just silencing React warning
+                        return <option key={tz.id} value={tz.id}>
+                            {tz.name}
+                        </option>;
+                    })}
+                </select>
+            </div>
+            <div className="tbl-td">
+                <select
+                    value={this.state.editModel.calendar || 'null'}
+                    onChange={this.handleChange.bind(this, 'calendar', true)}
+                    disabled={this.state.ajaxInFlight}
+                    >
+                    <option value='null'>Calendar…</option>
+                    {this.props.allCalendars.map(function(cal) {
+                        // Don't need key here, just silencing React warning
+                        return <option key={cal.id} value={cal.id}>
+                            {cal.email}
+                        </option>;
+                    })}
+                </select>
+            </div>
+            <div className="tbl-td">
+                <button type="submit" disabled={this.state.ajaxInFlight}>
+                    {this.isNewItem() ? '+ Add' : 'Save'}
+                </button>
+                <button type="button"
+                    onClick={this.cancelEdit}
+                    disabled={this.state.ajaxInFlight}
+                    hidden={this.isNewItem()}
+                    >
+                    Cancel
+                </button>
+                <button type="reset"
+                    disabled={this.state.ajaxInFlight}
+                    hidden={!this.isNewItem()}
+                    >
+                    Clear fields
+                </button>
+                {statusBox}
+            </div>
         </form>;
     }
 });
