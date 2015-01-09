@@ -1,12 +1,11 @@
 {% extends "futuschedule/base.html" %}
+{% load staticfiles %}
 
 {% block title %}Schedule Template{% endblock %}
 
 {% block body %}
-<script type="text/jsx">
-/** @jsx React.DOM */
-// pass the ‘id’ attr as a number not as a string
-React.render(<ScheduleTemplateDetail id={ {{st_id}} } />,
-  document.getElementById('main-content'));
+<script type="text/javascript">
+var st_id = {{st_id}};
 </script>
+<script src="{% static 'futuschedule/js/build/page-schedule-template-detail.js' %}"></script>
 {% endblock %}

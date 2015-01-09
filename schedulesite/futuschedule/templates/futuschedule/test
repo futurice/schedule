@@ -12,5 +12,5 @@
 <div id="qunit-fixture"></div>
 
 <script src="{% static 'futuschedule/bower_components/qunit/qunit/qunit.js' %}"></script>
-<script src="{% static 'futuschedule/js/test.js' %}"></script>
+<script src="{% static 'futuschedule/js/build/test.js' %}"></script>
 {% endblock %}

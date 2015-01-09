@@ -1,4 +1,5 @@
 {% extends "futuschedule/base.html" %}
+{% load staticfiles %}
 
 {% block title %}Schedule Templates{% endblock %}
 
@@ -11,9 +12,5 @@ A schedule template contains a series of events.
 <div id="schedule-templates-main-content">
 </div>
 
-<script type="text/jsx">
-/** @jsx React.DOM */
-React.render(<ScheduleTemplatesList />,
-  document.getElementById('schedule-templates-main-content'));
-</script>
+<script src="{% static 'futuschedule/js/build/page-schedule-templates.js' %}"></script>
 {% endblock %}

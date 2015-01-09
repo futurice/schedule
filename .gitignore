@@ -4,4 +4,7 @@
 /env
 *.pyc
 /schedulesite/schedulesite/settings.py
-/schedulesite/futuschedule/static/futuschedule/bower_components
+
+/schedulesite/futuschedule/static/futuschedule/bower_components/
+/node_modules/
+/schedulesite/futuschedule/static/futuschedule/js/build/

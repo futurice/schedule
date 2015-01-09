@@ -1,4 +1,5 @@
 {% extends "futuschedule/base.html" %}
+{% load staticfiles %}
 
 {% block title %}Create New Schedule{% endblock %}
 
@@ -8,9 +9,5 @@
 <div id="new-schedule-main-content">
 </div>
 
-<script type="text/jsx">
-/** @jsx React.DOM */
-React.render(<NewSchedule />,
-  document.getElementById('new-schedule-main-content'));
-</script>
+<script src="{% static 'futuschedule/js/build/page-new-schedule-page.js' %}"></script>
 {% endblock %}

@@ -1,5 +1,3 @@
-/** @jsx React.DOM */
-
 var ScheduleTemplatesList = React.createClass({
     getInitialState: function() {
         return {

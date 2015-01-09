@@ -1,12 +1,11 @@
 {% extends "futuschedule/base.html" %}
+{% load staticfiles %}
 
 {% block title %}Scheduling Request{% endblock %}
 
 {% block body %}
-<script type="text/jsx">
-/** @jsx React.DOM */
-// pass the ‘id’ attr as a number not as a string
-React.render(<SchedulingRequestDetail id={ {{sr_id}} } />,
-  document.getElementById('main-content'));
+<script type="text/javascript">
+var sr_id = {{sr_id}};
 </script>
+<script src="{% static 'futuschedule/js/build/page-scheduling-request-detail.js' %}"></script>
 {% endblock %}

@@ -1,9 +1,4 @@
-/** @jsx React.DOM */
-
-var SchedulingRequestDetail = React.createClass({
-    propTypes: {
-        id: React.PropTypes.number.isRequired
-    },
+var SchedulesList = React.createClass({
     mixins: [
         getRestLoaderMixin(apiRoot + 'users/',
             'users', 'usersLoaded', 'usersErr', function() {
@@ -15,6 +10,8 @@ var SchedulingRequestDetail = React.createClass({
                     usersById: usersById
                 });
             }),
+        getRestLoaderMixin(apiRoot + 'schedules/?ordering=-createdAt',
+            'schedules', 'schedulesLoaded', 'schedulesErr'),
         getRestLoaderMixin(apiRoot + 'scheduletemplates/',
             'scheduleTemplates', 'scheduleTemplLoaded', 'scheduleTemplErr',
             function() {
@@ -27,18 +24,12 @@ var SchedulingRequestDetail = React.createClass({
                 });
             })
     ],
-    componentDidMount: function() {
-        compFetchItemRest.bind(this)(
-            apiRoot + 'schedulingrequests/' + this.props.id,
-            'schedReq', 'schedReqErr');
-        compFetchRest.bind(this)(
-            apiRoot + 'schedules/?schedulingRequest=' + this.props.id,
-            'schedules', 'schedulesLoaded', 'schedulesErr');
-    },
     getInitialState: function() {
         return {
-            schedReq: null,
-            schedReqErr: '',
+            users: null,
+            usersLoaded: false,
+            usersErr: '',
+            usersById: null,
 
             schedules: null,
             schedulesLoaded: false,
@@ -47,17 +38,12 @@ var SchedulingRequestDetail = React.createClass({
             scheduleTemplates: null,
             scheduleTemplLoaded: false,
             scheduleTemplErr: '',
-            scheduleTemplById: null,
-
-            users: null,
-            usersLoaded: false,
-            usersErr: '',
-            usersById: null
+            scheduleTemplById: null
         };
     },
     render: function() {
         var err;
-        ['schedReqErr', 'schedulesErr', 'scheduleTemplErr', 'usersErr'
+        ['usersErr', 'schedulesErr', 'scheduleTemplErr'
         ].forEach((function(fName) {
             err = err || this.state[fName];
         }).bind(this));
@@ -66,8 +52,8 @@ var SchedulingRequestDetail = React.createClass({
         }
 
         var loaded = true;
-        ['schedulesLoaded', 'scheduleTemplLoaded', 'scheduleTemplById',
-            'usersLoaded', 'usersById'
+        ['usersLoaded', 'usersById', 'schedulesLoaded', 'scheduleTemplLoaded',
+            'scheduleTemplById'
         ].forEach((function(fName) {
             loaded = loaded && Boolean(this.state[fName]);
         }).bind(this));
@@ -75,31 +61,34 @@ var SchedulingRequestDetail = React.createClass({
             return <div><span className="status-waiting">Loading…</span></div>;
         }
 
-        var templName = 'Unknown',
-            srJson = JSON.parse(this.state.schedReq.json),
-            templId = srJson.scheduleTemplate;
-        if (templId in this.state.scheduleTemplById) {
-            templName = this.state.scheduleTemplById[templId].name;
+        if (!this.state.schedules.length) {
+            return <div>
+                <span className="info">
+                    There are no schedules.
+                </span>
+            </div>;
         }
-        return <div>
-            Scheduling request
-            <br/>
-            From template: {templName}
-            <br/>Submitted on {' '}
-            {new Date(this.state.schedReq.requestedAt).toString()}
-            {' '} by {getUserNameAndEmail(this.state.schedReq.requestedBy,
-                this.state.usersById)}
 
+        return (
             <ul>
                 {this.state.schedules.map((function(s) {
+                    var templateName = 'Unknown';
+                    if (s.template in this.state.scheduleTemplById) {
+                        templateName =
+                            this.state.scheduleTemplById[s.template].name;
+                    }
                     return <li key={s.id}>
-                        <a href={'../../schedule/' + s.id}>
-                            Schedule for {getUserName(s.forUser,
+                        <a href={'../schedule/' + s.id}>
+                            Schedule for {getUserNameAndEmail(s.forUser,
                                 this.state.usersById)}
                         </a>
+                        <br/>
+                        From template: {templateName}
+                        <br/>
+                        created {new Date(s.createdAt).toString()}
                     </li>;
                 }).bind(this))}
             </ul>
-        </div>;
+        );
     }
 });

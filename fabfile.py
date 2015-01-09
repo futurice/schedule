@@ -62,6 +62,12 @@ def prepare_repository():
                 # disable the 'may bower report statistics?' question
                 sudo('bower install --config.interactive=false')
 
+                sudo('npm install react-tools')
+            js_dir = os.path.join(repo_dir, 'schedulesite', 'futuschedule',
+                    'static', 'futuschedule', 'js')
+            sudo('./node_modules/.bin/jsx --no-cache-dir {} {}'.format(
+                os.path.join(js_dir, 'src'), os.path.join(js_dir, 'build')))
+
 
 def run_tests():
     with settings(cd(config_dir), sudo_user=schedule_user):

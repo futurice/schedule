@@ -1,99 +1,85 @@
-/** @jsx React.DOM */
-
-/*
- * Fetches the timezones when created then displays them.
- */
-var TimeZoneListComp = React.createClass({
+var CalendarList = React.createClass({
     mixins: [
-        getRestLoaderMixin(apiRoot + 'timezones/?ordering=name',
-            'timezones', 'tzLoaded', 'tzErr'),
+        getRestLoaderMixin(apiRoot + 'calendars/?ordering=email',
+            'calendars', 'calLoaded', 'calErr'),
     ],
     getInitialState: function() {
         return {
-            timezones: [],
-            tzLoaded: false,
-            tzErr: ''
+            calendars: [],
+            calLoaded: false,
+            calErr: ''
         };
     },
-    onDelete: function(deletedTz) {
-        // non-optimal O(n) operation
-        var timezones = this.state.timezones.filter(function(tz) {
-            return tz.id != deletedTz.id;
-        });
+    onDelete: function(deletedCal) {
         this.setState({
-            timezones: timezones
+            calendars: this.state.calendars.filter(function(cal) {
+                return cal.id != deletedCal.id;
+            })
         });
     },
     onCreate: function(obj) {
         this.setState({
-            timezones: this.state.timezones.concat(obj)
+            calendars: this.state.calendars.concat(obj)
         });
     },
     onUpdate: function(obj) {
         this.setState({
-            timezones: this.state.timezones.map(function(tz) {
-                if (tz.id == obj.id) {
+            calendars: this.state.calendars.map(function(cal) {
+                if (cal.id == obj.id) {
                     return obj;
                 }
-                return tz;
+                return cal;
             })
         });
     },
     render: function() {
-        if (this.state.tzErr) {
+        if (this.state.calErr) {
             return <div>
-                <span className="status-error">{this.state.tzErr}</span>
+                <span className="status-error">{this.state.calErr}</span>
             </div>;
         }
-        if (!this.state.tzLoaded) {
+        if (!this.state.calLoaded) {
             return <div>
                 <span className="status-waiting">Getting data…</span>
             </div>;
         }
 
-        // tz is either an object or null (for the "add new" form).
-        function createTimezoneComp(tz) {
-            return <TimeZoneComp
-                key={tz ? tz.id : 'add-new-tz-item'}
-                model={tz}
+        // cal is either an object or null (for the "add new" form).
+        function createCalComp(cal) {
+            return <Calendar
+                key={cal ? cal.id : 'add-new-cal-item'}
+                model={cal}
                 onDelete={this.onDelete}
                 onCreate={this.onCreate}
                 onUpdate={this.onUpdate}
             />;
         }
         return <section>
-            {this.state.timezones.length ? '' :
+            {this.state.calendars.length ? '' :
                 <span className="info">
-                    You have not entered any timezones.
+                    You have not entered any calendars.
                 </span>}
-
             <section className="tbl">
                 <header className="tbl-head">
                     <div className="tbl-tr">
-                        <span className="tbl-td">Name</span>
+                        <span className="tbl-td">Email</span>
                         <span className="tbl-td">Actions</span>
                     </div>
                 </header>
                 <div className="tbl-body">
-                    {this.state.timezones.map(createTimezoneComp, this)}
-                    {createTimezoneComp.bind(this)(null)}
+                    {this.state.calendars.map(createCalComp, this)}
+                    {createCalComp.bind(this)(null)}
                 </div>
             </section>
         </section>;
     }
 });
 
-/*
- * Display, edit and delete a TimeZone, or create a new one.
- *
- * model is either a timezone object {…} or null, which means show a form to
- * create a new timezone.
- */
-var TimeZoneComp = React.createClass({
+var Calendar = React.createClass({
     mixins: [
         getPropModelClonerMixin({
             id: null,
-            name: ''
+            email: ''
         }),
     ],
     propTypes: {
@@ -104,11 +90,7 @@ var TimeZoneComp = React.createClass({
     },
     getInitialState: function() {
         var state = {
-            // If non-empty, an AJAX request is in flight and this is its
-            // description, e.g. ‘Saving…’.
             reqInFlight: '',
-            // If non-empty, the previous request had an error and this is a
-            // text to show the user.
             reqErr: '',
 
             editing: this.isNewItem(),
@@ -144,17 +126,17 @@ var TimeZoneComp = React.createClass({
             editModel: m
         });
     },
-    saveOrCreate: function(evt) {
+    updateOrCreate: function(evt) {
         evt.preventDefault();
         this.setState({
-            reqInFlight: this.isNewItem() ? 'Creating…' : 'Saving…'
+            reqInFlight: this.isNewItem() ? 'Creating…' : 'Updating…'
         });
 
         var url;
         if (this.isNewItem()) {
-            url = apiRoot + 'timezones/';
+            url = apiRoot + 'calendars/';
         } else {
-            url = apiRoot + 'timezones/' + this.props.model.id + '/';
+            url = apiRoot + 'calendars/' + this.props.model.id + '/';
         }
 
         $.ajax({
@@ -188,7 +170,7 @@ var TimeZoneComp = React.createClass({
         });
     },
     delete: function() {
-        if (!confirm('Delete ' + this.props.model.name + '?')) {
+        if (!confirm('Delete ' + this.props.model.email + '?')) {
             return;
         }
 
@@ -197,7 +179,7 @@ var TimeZoneComp = React.createClass({
         });
 
         $.ajax({
-            url: apiRoot + 'timezones/' + this.props.model.id + '/',
+            url: apiRoot + 'calendars/' + this.props.model.id + '/',
             type: 'DELETE',
             headers: {
                 'X-CSRFToken': $.cookie('csrftoken')
@@ -219,7 +201,6 @@ var TimeZoneComp = React.createClass({
             }).bind(this)
         });
     },
-
     render: function() {
         var statusBox;
 
@@ -242,7 +223,7 @@ var TimeZoneComp = React.createClass({
         if (!this.state.editing) {
             return <article className="tbl-tr">
                 <div className="tbl-td">
-                    {this.props.model.name}
+                    {this.props.model.email}
                 </div>
                 <div className="tbl-td">
                     <button type="button"
@@ -256,12 +237,12 @@ var TimeZoneComp = React.createClass({
             </article>;
         }
 
-        return <form onSubmit={this.saveOrCreate} className="tbl-tr">
+        return <form onSubmit={this.updateOrCreate} className="tbl-tr">
             <div className="tbl-td">
                 <input type="text"
-                    placeholder="Time zone name…"
-                    value={this.state.editModel.name}
-                    onChange={this.handleChange.bind(this, 'name')}
+                    placeholder="Calendar email…"
+                    value={this.state.editModel.email}
+                    onChange={this.handleChange.bind(this, 'email')}
                     disabled={this.state.reqInFlight} />
             </div>
             <div className="tbl-td">

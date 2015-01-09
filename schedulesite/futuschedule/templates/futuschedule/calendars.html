@@ -1,4 +1,5 @@
 {% extends "futuschedule/base.html" %}
+{% load staticfiles %}
 
 {% block title %}Calendars{% endblock %}
 
@@ -14,9 +15,5 @@ You may ask an administrator for help if you are not sure.
 <div id="calendars-main-content">
 </div>
 
-<script type="text/jsx">
-/** @jsx React.DOM */
-React.render(<CalendarList />,
-  document.getElementById('calendars-main-content'));
-</script>
+<script src="{% static 'futuschedule/js/build/page-calendars.js' %}"></script>
 {% endblock %}

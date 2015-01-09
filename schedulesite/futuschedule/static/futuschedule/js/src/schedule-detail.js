@@ -1,5 +1,3 @@
-/** @jsx React.DOM */
-
 var ScheduleDetail;
 (function() {
     ScheduleDetail = React.createClass({

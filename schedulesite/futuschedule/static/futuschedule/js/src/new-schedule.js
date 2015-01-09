@@ -1,5 +1,3 @@
-/** @jsx React.DOM */
-
 // TODO: clean up a bit. Argument passing is a bit messy (passing whole objects
 // e.g. Users instead of just IDs) in a few places.
 // This is because of speed to get a working prototype asap.

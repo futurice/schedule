@@ -1,5 +1,3 @@
-/** @jsx React.DOM */
-
 var ScheduleTemplateDetail = React.createClass({
     propTypes: {
         id: React.PropTypes.number.isRequired

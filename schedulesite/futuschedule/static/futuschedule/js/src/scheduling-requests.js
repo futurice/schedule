@@ -1,5 +1,3 @@
-/** @jsx React.DOM */
-
 var SchedulingRequestsList = React.createClass({
     mixins: [
         getRestLoaderMixin(apiRoot + 'schedulingrequests/?ordering=-requestedAt',

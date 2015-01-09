@@ -1,5 +1,3 @@
-/** @jsx React.DOM */
-
 var apiRoot = '/futuschedule/api/';
 
 function noop() {
