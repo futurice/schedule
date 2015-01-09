@@ -36,15 +36,12 @@ createdb futuschedule
 syncdb as described in README.
 
 
-Source code:
-===========
-Check out the source code, e.g. in /home/futuschedule/futuschedule
+Config files:
+============
 The app needs a few files (e.g. Google API Tokens) stored in your
-current working directory. To avoid accidentally deleting these when updating
-the source code, make a separate directory e.g. $HOME/config-files/ and always
-launch processes from there.
-
-Set up Django settings.py and the SECRET_KEY as explained in the README.
+current working directory. To avoid accidentally deleting these,
+make a separate directory e.g. $HOME/config-files/
+and always launch processes from there.
 
 Download the client-secrets.json to config-files/ as described in the README.
 Authorize the app to get a ‘a_credentials_file’ as described in the README,
@@ -166,3 +163,9 @@ SIGTERM to the correct child process ID, so the graceful exit message printed
 by the task processor doesn't show up in the text files.
 When we send that signal by hand we see the graceful exit message, so shutdown
 should happen ok this way.
+
+
+Bower
+=====
+Install npm (apt-get install npm or compile from sources).
+sudo npm install -g bower

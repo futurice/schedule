@@ -8,12 +8,14 @@ See the `DEPLOY` file for a suggested way of doing this on a remote server.
 For licensing (BSD 3-clause), see `COPYING`.
 
 ## Setup:
-Create settings.py for Django:
 ```bash
+# Create settings.py for Django:
 cd schedulesite/schedulesite
 cp settings_dev.py.template settings.py
 # Set the SECRET_KEY in settings.py to some random string.
 cd -
+
+bower install
 ```
 
 Choose your Database by editing `settings.py`.

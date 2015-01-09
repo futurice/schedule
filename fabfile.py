@@ -1,6 +1,6 @@
 import datetime
 from fabric.api import task, env
-from fabric.context_managers import cd, prefix, settings
+from fabric.context_managers import cd, prefix, settings, shell_env
 from fabric.operations import sudo
 import os, os.path
 import random
@@ -55,6 +55,12 @@ def prepare_repository():
             chars = string.ascii_letters + string.digits
             secret_key = ''.join(random.choice(chars) for x in range(40))
             sudo('echo \'SECRET_KEY = "' + secret_key + '"\' >>settings.py')
+
+        with settings(cd(repo_dir)):
+            # otherwise bower tries to access ~/.config for the SSH user
+            with shell_env(HOME=home_dir):
+                # disable the 'may bower report statistics?' question
+                sudo('bower install --config.interactive=false')
 
 
 def run_tests():
