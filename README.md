@@ -74,3 +74,5 @@ REMOTE_USER=myusername ./schedulesite/manage.py runserver
 # Start the task-processor (kill with Ctrl+C (SIGINT) or SIGTERM):
 ./schedulesite/manage.py shell < task-processor.py
 ```
+
+[http://localhost:8000/futuschedule/](http://localhost:8000/futuschedule/)

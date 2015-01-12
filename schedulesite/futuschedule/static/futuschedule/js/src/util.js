@@ -571,6 +571,15 @@ function getUserName(userId, usersById) {
     }
 }
 
+function getUserEmail(userId, usersById) {
+    var user = usersById[userId];
+    if (user) {
+        return user.email;
+    } else {
+        return 'unknown@example.com';
+    }
+}
+
 function getUserNameAndEmail(userId, usersById) {
     var user = usersById[userId];
     if (user) {

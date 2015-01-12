@@ -69,25 +69,28 @@ var SchedulingRequestsList = React.createClass({
             </div>;
         }
 
-        if (!this.state.sReq.length) {
-            return <div>
-                <span className="info">
-                    There are no requests to make schedules.
-                </span>
-            </div>;
-        }
-
-        return <ul>
-            {this.state.sReq.map((function(r) {
-                return <li key={r.id}>
-                    <SchedulingRequest
-                        model={r}
-                        usersById={this.state.usersById}
-                        scheduleTemplById={this.state.scheduleTemplById}
-                    />
-                </li>;
-            }).bind(this))}
-        </ul>;
+        return <table className="striped">
+            <thead>
+                <tr>
+                    <th>For</th>
+                    <th>Template</th>
+                    <th>By</th>
+                    <th>When</th>
+                    <th>Status</th>
+                    <th>Delete</th>
+                </tr>
+            </thead>
+            <tbody>
+                {this.state.sReq.map((function(r) {
+                    return <SchedulingRequest
+                            key={r.id}
+                            model={r}
+                            usersById={this.state.usersById}
+                            scheduleTemplById={this.state.scheduleTemplById}
+                        />;
+                }).bind(this))}
+            </tbody>
+        </table>;
     }
 });
 
@@ -100,6 +103,7 @@ var SchedulingRequest = React.createClass({
     getInitialState: function() {
         return {
             showDeleteBtn: true,
+            showException: false,
             ajaxInFlight: '',
             ajaxErr: ''
         };
@@ -138,9 +142,27 @@ var SchedulingRequest = React.createClass({
             });
         }
     },
+    toggleException: function(e) {
+        e.preventDefault();
+        this.setState({
+            showException: !this.state.showException
+        });
+    },
     render: function() {
-        var userText = getUserNameAndEmail(this.props.model.requestedBy,
-                this.props.usersById);
+        var userName = getUserName(this.props.model.requestedBy,
+                this.props.usersById),
+            userEmail = getUserEmail(this.props.model.requestedBy,
+                this.props.usersById),
+            userElem = <a href={'mailto:' + userEmail}>{userName}</a>,
+            dateElem = (function() {
+                function zeroPad(n) {
+                    return (n < 10 ? '0' : '') + n;
+                }
+                var d = new Date(this.props.model.requestedAt),
+                    txt = d.getFullYear() + '-' + zeroPad(d.getMonth() + 1) +
+                        '-' + zeroPad(d.getDate());
+                return <abbr title={d.toString()}>{txt}</abbr>;
+            }).bind(this)();
         var deleteBox;
         if (this.state.showDeleteBtn) {
             deleteBox = <div>
@@ -181,38 +203,37 @@ var SchedulingRequest = React.createClass({
             templName = this.props.scheduleTemplById[templId].name;
         }
 
-        var statusLine = (function() {
-            var clsName, txt;
-            switch (this.props.model.status) {
+        var statusElem = (function() {
+            switch (status) {
                 case 'SUCCESS':
-                    clsName = 'success';
-                    txt = 'Status: ' + this.props.model.status;
-                    break;
+                    return <span className='success'>{status}</span>;
                 case 'ERROR':
-                    clsName = 'error';
-                    txt = 'Status: ' + this.props.model.status;
-                    break;
+                    return <a href="" onClick={this.toggleException}>
+                        <span className='error'>{status}</span>
+                    </a>;
                 default:
-                    clsName = 'info';
-                    txt = 'Status: ' + this.props.model.status;
+                    return <span className='info'>{status}</span>;
             }
-            return <span className={clsName}>{txt}</span>;
         }).bind(this)();
 
-        return <div>
-            {link}
-            <br/>
-            From template: {templName}
-            <br/>
-            Submitted on {new Date(this.props.model.requestedAt).toString()}
-            {' '} by {userText}
+        if (this.state.showException) {
+            return <tr>
+                <td colSpan="6">
+                    <button type="button" onClick={this.toggleException}>
+                        ←Back
+                    </button>
+                    <PreviewExpandBox text={this.props.model.error}/>
+                </td>
+            </tr>;
+        }
 
-            <br/>
-            {statusLine}
-
-            {this.props.model.status == 'ERROR' ?
-                <PreviewExpandBox text={this.props.model.error}/> : ''}
-            {deleteBox}
-        </div>;
+        return <tr>
+            <td>{link}</td>
+            <td>{templName}</td>
+            <td>{userElem}</td>
+            <td>{dateElem}</td>
+            <td>{statusElem}</td>
+            <td>{deleteBox}</td>
+        </tr>;
     }
 });
