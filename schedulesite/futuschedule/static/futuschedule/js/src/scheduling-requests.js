@@ -153,7 +153,7 @@ var SchedulingRequest = React.createClass({
                 this.props.usersById),
             userEmail = getUserEmail(this.props.model.requestedBy,
                 this.props.usersById),
-            userElem = <a href={'mailto:' + userEmail}>{userName}</a>,
+            userElem = <abbr title={userEmail}>{userName}</abbr>,
             dateElem = (function() {
                 function zeroPad(n) {
                     return (n < 10 ? '0' : '') + n;
