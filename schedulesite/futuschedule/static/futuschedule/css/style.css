@@ -96,7 +96,7 @@ ul#main-nav-list > li + li::before {
 .tbl-td, table.striped td {
 	padding: 0.2em;
 }
-.tbl-body > .tbl-tr:nth-child(odd), table.striped tbody > tr:nth-child(odd) {
+.tbl-body > .tbl-tr:nth-child(odd), table.striped > tbody > tr:nth-child(odd) {
 	background-color: #eee;
 }
 

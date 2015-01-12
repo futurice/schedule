@@ -187,7 +187,7 @@ var SchedulingRequest = React.createClass({
         var status = this.props.model.status,
             modelJson = JSON.parse(this.props.model.json),
             link = <span>
-                For {enumSentence(modelJson.users.map((function(uid) {
+                {enumSentence(modelJson.users.map((function(uid) {
                     return getUserName(uid, this.props.usersById);
                 }).bind(this)))}
             </span>;

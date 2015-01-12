@@ -17,9 +17,6 @@ cd -
 
 bower install
 npm install react-tools
-
-# compile JSX files to plain JavaScript; JS files are copied unchanged
-PATH=./node_modules/.bin:$PATH jsx --watch schedulesite/futuschedule/static/futuschedule/js/src schedulesite/futuschedule/static/futuschedule/js/build
 ```
 
 Choose your Database by editing `settings.py`.
@@ -67,6 +64,9 @@ futuschedule.util.updateMeetingRooms('google.admin@futurice.com', '«pass»')
 
 ```bash
 ./schedulesite/manage.py migrate
+
+# compile JSX files to plain JavaScript; JS files are copied unchanged
+PATH=./node_modules/.bin:$PATH jsx --watch schedulesite/futuschedule/static/futuschedule/js/src schedulesite/futuschedule/static/futuschedule/js/build
 
 # Start the webserver:
 REMOTE_USER=myusername ./schedulesite/manage.py runserver
