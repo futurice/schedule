@@ -151,9 +151,6 @@ var SchedulingRequest = React.createClass({
     render: function() {
         var userName = getUserName(this.props.model.requestedBy,
                 this.props.usersById),
-            userEmail = getUserEmail(this.props.model.requestedBy,
-                this.props.usersById),
-            userElem = <abbr title={userEmail}>{userName}</abbr>,
             dateElem = (function() {
                 function zeroPad(n) {
                     return (n < 10 ? '0' : '') + n;
@@ -230,7 +227,7 @@ var SchedulingRequest = React.createClass({
         return <tr>
             <td>{link}</td>
             <td>{templName}</td>
-            <td>{userElem}</td>
+            <td>{userName}</td>
             <td>{dateElem}</td>
             <td>{statusElem}</td>
             <td>{deleteBox}</td>

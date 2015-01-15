@@ -46,6 +46,10 @@ textarea.event-description {
 	width: 50em;
 }
 
+h1.no-margin, h2.no-margin {
+	margin: 0;
+}
+
 
 /* top <nav> */
 ul#main-nav-list {
@@ -103,6 +107,12 @@ ul#main-nav-list > li + li::before {
 
 /* <MultiSelect/> */
 
+ul.typeahead-chosen-items {
+	list-style-type: none;
+	padding: 0;
+	margin: 0;
+}
+
 div.typeahead-suggestions-parent {
 	position: relative;
 }
@@ -138,7 +148,7 @@ ul.typeahead-suggestions li.selected {
 /* Schedule Template Detail */
 
 div.schedule-template-status {
-	padding: 1em;
+	padding: 0.5em;
 	border: 1px solid;
 	margin-top: 1em;
 	margin-bottom: 1em;
@@ -157,29 +167,24 @@ div#schedule-template-fields {
 	margin-bottom: 1em;
 }
 
-div#event-templates-container {
+section#event-templates-container {
 	background-color: LavenderBlush;
 	padding: 0.5em;
 	border: 1px solid;
 	margin-bottom: 1em;
 }
 
-ul#event-templates-list {
-	list-style-type: none;
-}
-
 div.event-template {
 	background-color: Lavender;
 	padding: 0.5em;
 	border: 1px solid;
-	margin-bottom: 1em;
+	margin-top: 0.5em;
+	margin-bottom: 0.5em;
 }
-
 div.event-template.collapsed:hover {
 	cursor: pointer;
 	background-color: Plum;
 }
-
 div.event-template.expanded span.collapse-symbol:hover {
 	cursor: pointer;
 }
@@ -191,6 +196,9 @@ table.event-template-fields td {
 
 form#add-event-template {
 	background-color: PaleGreen;
+	margin-bottom: 0;
+	padding: 0.5em;
+	border: 1px solid;
 }
 
 
@@ -200,50 +208,40 @@ table#new-schedule-fields td {
 	vertical-align: top;
 }
 
-ul#new-schedule-events {
-	list-style-type: none;
-}
-
-ul#new-schedule-events li.event-group-collective div.event-editor {
-	background-color: Azure;
-	margin-bottom: 1em;
-	padding: 1em;
+section#new-schedule-events > article.event-group-collective > div.event-editor,
+section#new-schedule-events > article.event-group-individual,
+div.individual-events-list > div.event-editor {
+	margin-top: 0.5em;
+	margin-bottom: 0.5em;
+	padding: 0.5em;
 	border: solid 1px;
 }
 
-ul#new-schedule-events li.event-group-collective div.event-editor.collapsed:hover {
+section#new-schedule-events > article.event-group-collective > div.event-editor {
+	background-color: Azure;
+}
+section#new-schedule-events > article.event-group-collective > div.event-editor.collapsed:hover {
 	cursor: pointer;
 	background-color: PaleTurquoise;
 }
-
-ul#new-schedule-events li.event-group-collective div.event-editor.expanded span.collapse-symbol {
+section#new-schedule-events > article.event-group-collective > div.event-editor.expanded > span.collapse-symbol {
 	cursor: pointer;
 }
 
-ul#new-schedule-events li.event-group-individual {
+section#new-schedule-events > article.event-group-individual {
 	background-color: PeachPuff;
-	margin-bottom: 1em;
-	padding: 1em;
-	border: solid 1px;
 }
 
-ul.individual-events-list {
-	list-style-type: none;
-}
-
-ul.individual-events-list div.event-editor {
+div.individual-events-list > div.event-editor {
 	background-color: MistyRose;
-	margin-bottom: 1em;
-	padding: 1em;
-	border: solid 1px;
 }
 
-ul.individual-events-list div.event-editor.collapsed:hover {
+div.individual-events-list > div.event-editor.collapsed:hover {
 	cursor: pointer;
 	background-color: Pink;
 }
 
-ul.individual-events-list div.event-editor.expanded span.collapse-symbol {
+div.individual-events-list > div.event-editor.expanded > span.collapse-symbol {
 	cursor: pointer;
 }
 

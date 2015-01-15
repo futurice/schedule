@@ -455,7 +455,7 @@ var ScheduleTemplateDetail = React.createClass({
             {makeSaveBox()}
 
             <div id="schedule-template-fields">
-                <h1>Schedule Template</h1>
+                <h1 className="no-margin">Schedule Template</h1>
                 <table>
                 <tr>
                     <td>
@@ -511,8 +511,8 @@ var ScheduleTemplateDetail = React.createClass({
                 </table>
             </div>
 
-            <div id="event-templates-container">
-                <h1>Event Templates</h1>
+            <section id="event-templates-container">
+                <h1 className="no-margin">Event Templates</h1>
                 <p>
                     Show weekdays for schedule starting on: {' '}
                     <select
@@ -530,85 +530,79 @@ var ScheduleTemplateDetail = React.createClass({
                 {this.state.editEvTempl.length ? '' :
                     <span className="info">There are no event templates</span>}
 
-                <ul id="event-templates-list">
-                    {(function() {
-                        var result = [], lastDayOffset = null;
-                        this.state.editEvTempl.forEach((function(et, i) {
-                            if (et.dayOffset != lastDayOffset) {
-                                lastDayOffset = et.dayOffset;
-                                result.push(<li key={'daychange-'+et.id}>
-                                    <h2>
-                                    {(function() {
-                                        var dayOff = parseInt(et.dayOffset, 10) || 0,
-                                            norm = normalizeWeekdayIndex(
-                                                dayOff + this.state.startingWeekday),
-                                            result = weekdayLongNames[norm],
-                                            wOff = weekOffset(dayOff);
-                                        if (wOff != 0) {
-                                            var unit = Math.abs(wOff) == 1 ? 'week' : 'weeks';
-                                            result += ', ' + (wOff > 0 ? '+' : '') + wOff + ' ' + unit;
-                                        }
-                                        return result;
-                                    }).bind(this)()}
-                                    </h2>
-                                </li>);
-                            }
-                            result.push(<li key={et.id}>
-                                <EventTemplate
-                                    model={et}
-                                    zeroWeekday={this.state.startingWeekday}
-                                    usersById={this.state.usersById}
-                                    userTextById={this.state.userTextById}
-                                    alphabeticalUserIds={this.state.alphabeticalUserIds}
-                                    roomMSModel={this.state.roomMSModel}
-                                    disabled={Boolean(this.state.ajaxInFlight)}
-                                    errTxt={this.state.evTemplExtra[i].ajaxErr}
-                                    onDelete={this.deleteEventTemplate.bind(
-                                        this, i)}
-                                    onFieldEdit={this.evTemplFieldEdit.bind(
-                                        this, i)}
-                                    collapsed={this.state.evTemplExtra[i].collapsed}
-                                    onCollapsedChanged={
-                                        this.evTemplExtraFieldChanged.bind(
-                                            this, i, 'collapsed')}
-                                />
-                            </li>)
-                        }).bind(this));
-                        return result;
-                    }).bind(this)()}
-
-                    <li>
-                        {
-                            /*
-                            Help the user save more often, and reduce confusion
-                            about what's saved and what's not, by requiring
-                            them to save their changes before adding a new
-                            event template.
-                            */
+                {(function() {
+                    var result = [], lastDayOffset = null;
+                    this.state.editEvTempl.forEach((function(et, i) {
+                        if (et.dayOffset != lastDayOffset) {
+                            lastDayOffset = et.dayOffset;
+                            result.push(<h2 key={'daychange-'+et.id}
+                                    className="no-margin">
+                                {(function() {
+                                    var dayOff = parseInt(et.dayOffset, 10) || 0,
+                                        norm = normalizeWeekdayIndex(
+                                            dayOff + this.state.startingWeekday),
+                                        result = weekdayLongNames[norm],
+                                        wOff = weekOffset(dayOff);
+                                    if (wOff != 0) {
+                                        var unit = Math.abs(wOff) == 1 ? 'week' : 'weeks';
+                                        result += ', ' + (wOff > 0 ? '+' : '') + wOff + ' ' + unit;
+                                    }
+                                    return result;
+                                }).bind(this)()}
+                            </h2>);
                         }
-                        <form id="add-event-template"
-                            onSubmit={this.createEventTemplate}>
-                            {hasUnsavedChanges ?
-                                <div><span className="info">
-                                    Please save your changes (or undo them)
-                                    before adding a new Event Template
-                                </span></div>
-                            : ''}
-                            <label>Add an event template:</label>
-                            <input type="text" placeholder="Event Summary…"
-                                value={this.state.newEventSummary}
-                                onChange={this.handleChangeNewEvent}
-                                disabled={this.state.ajaxInFlight ||
-                                    hasUnsavedChanges} />
-                            <button type="submit"
-                                disabled={this.state.ajaxInFlight ||
-                                    hasUnsavedChanges}>
-                                + Add
-                            </button>
-                        </form>
-                    </li>
-                </ul>
-            </div>
+                        result.push(<EventTemplate
+                            key={et.id}
+                            model={et}
+                            zeroWeekday={this.state.startingWeekday}
+                            usersById={this.state.usersById}
+                            userTextById={this.state.userTextById}
+                            alphabeticalUserIds={this.state.alphabeticalUserIds}
+                            roomMSModel={this.state.roomMSModel}
+                            disabled={Boolean(this.state.ajaxInFlight)}
+                            errTxt={this.state.evTemplExtra[i].ajaxErr}
+                            onDelete={this.deleteEventTemplate.bind(
+                                this, i)}
+                            onFieldEdit={this.evTemplFieldEdit.bind(
+                                this, i)}
+                            collapsed={this.state.evTemplExtra[i].collapsed}
+                            onCollapsedChanged={
+                                this.evTemplExtraFieldChanged.bind(
+                                    this, i, 'collapsed')}
+                        />)
+                    }).bind(this));
+                    return result;
+                }).bind(this)()}
+
+                {
+                    /*
+                    Help the user save more often, and reduce confusion
+                    about what's saved and what's not, by requiring
+                    them to save their changes before adding a new
+                    event template.
+                    */
+                }
+                <form id="add-event-template"
+                    onSubmit={this.createEventTemplate}>
+                    {hasUnsavedChanges ?
+                        <div><span className="info">
+                            Please save your changes (or undo them)
+                            before adding a new Event Template
+                        </span></div>
+                    : ''}
+                    <label>Add an event template:</label> {' '}
+                    <input type="text" placeholder="Event Summary…"
+                        value={this.state.newEventSummary}
+                        onChange={this.handleChangeNewEvent}
+                        disabled={this.state.ajaxInFlight ||
+                            hasUnsavedChanges} /> {' '}
+                    <button type="submit"
+                        disabled={this.state.ajaxInFlight ||
+                            hasUnsavedChanges}>
+                        + Add
+                    </button>
+                </form>
+            </section>
 
             {makeSaveBox()}
         </div>;
@@ -725,8 +719,8 @@ var EventTemplate = React.createClass({
             return <div className="event-template collapsed"
                     title="Click to Expand"
                     onClick={this.toggleCollapsed}>
-                ▶ {this.props.model.summary}
-                {!this.props.model.isCollective && ' (individual event)'}
+                ▶ <strong>{this.props.model.summary}</strong>
+                {!this.props.model.isCollective && ' [individual event]'}
                 <br/>
                 {this.props.model.dayOffset >= 0 && '+'}
                 {this.props.model.dayOffset} days,{' '}
@@ -863,7 +857,7 @@ var EventTemplate = React.createClass({
                         value={this.props.model.startTime}
                         onChange={this.handleChange.bind(this, 'startTime', false)}
                         />
-                    to
+                    {' '} to {' '}
                     <input type="time"
                         disabled={this.props.disabled}
                         value={this.props.model.endTime}

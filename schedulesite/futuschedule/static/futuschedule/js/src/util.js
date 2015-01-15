@@ -437,10 +437,10 @@ var MultiSelect = React.createClass({
         return <div>
             {this.props.selectedIds.length ? '' :
                 <span className="info">No item selected</span>}
-            <ul>
+            <ul className="typeahead-chosen-items">
                 {this.props.selectedIds.map((function(id) {
                     return <li key={id}>
-                        {this.props.itemTextById[id]}
+                        {this.props.itemTextById[id]} {' '}
                         <a href=""
                             onClick={this.handleRemove.bind(this, id)}
                             hidden={this.props.disabled}

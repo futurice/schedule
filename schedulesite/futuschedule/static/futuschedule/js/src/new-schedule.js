@@ -593,11 +593,11 @@ var NewSchedule;
             }
 
             return <div id="new-schedule-edit">
-                <h1>
+                <h2 className="no-margin">
                     From template:{' '}
                     {this.props.scheduleTemplate.name}
-                </h1>
-                <ul id="new-schedule-events">
+                </h2>
+                <section id="new-schedule-events">
                 {this.state.evTempl.map((function(et, idx) {
                     function getFullName(user) {
                         return user.first_name + ' ' + user.last_name;
@@ -618,38 +618,36 @@ var NewSchedule;
                             onDelete={this.deleteEventAndGroup.bind(this, idx)}
                         />;
                     } else {
-                        eventsBox = <ul className="individual-events-list">
+                        eventsBox = <div className="individual-events-list">
                             {this.state.evGroups[idx].map((function(ev, j) {
                                 var fullName = getFullName(
                                     this.props.selectedUsers[j]);
 
                                 if (ev == null) {
-                                    return <li key={j}>
-                                        <div className="event-editor">
-                                            Deleted event for {fullName}.
-                                        </div>
-                                    </li>;
+                                    return <div key={j}
+                                            className="event-editor">
+                                        Deleted event for {fullName}.
+                                    </div>;
                                 }
-                                return <li key={j}>
-                                    <EventEditor
-                                        usersById={this.props.usersById}
-                                        disabled={this.shouldDisable()}
-                                        model={ev}
-                                        roomMSModel={this.state.roomMSModel}
-                                        users={this.props.users}
-                                        userTextById={this.props.userTextById}
-                                        alphabeticalUserIds={this.props.alphabeticalUserIds}
-                                        onFieldEdit={
-                                            this.handleEventFieldEdit.bind(
-                                                this, idx, j)}
-                                        onDelete={this.deleteIndividualEvent.bind(this, idx, j)}
-                                    />
-                                </li>;
+                                return <EventEditor
+                                    key={j}
+                                    usersById={this.props.usersById}
+                                    disabled={this.shouldDisable()}
+                                    model={ev}
+                                    roomMSModel={this.state.roomMSModel}
+                                    users={this.props.users}
+                                    userTextById={this.props.userTextById}
+                                    alphabeticalUserIds={this.props.alphabeticalUserIds}
+                                    onFieldEdit={
+                                        this.handleEventFieldEdit.bind(
+                                            this, idx, j)}
+                                    onDelete={this.deleteIndividualEvent.bind(this, idx, j)}
+                                />;
                             }).bind(this))}
-                        </ul>;
+                        </div>;
                     }
 
-                    return <li key={et.id} className={'event-group-' +
+                    return <article key={et.id} className={'event-group-' +
                         (et.isCollective ? 'collective' : 'individual')}>
                         {et.isCollective ? '' :
                             <b>{et.summary} (individual events)</b>}
@@ -661,15 +659,15 @@ var NewSchedule;
                                 onClick={this.deleteEventAndGroup.bind(this, idx)}>
                                 ✗ Delete
                             </button>}
-                    </li>;
+                    </article>;
                 }).bind(this))}
-                </ul>
+                </section>
 
                 <button type="button"
                     disabled={this.shouldDisable()}
                     onClick={this.createEvents}>
                     Create Events in Google Calendar
-                </button>
+                </button> {' '}
                 <button type="button"
                     disabled={this.shouldDisable()}
                     onClick={this.props.onCancel}>
@@ -800,13 +798,11 @@ var NewSchedule;
             }
 
             return <div className="event-editor expanded">
-                <b>
-                    <span onClick={this.toggleCollapsed}
-                        className="collapse-symbol"
-                        title="Click to Collapse">
-                        ▼
-                    </span>
-                </b>
+                <span onClick={this.toggleCollapsed}
+                    className="collapse-symbol"
+                    title="Click to Collapse">
+                    ▼
+                </span>
                 <table className="new-event-fields">
                 <tr>
                     <td>
