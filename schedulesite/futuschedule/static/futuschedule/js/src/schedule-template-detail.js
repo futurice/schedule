@@ -49,6 +49,8 @@ var ScheduleTemplateDetail = React.createClass({
             }),
     ],
     componentDidMount: function() {
+        window.addEventListener('beforeunload', this.beforeUnloadHandler);
+
         compFetchRest.bind(this)(
             apiRoot + 'eventtemplates/' +
             '?scheduleTemplate=' + this.props.id +
@@ -89,6 +91,15 @@ var ScheduleTemplateDetail = React.createClass({
             collapsed: true,
             ajaxErr: ''
         };
+    },
+    beforeUnloadHandler: function(ev) {
+        if (this.hasUnsavedChanges()) {
+            ev.returnValue = 'You have unsaved changes.';
+        }
+    },
+    componentWillUnmount: function() {
+        // we're not actually testing this, but be tidy and remove the handler
+        window.removeEventListener('beforeunload', this.beforeUnloadHandler);
     },
     getInitialState: function() {
         return {
