@@ -53,16 +53,16 @@ h1.no-margin, h2.no-margin {
 
 /* top <nav> */
 ul#main-nav-list {
-    list-style-type: none;
-    padding: initial;
+	list-style-type: none;
+	padding: initial;
 }
 
 ul#main-nav-list > li {
-    display: inline;
+	display: inline;
 }
 
 ul#main-nav-list > li + li::before {
-    content: "| ";
+	content: "| ";
 }
 
 
@@ -116,7 +116,10 @@ ul.comma-separated > li {
 	display: inline;
 }
 ul.comma-separated > li + li::before {
-    content: ", ";
+	content: ", ";
+}
+ul.comma-separated > li + li:last-child::before {
+	content: " and ";
 }
 
 
