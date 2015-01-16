@@ -117,16 +117,17 @@ var ScheduleDetail;
                 <br/>
                 Where: {m.location || '—'}
                 <br/>
-                Attendees:
-                <ul>
+                Who: {' '}
+                <ul className="comma-separated">
                     {m.attendees.filter(function(a) {
                         return !a.resource;
                     }).map(function(a) {
                         return <li key={a.email}>
-                            {a.displayName + ' (' + a.email + ')'}
+                            {/* there's also {a.email} available */}
+                            {a.displayName}
                         </li>;
                     })}
-                </ul>
+                </ul>.
             </div>;
             return <span>{JSON.stringify(this.props.model)}</span>;
         }

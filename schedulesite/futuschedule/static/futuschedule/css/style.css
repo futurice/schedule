@@ -104,6 +104,21 @@ ul#main-nav-list > li + li::before {
 	background-color: #eee;
 }
 
+/*
+ * Comma-separated list
+ */
+ul.comma-separated {
+	list-style-type: none;
+	padding: 0;
+	display: inline;
+}
+ul.comma-separated > li {
+	display: inline;
+}
+ul.comma-separated > li + li::before {
+    content: ", ";
+}
+
 
 /* <MultiSelect/> */
 
