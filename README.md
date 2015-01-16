@@ -15,7 +15,7 @@ cp settings_dev.py.template settings.py
 # Set the SECRET_KEY in settings.py to some random string.
 cd -
 
-bower install
+bower install --config.interactive=false
 npm install react-tools
 ```
 
