@@ -229,6 +229,7 @@ var Calendar = React.createClass({
                     <button type="button"
                         onClick={this.edit}
                         disabled={this.state.reqInFlight}>Edit</button>
+                    {' '}
                     <button type="button"
                         onClick={this.delete}
                         disabled={this.state.reqInFlight}>Delete</button>
@@ -250,6 +251,7 @@ var Calendar = React.createClass({
                     onClick={this.cancelEdit}
                     disabled={this.state.reqInFlight}
                     hidden={this.isNewItem()}>Cancel</button>
+                    {' '}
                 <button type="submit"
                     disabled={this.state.reqInFlight}>
                     {this.isNewItem() ? '+ Add' : 'Save'}

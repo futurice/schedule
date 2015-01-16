@@ -311,6 +311,7 @@ var ScheduleTemplateSummary = React.createClass({
                         disabled={this.state.ajaxInFlight}>
                         Edit
                     </button>
+                    {' '}
                     <button type="button"
                         onClick={this.delete}
                         disabled={this.state.ajaxInFlight}>
@@ -364,6 +365,7 @@ var ScheduleTemplateSummary = React.createClass({
                 <button type="submit" disabled={this.state.ajaxInFlight}>
                     {this.isNewItem() ? '+ Add' : 'Save'}
                 </button>
+                {' '}
                 <button type="button"
                     onClick={this.cancelEdit}
                     disabled={this.state.ajaxInFlight}
