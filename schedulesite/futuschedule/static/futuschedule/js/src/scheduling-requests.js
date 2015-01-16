@@ -75,7 +75,7 @@ var SchedulingRequestsList = React.createClass({
                     <th>For Group</th>
                     <th>Template</th>
                     <th>By</th>
-                    <th>When</th>
+                    <th>Created</th>
                     <th>Status</th>
                     <th>Delete</th>
                 </tr>

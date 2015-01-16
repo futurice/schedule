@@ -69,26 +69,32 @@ var SchedulesList = React.createClass({
             </div>;
         }
 
-        return (
-            <ul>
+        return <table className="striped">
+            <thead>
+                <tr>
+                    <th>For</th>
+                    <th>Template</th>
+                    <th>Created</th>
+                </tr>
+            </thead>
+            <tbody>
                 {this.state.schedules.map((function(s) {
                     var templateName = 'Unknown';
                     if (s.template in this.state.scheduleTemplById) {
                         templateName =
                             this.state.scheduleTemplById[s.template].name;
                     }
-                    return <li key={s.id}>
-                        <a href={'../schedule/' + s.id}>
-                            Schedule for {getUserNameAndEmail(s.forUser,
-                                this.state.usersById)}
-                        </a>
-                        <br/>
-                        From template: {templateName}
-                        <br/>
-                        created {new Date(s.createdAt).toString()}
-                    </li>;
+                    return <tr key={s.id}>
+                        <td>
+                            <a href={'../schedule/' + s.id}>
+                                {getUserName(s.forUser, this.state.usersById)}
+                            </a>
+                        </td>
+                        <td>{templateName}</td>
+                        <td><DateOnly date={new Date(s.createdAt)} /></td>
+                    </tr>;
                 }).bind(this))}
-            </ul>
-        );
+            </tbody>
+        </table>;
     }
 });
