@@ -621,3 +621,30 @@ function weekOffset(dayOffset) {
     dayOffset--;
     return -Math.floor(dayOffset / 7) - 1;
 }
+
+
+/*
+ * Show only the date (YYYY-MM-DD) for a Date object, with the full datetime
+ * as a tooltip.
+ */
+var DateOnly = React.createClass({
+    propTypes: {
+        // a Date object
+        date: React.PropTypes.object.isRequired
+    },
+    zeroPad: function(n) {
+        if (n <= 0) {
+            throw 'Invalid number ' + n;
+        }
+        if (n < 10) {
+            return '0' + n;
+        }
+        return n + '';
+    },
+    render: function() {
+        var d = this.props.date,
+            txt = d.getFullYear() + '-' + this.zeroPad(d.getMonth() + 1) +
+                '-' + this.zeroPad(d.getDate());
+        return <abbr title={d.toString()}>{txt}</abbr>;
+    }
+});

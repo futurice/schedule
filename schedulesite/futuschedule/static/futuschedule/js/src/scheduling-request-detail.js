@@ -80,20 +80,19 @@ var SchedulingRequestDetail = React.createClass({
             templName = this.state.scheduleTemplById[templId].name;
         }
         return <div>
-            Scheduling request
-            <br/>
-            From template: {templName}
+            From template: {templName}.
             <br/>Submitted on {' '}
-            {new Date(this.state.schedReq.requestedAt).toString()}
-            {' '} by {getUserNameAndEmail(this.state.schedReq.requestedBy,
-                this.state.usersById)}
+            <DateOnly date={new Date(this.state.schedReq.requestedAt)}/>
+            {' '} by {getUserName(this.state.schedReq.requestedBy,
+                this.state.usersById)}.
+
+            <p>Individual schedules:</p>
 
             <ul>
                 {this.state.schedules.map((function(s) {
                     return <li key={s.id}>
                         <a href={'../../schedule/' + s.id}>
-                            Schedule for {getUserName(s.forUser,
-                                this.state.usersById)}
+                            {getUserName(s.forUser, this.state.usersById)}
                         </a>
                     </li>;
                 }).bind(this))}

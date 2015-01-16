@@ -72,7 +72,7 @@ var SchedulingRequestsList = React.createClass({
         return <table className="striped">
             <thead>
                 <tr>
-                    <th>For</th>
+                    <th>For Group</th>
                     <th>Template</th>
                     <th>By</th>
                     <th>When</th>
@@ -151,15 +151,8 @@ var SchedulingRequest = React.createClass({
     render: function() {
         var userName = getUserName(this.props.model.requestedBy,
                 this.props.usersById),
-            dateElem = (function() {
-                function zeroPad(n) {
-                    return (n < 10 ? '0' : '') + n;
-                }
-                var d = new Date(this.props.model.requestedAt),
-                    txt = d.getFullYear() + '-' + zeroPad(d.getMonth() + 1) +
-                        '-' + zeroPad(d.getDate());
-                return <abbr title={d.toString()}>{txt}</abbr>;
-            }).bind(this)();
+            dateElem = <DateOnly
+                date={new Date(this.props.model.requestedAt)}/>;
         var deleteBox;
         if (this.state.showDeleteBtn) {
             deleteBox = <div>
