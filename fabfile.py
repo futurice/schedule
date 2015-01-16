@@ -72,7 +72,10 @@ def prepare_repository():
 def run_tests():
     with settings(cd(config_dir), sudo_user=schedule_user):
         with prefix('source ' + os.path.join(env_dir, 'bin/activate')):
-            sudo('xvfb-run ' + manage_py + ' test futuschedule')
+            # otherwise firefox hangs forever
+            # (tries to use ~/.mozilla for the SSH user?)
+            with shell_env(HOME=home_dir):
+                sudo('xvfb-run ' + manage_py + ' test futuschedule')
 
 
 def migrate():
