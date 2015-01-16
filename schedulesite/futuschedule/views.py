@@ -10,7 +10,7 @@ from futuschedule import calendar, models, tasksched
 def scheduleTemplates(request):
     return render(request, 'futuschedule/schedule-templates.html')
 
-def root(request):
+def index(request):
     return render(request, 'futuschedule/base.html')
 
 def timezones(request):

@@ -3,7 +3,7 @@ from futuschedule import views, apiviews
 
 
 urlpatterns = patterns('',
-    url(r'^$', views.root, name='root'),
+    url(r'^$', views.index, name='index'),
     url(r'^api/', include(apiviews.router.urls)),
     url(r'^timezones/', views.timezones, name='timezones'),
     url(r'^calendars/', views.calendars, name='calendars'),
