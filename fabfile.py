@@ -72,7 +72,7 @@ def prepare_repository():
 def run_tests():
     with settings(cd(config_dir), sudo_user=schedule_user):
         with prefix('source ' + os.path.join(env_dir, 'bin/activate')):
-            sudo(manage_py + ' test futuschedule')
+            sudo('xvfb-run ' + manage_py + ' test futuschedule')
 
 
 def migrate():

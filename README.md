@@ -35,28 +35,34 @@ The first time the code needs Google OAuth, it looks for `client-secrets.json`
 in your current directory, prints a URL for you to authorize the app and get
 an access token in the URL fragment at the end.
 Credentials are stored in `a_credentials_file` in your current dir.
-Trigger this e.g. with:
-```bash
-./schedulesite/manage.py test futuschedule
-```
+Trigger this e.g. by running the unit tests (see below).
 
 ### Populate your DB with FUM users
-― Get a JSON dump of FUM users (you need an API token for FUM)
+
+Get a JSON dump of FUM users (you need an API token for FUM)
 ```bash
 go run dump-fum-users.go -o users.json «AccessToken»
 ```
-― Create Django users from this dump:
-```bash
+
+Create Django users from this dump:
+```python
 ./schedulesite/manage.py shell
 import futuschedule.util
 futuschedule.util.updateUsers('users.json')
 ```
 
 ### Populate your DB with Meeting Rooms (you need the Google Admin password)
-```bash
+```python
 ./schedulesite/manage.py shell
 import futuschedule.util
 futuschedule.util.updateMeetingRooms('google.admin@futurice.com', '«pass»')
+```
+
+
+## Test
+```bash
+PATH=./node_modules/.bin:$PATH jsx --no-cache-dir schedulesite/futuschedule/static/futuschedule/js/src schedulesite/futuschedule/static/futuschedule/js/build
+./schedulesite/manage.py test futuschedule
 ```
 
 

@@ -169,3 +169,14 @@ Bower
 =====
 Install npm (apt-get install npm or compile from sources).
 sudo npm install -g bower
+
+
+Tests
+=====
+apt-get install xvfb
+apt-get install chromium-browser
+
+Install ChromeDriver. On Ubuntu 12.04 it's not in the repository, do e.g.:
+wget -P /tmp http://chromedriver.storage.googleapis.com/2.12/chromedriver_linux64.zip
+sudo unzip /tmp/chromedriver_linux64.zip -d /usr/bin
+sudo chmod +rx /usr/bin/chromedriver
