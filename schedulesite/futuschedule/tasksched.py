@@ -228,8 +228,7 @@ def processCleanupSchedulingRequest(modelId):
                 # in the future we can add a foreign key from the Event to a
                 # Calendar. But for the way we're making calendar events now,
                 # jsonData.organizer.email is the calendar ID.
-                calendar.deleteEvent(evData['organizer']['email'], evData['id'],
-                        True)
+                calendar.deleteEvent(evData['organizer']['email'], evData['id'])
             except:
                 logging.error(traceback.format_exc())
             event.delete()
