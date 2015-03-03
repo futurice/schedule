@@ -95,12 +95,17 @@ def updateMeetingRooms(email, password):
     # In May 2014 only getting a single page of results and can't figure out
     # how to request few (e.g. 5) results per page to test pagination.
     calendar_resources = client.GetResourceFeed()
+
+    # current resource (meeting room) ids in Google Calendar
+    crt_res_ids = set()
     for r in calendar_resources.get_elements():
         if r.tag == 'entry':
+            res_id = r.GetResourceId()
+            crt_res_ids.add(res_id)
             try:
-                obj = CalendarResource.objects.get(resourceId=r.GetResourceId())
+                obj = CalendarResource.objects.get(resourceId=res_id)
             except CalendarResource.DoesNotExist as e:
-                obj = CalendarResource(resourceId=r.GetResourceId())
+                obj = CalendarResource(resourceId=res_id)
             obj.email=r.GetResourceEmail()
             obj.resourceType=r.GetResourceType() or ''
             obj.name=r.GetResourceCommonName()
@@ -110,3 +115,7 @@ def updateMeetingRooms(email, password):
             obj.description=(r.GetResourceDescription() or '')[:descr_max_len]
 
             obj.save()
+
+    for r in CalendarResource.objects.filter():
+        if r.resourceId not in crt_res_ids:
+            r.delete()

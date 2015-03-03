@@ -198,6 +198,7 @@ class ForeignKeyDeleteTest(TestCase):
         et = models.EventTemplate.objects.create(dayOffset=0,
                 startTime=nowT, endTime=nowT, scheduleTemplate=schedTempl)
         et.locations.add(room)
+        self.assertIs(len(et.locations.all()), 1)
         room.delete()
         self.assertIs(len(et.locations.all()), 0)
 
