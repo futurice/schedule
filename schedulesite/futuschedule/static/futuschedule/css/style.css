@@ -34,6 +34,7 @@ div.preview-expand-box {
 	cursor: pointer;
 	background: silver;
 	white-space: pre-wrap;
+	font-family: monospace;
 }
 div.preview-expand-box:hover {
 	background: lightgray;
