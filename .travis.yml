@@ -24,7 +24,8 @@ install:
   - cd -
   - pip install -r req.txt
   - psql -c 'create database futuschedule;' -U postgres
-  - npm install -g
+  - npm install
+  - PATH=./node_modules/.bin:$PATH
   - bower install
   - jsx --no-cache-dir schedulesite/futuschedule/static/futuschedule/js/src schedulesite/futuschedule/static/futuschedule/js/build
 
