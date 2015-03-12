@@ -226,10 +226,11 @@ var NewSchedule;
             this.props.onSelectUsers(selectedUsers);
         },
         handleStartDateChange: function() {
-            this.props.onStartDateChange(this.refs.startDate.getDOMNode().value);
+            var val = React.findDOMNode(this.refs.startDate).value;
+            this.props.onStartDateChange(val);
         },
         handleStartDateBlur: function() {
-            var val = this.refs.startDate.getDOMNode().value;
+            var val = React.findDOMNode(this.refs.startDate).value;
             if (val == '' || Number.isNaN(new Date(val).valueOf())) {
                 val = fmtLocalDate(new Date());
             }

@@ -59,10 +59,10 @@ def prepare_repository():
         with settings(cd(repo_dir)):
             # otherwise bower tries to access ~/.config for the SSH user
             with shell_env(HOME=home_dir):
+                sudo('npm install')
                 # disable the 'may bower report statistics?' question
-                sudo('bower install --config.interactive=false')
-
-                sudo('npm install react-tools')
+                sudo('./node_modules/.bin/bower install ' +
+                        '--config.interactive=false')
             js_dir = os.path.join(repo_dir, 'schedulesite', 'futuschedule',
                     'static', 'futuschedule', 'js')
             sudo('./node_modules/.bin/jsx --no-cache-dir {} {}'.format(

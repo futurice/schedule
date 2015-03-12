@@ -380,7 +380,7 @@ var MultiSelect = React.createClass({
     },
     handleSuggestionClick: function(id) {
         this.props.onAdd(id);
-        this.refs.searchbox.getDOMNode().focus();
+        React.findDOMNode(this.refs.searchbox).focus();
     },
     handleSuggestionMouseEnter: function(idx) {
         this.setState({
@@ -410,7 +410,7 @@ var MultiSelect = React.createClass({
                 return <li key={id}
                     onClick={this.handleSuggestionClick.bind(this, id)}
                     onMouseEnter={this.handleSuggestionMouseEnter.bind(this, idx)}
-                    // avoid the experimental React.addons.classSet() for now.
+                    // avoid the deprecated React.addons.classSet() for now.
                     className={this.state.selectedSuggestionIdx == idx ?
                         'match selected' : 'match'}
                     >

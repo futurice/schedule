@@ -431,7 +431,7 @@ var ScheduleTemplateDetail = React.createClass({
                 </div>;
             }
 
-            // avoid getting the experimental React.addons.classSet() for now.
+            // avoid getting the deprecated React.addons.classSet() for now.
             var boxClassStr = ['schedule-template-status',
                 hasUnsavedChanges ?
                 'schedule-template-status-not-saved' :

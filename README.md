@@ -15,8 +15,8 @@ cp settings_dev.py.template settings.py
 # Set the SECRET_KEY in settings.py to some random string.
 cd -
 
-bower install --config.interactive=false
-npm install react-tools
+npm install
+PATH=./node_modules/.bin:$PATH bower install --config.interactive=false
 ```
 
 Choose your Database by editing `settings.py`.
