@@ -165,10 +165,9 @@ When we send that signal by hand we see the graceful exit message, so shutdown
 should happen ok this way.
 
 
-Bower
-=====
+NPM
+===
 Install npm (apt-get install npm or compile from sources).
-sudo npm install -g bower
 
 
 Tests
