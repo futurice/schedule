@@ -59,6 +59,12 @@ def updateUsers(jsonDumpFile):
     # de-duplicate first (the dump has a duplicate)
     userById = {u['id']: u for u in dump}
 
+    # Delete existing DB users not present in this dump
+    keepUsernames = {u['username'] for u in dump}
+    for oldUser in UM.objects.all():
+        if oldUser.username not in keepUsernames:
+            oldUser.delete()
+
     for u in userById.values():
         try:
             newUser = UM.objects.get(username=u['username'])
@@ -80,12 +86,6 @@ def updateUsers(jsonDumpFile):
             a.supervisor = UM.objects.get(
                     username=userById[u['supervisor']]['username'])
             a.save()
-
-    # Delete existing DB users not present in this dump
-    keepUsernames = {u['username'] for u in dump}
-    for oldUser in UM.objects.all():
-        if oldUser.username not in keepUsernames:
-            oldUser.delete()
 
 def updateMeetingRooms(email, password):
     client = CalendarResourceClient(domain='futurice.com')
