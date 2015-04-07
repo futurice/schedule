@@ -94,8 +94,8 @@ Access only via HTTPS.
 /etc/apache2/sites-available/default-ssl
 https://docs.djangoproject.com/en/dev/howto/deployment/wsgi/modwsgi/
 
-Alias /static/ /home/futuschedule/futuschedule/schedulesite/futuschedule/static/
-<Directory /home/futuschedule/futuschedule/schedulesite/futuschedule/static>
+Alias /static/ /home/futuschedule/futuschedule/static/
+<Directory /home/futuschedule/futuschedule/static>
 # For Apache 2.4 or newer:
 #Require all granted
 

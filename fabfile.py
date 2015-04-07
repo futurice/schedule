@@ -19,6 +19,7 @@ env_link = os.path.join(home_dir, 'venv')
 repo_dir = os.path.join(home_dir, 'futuschedule-' + stamp)
 env_dir = os.path.join(home_dir, 'venv-' + stamp)
 manage_py = os.path.join(repo_dir, 'schedulesite', 'manage.py')
+static_dir = os.path.join(repo_dir, 'static')
 
 git_clone_url = 'https://github.com/futurice/schedule.git'
 
@@ -67,6 +68,10 @@ def prepare_repository():
                     'static', 'futuschedule', 'js')
             sudo('./node_modules/.bin/jsx --no-cache-dir {} {}'.format(
                 os.path.join(js_dir, 'src'), os.path.join(js_dir, 'build')))
+
+        sudo('mkdir ' + static_dir)
+        with prefix('source ' + os.path.join(env_dir, 'bin/activate')):
+            sudo(manage_py + ' collectstatic --clear --noinput')
 
 
 def run_tests():

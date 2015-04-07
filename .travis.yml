@@ -28,5 +28,9 @@ install:
   - PATH=./node_modules/.bin:$PATH
   - bower install
   - jsx --no-cache-dir schedulesite/futuschedule/static/futuschedule/js/src schedulesite/futuschedule/static/futuschedule/js/build
+  # 'collectstatic' isn't needed for running the tests at the time of writing,
+  # this only checks that the command itself works (it's used in deployment).
+  - mkdir static
+  - schedulesite/manage.py collectstatic --clear --noinput
 
 script: xvfb-run schedulesite/manage.py test futuschedule
