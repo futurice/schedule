@@ -173,7 +173,17 @@ var ScheduleTemplateDetail = React.createClass({
                 // some sensible values for the remaining required fields
                 dayOffset: 0,
                 startTime: '10:00',
-                endTime: '11:00'
+                endTime: '11:00',
+
+                /* Django REST Framework complains ‘this field is required’
+                 * if the following are missing. Making them ‘null=True’ in
+                 * models.py solves this, but ‘manage.py migrate’ warns that
+                 * ‘null=True’ has no effect on many-to-many fields.
+                 * Looks like a rest framework limitation during validation,
+                 * so adding the fields here as empty arrays.
+                 */
+                locations: [],
+                otherInvitees: []
             }),
             complete: (function(data) {
                 this.isMounted() && this.setState({

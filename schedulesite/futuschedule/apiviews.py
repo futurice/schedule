@@ -1,52 +1,100 @@
 from django.contrib.auth import get_user_model
-import django_filters
-from rest_framework import viewsets, routers
+from rest_framework import viewsets, routers, serializers
 from futuschedule import models
 
+
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = get_user_model()
+        fields = ('id', 'username', 'email', 'first_name', 'last_name',
+                'supervisor')
+
 class UserViewSet(viewsets.ModelViewSet):
-    model = get_user_model()
+    serializer_class = UserSerializer
+    queryset = get_user_model().objects.all()
     filter_fields = ('username',)   # ?username=jim
     search_fields = ('username', 'first_name', 'last_name') # ?search=jim
     ordering_fields = ('username', 'first_name', 'last_name')
     # or ordering_fields = '__all__'
     # ?ordering=last_name ?ordering=-last_name ?ordering=first_name,-last_name
 
+
+class TimeZoneSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.TimeZone
+
 class TimeZoneViewSet(viewsets.ModelViewSet):
-    model = models.TimeZone
-    ordering_fields = ('name',)
+    serializer_class = TimeZoneSerializer
+    queryset = models.TimeZone.objects.all()
+
+
+class CalendarSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Calendar
 
 class CalendarViewSet(viewsets.ModelViewSet):
-    model = models.Calendar
-    ordering_fields = ('email',)
+    serializer_class = CalendarSerializer
+    queryset = models.Calendar.objects.all()
+
+
+class ScheduleTemplateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.ScheduleTemplate
 
 class ScheduleTemplateViewSet(viewsets.ModelViewSet):
-    model = models.ScheduleTemplate
-    ordering_fields = ('name',)
+    serializer_class = ScheduleTemplateSerializer
+    queryset = models.ScheduleTemplate.objects.all()
+
+
+class EventTemplateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.EventTemplate
 
 class EventTemplateViewSet(viewsets.ModelViewSet):
-    model = models.EventTemplate
+    serializer_class = EventTemplateSerializer
+    queryset = models.EventTemplate.objects.all()
     filter_fields = ('scheduleTemplate',)
     ordering_fields = ('dayOffset', 'startTime')
 
+
+class CalendarResourcesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.CalendarResource
+
 class CalendarResourcesViewSet(viewsets.ModelViewSet):
-    model = models.CalendarResource
+    serializer_class = CalendarResourcesSerializer
+    queryset = models.CalendarResource.objects.all()
+
+
+class ScheduleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.Schedule
 
 class ScheduleViewSet(viewsets.ModelViewSet):
-    model = models.Schedule
+    serializer_class = ScheduleSerializer
+    queryset = models.Schedule.objects.all()
     filter_fields = ('schedulingRequest',)
     ordering_fields = ('createdAt',)
 
-class EventFilterSet(django_filters.FilterSet):
+
+class EventSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Event
 
 class EventViewSet(viewsets.ModelViewSet):
-    model = models.Event
-    filter_class = EventFilterSet
+    serializer_class = EventSerializer
+    queryset = models.Event.objects.all()
+    filter_fields = ('schedules',)
+
+
+class SchedulingRequestSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.SchedulingRequest
 
 class SchedulingRequestViewSet(viewsets.ModelViewSet):
-    model = models.SchedulingRequest
-    ordering_fields = ('requestedAt')
+    serializer_class = SchedulingRequestSerializer
+    queryset = models.SchedulingRequest.objects.all()
+    ordering_fields = ('requestedAt',)
 
 
 # Routers provide an easy way of automatically determining the URL conf.

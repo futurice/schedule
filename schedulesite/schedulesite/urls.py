@@ -1,9 +1,11 @@
-from django.conf.urls import patterns, include, url
-
+from django.conf.urls import include, url
 from django.contrib import admin
+
+import futuschedule.urls
+
 admin.autodiscover()
 
-urlpatterns = patterns('',
+urlpatterns = [
     url(r'^admin/', include(admin.site.urls)),
-    url(r'^futuschedule/', include('futuschedule.urls')),
-)
+    url(r'^futuschedule/', include(futuschedule.urls)),
+]

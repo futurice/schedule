@@ -117,7 +117,7 @@ class ScheduleTemplate(models.Model):
 class EventTemplate(models.Model):
     summary = models.CharField(max_length=200)
     description = models.TextField(blank=True)
-    locations = models.ManyToManyField(CalendarResource)
+    locations = models.ManyToManyField(CalendarResource, blank=True)
 
     # which calendar day the event is on. 0 is the employee's starting day,
     # 1 is her second day, -7 is 1 week before the starting day.
@@ -132,7 +132,7 @@ class EventTemplate(models.Model):
 
     inviteSupervisors = models.BooleanField(default=False)
     otherInvitees = models.ManyToManyField(settings.AUTH_USER_MODEL,
-            null=True, blank=True)
+            blank=True)
 
     # When making a schedule for multiple employees, a collective template
     # (e.g. Welcome Breakfast) creates a single event.
@@ -236,11 +236,10 @@ class EventTask(models.Model):
     """
     summary = models.CharField(max_length=200)
     description = models.TextField(blank=True)
-    locations = models.ManyToManyField(CalendarResource)
+    locations = models.ManyToManyField(CalendarResource, blank=True)
     startDt = models.DateTimeField()
     endDt = models.DateTimeField()
-    attendees = models.ManyToManyField(settings.AUTH_USER_MODEL,
-            null=True, blank=True)
+    attendees = models.ManyToManyField(settings.AUTH_USER_MODEL, blank=True)
     schedules = models.ManyToManyField(Schedule)
     template = models.ForeignKey(EventTemplate, null=True, blank=True,
             on_delete=models.SET_NULL)

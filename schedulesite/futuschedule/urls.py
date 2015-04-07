@@ -1,8 +1,8 @@
-from django.conf.urls import include, patterns, url
+from django.conf.urls import include, url
 from futuschedule import views, apiviews
 
 
-urlpatterns = patterns('',
+urlpatterns = [
     url(r'^$', views.index, name='index'),
     url(r'^api/', include(apiviews.router.urls)),
     url(r'^timezones/', views.timezones, name='timezones'),
@@ -24,4 +24,4 @@ urlpatterns = patterns('',
     url(r'^schedule/(?P<s_id>\d+)/$', views.scheduleDetail,
         name='schedule-detail'),
     url(r'^test/', views.test, name='test'),
-)
+]
