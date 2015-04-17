@@ -130,7 +130,8 @@ def processSchedulingRequest(modelId):
             except EventTemplate.DoesNotExist as e:
                 pass
 
-            evTask = EventTask.objects.create(summary=ev['data']['summary'],
+            evTask = EventTask.objects.create(
+                    summary=ev['data']['summary'][:200],
                     description=ev['data']['description'],
                     startDt=startDt, endDt=endDt, template=evTempl)
             evTask.locations.add(*rooms)
