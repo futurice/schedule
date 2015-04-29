@@ -4,6 +4,7 @@ from oauth2client.client import flow_from_clientsecrets
 from oauth2client.client import OAuth2WebServerFlow
 from oauth2client.file import Storage
 
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from futuschedule.models import CalendarResource
 
@@ -88,7 +89,7 @@ def updateUsers(jsonDumpFile):
             a.save()
 
 def updateMeetingRooms(email, password):
-    client = CalendarResourceClient(domain='futurice.com')
+    client = CalendarResourceClient(domain=settings.CALENDAR_DOMAIN)
     client.ClientLogin(email=email, password=password,
             source='futuschedule')
     # TODO: pagination

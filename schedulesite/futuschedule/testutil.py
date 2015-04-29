@@ -1,3 +1,3 @@
 # Test User emails
-Alice_email = 'alice.onboarding@futurice.com'
-Brad_email = 'brad.onboarding@futurice.com'
+Alice_email = 'alice.onboarding@example.com'
+Brad_email = 'brad.onboarding@example.com'

@@ -3,6 +3,7 @@ import dateutil.parser
 import json
 import pytz
 
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db.models import ProtectedError
 from django.test import TestCase
@@ -14,7 +15,7 @@ from futuschedule import models, tasksched
 class GoogleCalendarTest(TestCase):
 
     def testCreateAndDeleteEvent(self):
-        calId = 'futuintro@futurice.com'
+        calId = settings.TEST_CALENDAR_ID
         tzName = 'Europe/Berlin'
 
         startDt = datetime.datetime.today() - datetime.timedelta(days=28)
@@ -58,7 +59,7 @@ class GoogleCalendarTest(TestCase):
 
 
     def testEmptyEventSummaryDescriptionLocation(self):
-        calId = 'futuintro@futurice.com'
+        calId = settings.TEST_CALENDAR_ID
         tzName = 'Europe/Berlin'
 
         startDt = datetime.datetime.today() - datetime.timedelta(days=28)
@@ -87,7 +88,7 @@ class GoogleCalendarTest(TestCase):
         size we're testing here, and the tests documents them.
         If it fails, it just means we have to reduce that maximum size.
         """
-        calId = 'futuintro@futurice.com'
+        calId = settings.TEST_CALENDAR_ID
         tzName = 'Europe/Berlin'
 
         startDt = datetime.datetime.today() - datetime.timedelta(days=28)

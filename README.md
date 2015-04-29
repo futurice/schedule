@@ -7,12 +7,13 @@ See the `DEPLOY` file for a suggested way of doing this on a remote server.
 
 For licensing (BSD 3-clause), see `COPYING`.
 
-## Setup:
+## Setup
 ```bash
 # Create settings.py for Django:
 cd schedulesite/schedulesite
 cp settings_dev.py.template settings.py
 # Set the SECRET_KEY in settings.py to some random string.
+# Set CALENDAR_DOMAIN and TEST_CALENDAR_ID to the calendar to make events on.
 cd -
 
 npm install
@@ -66,7 +67,7 @@ PATH=./node_modules/.bin:$PATH jsx --no-cache-dir schedulesite/futuschedule/stat
 ```
 
 
-## Running:
+## Running
 
 ```bash
 ./schedulesite/manage.py migrate

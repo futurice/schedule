@@ -2,6 +2,10 @@ from schedulesite.settings_base import *
 
 SECRET_KEY = 'some random string'
 
+CALENDAR_DOMAIN = 'domain.com'
+# Used by unit tests which also create 'a_credentials_file' used by the app
+TEST_CALENDAR_ID = 'address@' + CALENDAR_DOMAIN
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
