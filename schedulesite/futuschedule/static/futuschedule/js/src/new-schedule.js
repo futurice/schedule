@@ -519,11 +519,6 @@ var NewSchedule;
                     events: (function() {
                         var result = [];
                         this.state.evTempl.forEach((function(et, idx) {
-                            var crt = {
-                                meta: {
-                                    isCollective: et.isCollective
-                                }
-                            };
                             var data;
                             if (et.isCollective) {
                                 result.push({
