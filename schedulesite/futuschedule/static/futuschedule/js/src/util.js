@@ -540,7 +540,8 @@ var PreviewExpandBox = React.createClass({
                 this.props.text.length > this.props.previewLength) {
             txt = this.props.text.substring(0, this.props.previewLength) + '…';
         }
-        return <div className="preview-expand-box" onClick={this.toggle}>
+        return <div className="preview-expand-box" onClick={this.toggle}
+            title={this.state.expanded ? 'Collapse' : 'Expand'}>
             {txt}
         </div>;
     }

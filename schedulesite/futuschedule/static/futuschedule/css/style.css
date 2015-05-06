@@ -274,3 +274,10 @@ table.new-event-fields td {
 div.event-description {
 	white-space: pre-wrap;
 }
+
+
+/* Scheduling Requests */
+
+td.sched-req-status, td.sched-req-status > div {
+	text-align: center;
+}
