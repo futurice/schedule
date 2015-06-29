@@ -1,5 +1,6 @@
 from apiclient.discovery import build
 from gdata.calendar_resource.client import CalendarResourceClient
+from gdata.gauth import OAuth2TokenFromCredentials
 from oauth2client.client import flow_from_clientsecrets
 from oauth2client.client import OAuth2WebServerFlow
 from oauth2client.file import Storage
@@ -12,7 +13,8 @@ import httplib2
 import json
 
 
-def ensureOAuthCredentials():
+def ensureOAuthCredentials(secrets_file='client_secrets.json', storage_file='a_credentials_file', redirect_uri='https://localhost:8000/oauth2callback',
+        scope=['https://www.googleapis.com/auth/calendar', 'https://apps-apis.google.com/a/feeds/calendar/resource/']):
     """
     Returns credentials (creates a_credentials_file in current dir if absent).
 
@@ -20,12 +22,12 @@ def ensureOAuthCredentials():
     for you to authorize the App on Google. Paste the resulting token and it
     will create a_credentials_file.
     """
-    storage = Storage('a_credentials_file')
+    storage = Storage(storage_file)
     credentials = storage.get()
     if not credentials:
-        flow = flow_from_clientsecrets('client_secrets.json',
-                scope='https://www.googleapis.com/auth/calendar',
-                redirect_uri='https://localhost:8000/oauth2callback',
+        flow = flow_from_clientsecrets(filename=secrets_file,
+                scope=scope,
+                redirect_uri=redirect_uri,
                 )
         # Try to get refresh token in response. Taken from:
         # https://developers.google.com/glass/develop/mirror/authorization
@@ -88,10 +90,10 @@ def updateUsers(jsonDumpFile):
                     username=userById[u['supervisor']]['username'])
             a.save()
 
-def updateMeetingRooms(email, password):
+def updateMeetingRooms():
     client = CalendarResourceClient(domain=settings.CALENDAR_DOMAIN)
-    client.ClientLogin(email=email, password=password,
-            source='futuschedule')
+    token = OAuth2TokenFromCredentials(ensureOAuthCredentials())
+    token.authorize(client)
     # TODO: pagination
     # In May 2014 only getting a single page of results and can't figure out
     # how to request few (e.g. 5) results per page to test pagination.

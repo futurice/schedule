@@ -52,11 +52,11 @@ import futuschedule.util
 futuschedule.util.updateUsers('users.json')
 ```
 
-### Populate your DB with Meeting Rooms (you need the Google Admin password)
+### Populate your DB with Meeting Rooms
 ```python
 ./schedulesite/manage.py shell
 import futuschedule.util
-futuschedule.util.updateMeetingRooms('google.admin@futurice.com', '«pass»')
+futuschedule.util.updateMeetingRooms()
 ```
 
 
