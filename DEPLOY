@@ -77,7 +77,7 @@ cd /home/futuschedule/config-files/
 . /home/futuschedule/venv/bin/activate
 exec /home/futuschedule/futuschedule/schedulesite/manage.py shell <<<'
 import futuschedule.util
-futuschedule.util.updateMeetingRooms("google.admin@futurice.com", "«pass»")
+futuschedule.util.updateMeetingRooms()
 '
 ---------------------------------------
 chmod u+x /home/futuschedule/config-files/update-meeting-rooms.sh
