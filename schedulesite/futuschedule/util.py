@@ -43,8 +43,12 @@ def buildCalendarSvc():
     credentials = ensureOAuthCredentials()
     http = httplib2.Http()
     http = credentials.authorize(http)
-    return build(serviceName='calendar', version='v3', http=http,
-            developerKey='YOUR_DEVELOPER_KEY')
+    return build(serviceName='calendar', version='v3', http=http)
+
+def calendar_resource():
+    client = CalendarResourceClient(domain=settings.CALENDAR_DOMAIN)
+    token = OAuth2TokenFromCredentials(ensureOAuthCredentials())
+    return token.authorize(client)
 
 def updateUsers(jsonDumpFile):
     """
@@ -86,18 +90,18 @@ def updateUsers(jsonDumpFile):
     for u in userById.values():
         if u['supervisor']:
             a = UM.objects.get(username=u['username'])
-            a.supervisor = UM.objects.get(
-                    username=userById[u['supervisor']]['username'])
+            try:
+                a.supervisor = UM.objects.get(
+                        username=userById[u['supervisor']]['username'])
+            except Exception as e:
+                print(e)
             a.save()
 
 def updateMeetingRooms():
-    client = CalendarResourceClient(domain=settings.CALENDAR_DOMAIN)
-    token = OAuth2TokenFromCredentials(ensureOAuthCredentials())
-    token.authorize(client)
     # TODO: pagination
     # In May 2014 only getting a single page of results and can't figure out
     # how to request few (e.g. 5) results per page to test pagination.
-    calendar_resources = client.GetResourceFeed()
+    calendar_resources = calendar_resource().GetResourceFeed()
 
     # current resource (meeting room) ids in Google Calendar
     crt_res_ids = set()

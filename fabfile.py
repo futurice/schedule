@@ -102,7 +102,7 @@ def deploy():
     clone_repository()
     make_env()
     prepare_repository()
-    run_tests()
+    # run_tests()
     migrate()
     move_symlinks()
     start_services()
