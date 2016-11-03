@@ -92,3 +92,6 @@ REST_FRAMEWORK = {
         'rest_framework.filters.OrderingFilter',
     ),
 }
+
+FUM_API_URL = os.getenv('FUM_API_URL', None)
+FUM_API_TOKEN = os.getenv('FUM_API_TOKEN', None)
