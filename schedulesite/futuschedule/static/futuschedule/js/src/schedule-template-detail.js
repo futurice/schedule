@@ -478,6 +478,7 @@ var ScheduleTemplateDetail = React.createClass({
             <div id="schedule-template-fields">
                 <h1 className="no-margin">Schedule Template</h1>
                 <table>
+                <tbody>
                 <tr>
                     <td>
                         <label>Name:</label>
@@ -529,6 +530,7 @@ var ScheduleTemplateDetail = React.createClass({
                         </select>
                     </td>
                 </tr>
+                </tbody>
                 </table>
             </div>
 
@@ -780,6 +782,7 @@ var EventTemplate = React.createClass({
                 ▼
             </span>
             <table className="event-template-fields">
+            <tbody>
             <tr>
                 <td><label>Summary:</label></td>
                 <td>
@@ -934,6 +937,7 @@ var EventTemplate = React.createClass({
                 <td>
                 </td>
             </tr>
+            </tbody>
             </table>
 
             <button type="button"

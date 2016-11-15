@@ -1,2 +1,2 @@
-React.render(<NewSchedule />,
+ReactDOM.render(<NewSchedule />,
   document.getElementById('new-schedule-main-content'));

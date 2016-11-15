@@ -1,4 +1,5 @@
 from schedulesite.settings_base import *
+from schedulesite.local_settings import *
 
 SECRET_KEY = 'some random string'
 

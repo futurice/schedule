@@ -76,7 +76,7 @@ var NewSchedule;
                 userTextById: null,
                 alphabeticalUserIds: null,
 
-                selectedSchedTempl: null,
+                selectedSchedTempl: "",
                 selectedUsers: [],
                 startDate: fmtLocalDate(new Date())
             };
@@ -226,11 +226,11 @@ var NewSchedule;
             this.props.onSelectUsers(selectedUsers);
         },
         handleStartDateChange: function() {
-            var val = React.findDOMNode(this.refs.startDate).value;
+            var val = ReactDOM.findDOMNode(this.refs.startDate).value;
             this.props.onStartDateChange(val);
         },
         handleStartDateBlur: function() {
-            var val = React.findDOMNode(this.refs.startDate).value;
+            var val = ReactDOM.findDOMNode(this.refs.startDate).value;
             if (val == '' || Number.isNaN(new Date(val).valueOf())) {
                 val = fmtLocalDate(new Date());
             }
@@ -239,6 +239,7 @@ var NewSchedule;
         render: function() {
             return <div id="new-schedule-prepare">
                 <table id="new-schedule-fields">
+                <tbody>
                 <tr>
                     <td><label>From template:</label></td>
                     <td>
@@ -246,7 +247,7 @@ var NewSchedule;
                             value={this.props.selectedSchedTempl}
                             onChange={this.schedTemplChanged}
                             >
-                            <option value='null'>—</option>
+                            <option value="">—</option>
                             {this.props.scheduleTemplates.map(function(st) {
                                 return <option value={st.id} key={st.id}>
                                     {st.name}
@@ -279,6 +280,7 @@ var NewSchedule;
                             />
                     </td>
                 </tr>
+                </tbody>
                 </table>
 
                 <button type="button" onClick={this.props.onAdvance}>
@@ -800,6 +802,7 @@ var NewSchedule;
                     ▼
                 </span>
                 <table className="new-event-fields">
+                <tbody>
                 <tr>
                     <td>
                         <label>Summary:</label>
@@ -896,6 +899,7 @@ var NewSchedule;
                             />
                     </td>
                 </tr>
+                </tbody>
                 </table>
 
                 <button type="button"

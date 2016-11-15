@@ -380,7 +380,7 @@ var MultiSelect = React.createClass({
     },
     handleSuggestionClick: function(id) {
         this.props.onAdd(id);
-        React.findDOMNode(this.refs.searchbox).focus();
+        ReactDOM.findDOMNode(this.refs.searchbox).focus();
     },
     handleSuggestionMouseEnter: function(idx) {
         this.setState({
