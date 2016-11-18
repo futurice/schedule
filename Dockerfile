@@ -31,6 +31,6 @@ COPY . /opt/app/
 
 EXPOSE 8000
 
-ENV DJANGO_SETTINGS_MODULE schedulesite.settings_dev
+ENV DJANGO_SETTINGS_MODULE schedulesite.settings_docker
 
 CMD ["bash", "docker/start.sh"]

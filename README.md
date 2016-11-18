@@ -7,6 +7,35 @@ See the `DEPLOY` file for a suggested way of doing this on a remote server.
 
 For licensing (BSD 3-clause), see `COPYING`.
 
+## Running locally on Docker
+
+First install [Docker](https://www.docker.com/)
+```
+docker build --rm -t schedule .
+```
+
+```
+docker run -d --restart always \
+ -e POSTGRES_PASSWORD=secret \
+ --name schedule-postgres postgres
+```
+```
+docker exec -it schedule-postgres sh -c "createdb -Upostgres schedule"
+```
+```
+docker run --rm -itp 8000:8000 \
+ -e DB_HOST=schedule-postgres \
+ -e DB_USER=postgres \
+ -e DB_NAME=schedule \
+ -e FUM_API_URL="" \
+ -e FUM_API_TOKEN="" \
+ --name schedule schedule
+```
+### Fetching users from FUM
+```
+docker exec schedule ./schedulesite/manage.py refresh_users
+```
+
 ## Setup
 ```bash
 # Create settings.py for Django:
