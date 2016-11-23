@@ -11,3 +11,4 @@ psycopg2==2.6
 fabric==1.10.1
 selenium
 slumber==0.6.0
+uwsgi==2.0.13.1

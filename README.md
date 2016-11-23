@@ -9,7 +9,7 @@ For licensing (BSD 3-clause), see `COPYING`.
 
 ## Running locally on Docker
 
-First install [Docker](https://www.docker.com/)
+Install [Docker](https://www.docker.com/)
 ```
 docker build --rm -t schedule .
 ```
@@ -29,8 +29,12 @@ docker run --rm -itp 8000:8000 \
  -e DB_NAME=schedule \
  -e FUM_API_URL="" \
  -e FUM_API_TOKEN="" \
+ -e TEST_CALENDAR_ID="" \
+ -e CALENDAR_DOMAIN="" \
+ --link schedule-postgres:schedule-postgres \
  --name schedule schedule
 ```
+[localhost:8000/futuschedule](localhost:8000/futuschedule)
 ### Fetching users from FUM
 ```
 docker exec schedule ./schedulesite/manage.py refresh_users

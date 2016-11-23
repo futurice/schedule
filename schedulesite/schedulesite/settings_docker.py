@@ -98,12 +98,12 @@ FUM_API_TOKEN = os.getenv('FUM_API_TOKEN', None)
 
 SECRET_KEY = 'some random string'
 
-CALENDAR_DOMAIN = 'domain.com'
+CALENDAR_DOMAIN = os.getenv('CALENDAR_DOMAIN', None)
 # Used by unit tests which also create 'a_credentials_file' used by the app
-TEST_CALENDAR_ID = 'address@' + CALENDAR_DOMAIN
+TEST_CALENDAR_ID = os.getenv('TEST_CALENDAR_ID', None)
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv('DEBUG', True)
 
 # Database
 # https://docs.djangoproject.com/en/1.6/ref/settings/#databases
@@ -113,7 +113,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'NAME': os.getenv('DB_NAME', None),
         'HOST': os.getenv('DB_HOST', None),
-        'USER': os.getenv('DB_NAME', None),
+        'USER': os.getenv('DB_USER', None),
         'PASSWORD': os.getenv('DB_PASSWORD', None),
         'PORT': os.getenv('DB_PORT', '5432'),
     }

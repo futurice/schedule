@@ -12,7 +12,9 @@ RUN apt-get update && apt-get install -y \
     wget \
     curl \
     vim \
-    git
+    git \
+    supervisor \
+    nginx-full
 
 RUN curl -sL https://deb.nodesource.com/setup_6.x | bash -
 RUN apt-get install -y nodejs
@@ -32,5 +34,9 @@ COPY . /opt/app/
 EXPOSE 8000
 
 ENV DJANGO_SETTINGS_MODULE schedulesite.settings_docker
+ENV UWSGI_PARAMS ""
+
+COPY docker/nginx.conf /etc/nginx/nginx.conf
+COPY docker/supervisord.conf /etc/supervisor/supervisord.conf
 
 CMD ["bash", "docker/start.sh"]
