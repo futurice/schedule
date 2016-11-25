@@ -58,6 +58,27 @@ class GoogleCalendarTest(TestCase):
         calendar.deleteEvent(calId, ev['id'])
 
 
+    def testIsOccupied(self):
+        calId = settings.TEST_CALENDAR_ID
+        tzName = 'Europe/Berlin'
+        # if this test fails, check that there are no other events in the test calendar on the chosen day!
+        eventStart = datetime.datetime(2016, 11, 26, 9, 0)
+        eventEnd = eventStart + datetime.timedelta(hours=1)
+        event = calendar.createEvent(calId, False, 'TEST: sample event', 'Test: test isOccupied', 'Location', eventStart, eventEnd, tzName, [])
+
+        timeBeforeEvent = eventStart - datetime.timedelta(minutes=30)
+        timeAfterEvent = eventEnd + datetime.timedelta(minutes=30)
+        timeMiddleOfEvent = eventStart + datetime.timedelta(minutes=30)
+
+        self.assertTrue(calendar.isOccupied(calId, eventStart, eventEnd, tzName))
+        self.assertFalse(calendar.isOccupied(calId, timeBeforeEvent, eventStart, tzName))
+        self.assertFalse(calendar.isOccupied(calId, eventEnd, timeAfterEvent, tzName))
+        self.assertTrue(calendar.isOccupied(calId, timeBeforeEvent, timeMiddleOfEvent, tzName))
+        self.assertTrue(calendar.isOccupied(calId, timeMiddleOfEvent, timeAfterEvent, tzName))
+
+        calendar.deleteEvent(calId, event['id'])
+
+
     def testEmptyEventSummaryDescriptionLocation(self):
         calId = settings.TEST_CALENDAR_ID
         tzName = 'Europe/Berlin'

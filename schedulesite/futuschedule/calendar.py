@@ -1,6 +1,10 @@
 import datetime
 from futuschedule import util
+import pytz
 
+def getNaive(dt):
+        """Return a naive datetime object for a possibly tz-aware one."""
+        return datetime.datetime(dt.year, dt.month, dt.day, dt.hour, dt.minute)
 
 def createEvent(calendarId, sendNotifications, summary, description, location,
         startDt, endDt, tzName, attendingEmails):
@@ -16,10 +20,6 @@ def createEvent(calendarId, sendNotifications, summary, description, location,
     only the 'dateTime' field to Google (in format '...+03:00'),
     without the 'timezone' field.
     """
-
-    def getNaive(dt):
-        """Return a naive datetime object for a possibly tz-aware one."""
-        return datetime.datetime(dt.year, dt.month, dt.day, dt.hour, dt.minute)
 
     startDt, endDt = map(getNaive, (startDt, endDt))
 
@@ -49,3 +49,17 @@ def deleteEvent(calendarId, eventId, sendNotifications=False):
     calSvc = util.buildCalendarSvc()
     calSvc.events().delete(calendarId=calendarId, eventId=eventId,
             sendNotifications=sendNotifications).execute()
+
+#Returns True if the calendar with given calendarId has an event during the given timeframe
+def isOccupied(calendarId, timeStart, timeEnd, timeZoneName):
+
+    tz = pytz.timezone(timeZoneName)
+    
+    timeStart = tz.localize(getNaive(timeStart))+datetime.timedelta(minutes=1)
+    timeEnd = tz.localize(getNaive(timeEnd))
+
+    calSvc = util.buildCalendarSvc()
+    events = calSvc.events().list(calendarId=calendarId, timeMin=timeStart.isoformat(), timeMax=timeEnd.isoformat(), timeZone=timeZoneName).execute()
+    if events['items'] == []:
+        return False
+    return True
