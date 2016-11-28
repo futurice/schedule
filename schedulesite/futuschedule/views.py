@@ -64,6 +64,27 @@ def createSchedules(request):
     }
     """
 
+    def parsedate(date, time):
+        return datetime.datetime.strptime(date+'-'+time, '%Y-%m-%d-%H:%M')
+
+    # Check if meeting rooms are available
+    data = json.loads(request.body)
+    timezone = models.ScheduleTemplate.objects.get(id=str(data['scheduleTemplate'])).timezone.name
+    errors = []
+    
+    for event in data['events']:
+        for location in event['data']['locations']:
+            room = models.CalendarResource.objects.get(id = str(location))
+            start = parsedate(event['data']['date'], event['data']['startTime'])
+            end = parsedate(event['data']['date'], event['data']['endTime'])
+            if(calendar.isOccupied(room.email, start, end, timezone)):
+                errors += [room.name + " is not available on "+ event['data']['date'] + " at " + event['data']['startTime'] + "-" + event['data']['endTime']]
+    
+    if errors != []:
+        return HttpResponse(json.dumps({'error': ', '.join(errors)}),
+        content_type="application/json", status=400)
+
+
     if request.method == 'POST':
         schedReq = models.SchedulingRequest.objects.create(
                 json=json.dumps(json.load(request)),

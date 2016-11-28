@@ -184,7 +184,11 @@ function getAjaxErr(xhr, txtStatus, errThrown) {
             // JSON response is an explanation of the problem.
             // Anything else is probably a huge html page
             // describing server misconfiguration.
-            errTxt += ': ' + JSON.stringify(JSON.parse(xhr.responseText));
+            if(JSON.parse(xhr.responseText)['error']){
+                errTxt += ': ' + JSON.parse(xhr.responseText)['error'];
+            } else {
+                errTxt += ': ' + JSON.stringify(JSON.parse(xhr.responseText));
+            }
         } catch (exc) {
             // json parsing error
         }

@@ -27,6 +27,7 @@ docker run --rm -itp 8000:8000 \
  -e DB_HOST=schedule-postgres \
  -e DB_USER=postgres \
  -e DB_NAME=schedule \
+ -e DB_PASSWORD=secret \
  -e FUM_API_URL="" \
  -e FUM_API_TOKEN="" \
  -e TEST_CALENDAR_ID="" \

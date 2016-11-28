@@ -54,12 +54,13 @@ def deleteEvent(calendarId, eventId, sendNotifications=False):
 def isOccupied(calendarId, timeStart, timeEnd, timeZoneName):
 
     tz = pytz.timezone(timeZoneName)
-    
+    #one minute is added to the even starting time, because timeMin (minimum ending time to filter by) is inclusive (timeMax, on the other hand, is not)
     timeStart = tz.localize(getNaive(timeStart))+datetime.timedelta(minutes=1)
     timeEnd = tz.localize(getNaive(timeEnd))
 
     calSvc = util.buildCalendarSvc()
     events = calSvc.events().list(calendarId=calendarId, timeMin=timeStart.isoformat(), timeMax=timeEnd.isoformat(), timeZone=timeZoneName).execute()
+    
     if events['items'] == []:
         return False
     return True
