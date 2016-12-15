@@ -244,6 +244,10 @@ class EventTask(models.Model):
     template = models.ForeignKey(EventTemplate, null=True, blank=True,
             on_delete=models.SET_NULL)
 
+class AddUsersTask(models.Model):
+    schedReq = models.ForeignKey(SchedulingRequest)
+    usersToAdd = models.ManyToManyField(settings.AUTH_USER_MODEL, blank=True)
+
 
 class DeletionTask(models.Model):
     """

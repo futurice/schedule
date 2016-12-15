@@ -2,9 +2,6 @@ import datetime
 from futuschedule import util
 import pytz
 
-def getNaive(dt):
-        """Return a naive datetime object for a possibly tz-aware one."""
-        return datetime.datetime(dt.year, dt.month, dt.day, dt.hour, dt.minute)
 
 def createEvent(calendarId, sendNotifications, summary, description, location,
         startDt, endDt, tzName, attendingEmails):
@@ -21,7 +18,7 @@ def createEvent(calendarId, sendNotifications, summary, description, location,
     without the 'timezone' field.
     """
 
-    startDt, endDt = map(getNaive, (startDt, endDt))
+    startDt, endDt = map(util.getNaive, (startDt, endDt))
 
     event = {
             'summary': summary,
@@ -41,6 +38,12 @@ def createEvent(calendarId, sendNotifications, summary, description, location,
     return calSvc.events().insert(calendarId=calendarId,
             sendNotifications=sendNotifications, body=event).execute()
 
+def addUsersToEvent(calendarId, eventId, users, sendNotifications=False):
+    calSvc = util.buildCalendarSvc()
+    event = calSvc.events().get(calendarId=calendarId, eventId=eventId).execute()
+    userDicts = map(lambda x: {'email': x.email}, users)
+    event['attendees'] += userDicts
+    updated_event = calSvc.events().update(calendarId=calendarId, eventId=eventId, body=event, sendNotifications=sendNotifications).execute()
 
 def deleteEvent(calendarId, eventId, sendNotifications=False):
     """
@@ -55,8 +58,8 @@ def isOccupied(calendarId, timeStart, timeEnd, timeZoneName):
 
     tz = pytz.timezone(timeZoneName)
     #one minute is added to the even starting time, because timeMin (minimum ending time to filter by) is inclusive (timeMax, on the other hand, is not)
-    timeStart = tz.localize(getNaive(timeStart))+datetime.timedelta(minutes=1)
-    timeEnd = tz.localize(getNaive(timeEnd))
+    timeStart = tz.localize(util.getNaive(timeStart))+datetime.timedelta(minutes=1)
+    timeEnd = tz.localize(util.getNaive(timeEnd))
 
     calSvc = util.buildCalendarSvc()
     events = calSvc.events().list(calendarId=calendarId, timeMin=timeStart.isoformat(), timeMax=timeEnd.isoformat(), timeZone=timeZoneName).execute()

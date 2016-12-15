@@ -21,16 +21,38 @@ var SchedulingRequestsList = React.createClass({
                     scheduleTemplById: scheduleTemplById
                 });
             }),
-        getRestLoaderMixin(apiRoot + 'users/',
+        getRestLoaderMixin(apiRoot + 'users/?ordering=first_name,last_name',
             'users', 'usersLoaded', 'usersErr', function() {
-                var usersById = {};
-                this.state.users.forEach(function(u) {
-                    usersById[u.id] = u;
-                });
-                this.setState({
-                    usersById: usersById
-                });
-            })
+                    var usersById = {};
+                    this.state.users.forEach(function(u) {
+                        usersById[u.id] = u;
+                    });
+
+                    var userTextById = {};
+                    this.state.users.forEach(function(u) {
+                        userTextById[u.id] = u.first_name + ' ' + u.last_name
+                                + ' (' + u.email + ')';
+                    });
+
+                    var alphabeticalUserIds = Object.keys(userTextById);
+                    alphabeticalUserIds.sort(function(a, b) {
+                        a = userTextById[a].toLowerCase();
+                        b = userTextById[b].toLowerCase();
+                        if (a == b) {
+                            return 0;
+                        }
+                        if (a < b) {
+                            return -1;
+                        }
+                        return 1;
+                    });
+
+                    this.setState({
+                        usersById: usersById,
+                        userTextById: userTextById,
+                        alphabeticalUserIds: alphabeticalUserIds
+                    });
+                })
     ],
     getInitialState: function() {
         return {
@@ -47,6 +69,8 @@ var SchedulingRequestsList = React.createClass({
             usersLoaded: false,
             usersErr: '',
             usersById: null,
+            userTextById: null,
+            alphabeticalUserIds: null,
 
             // the ‘hacky’ re-schedule special case (see class docstring)
             reSchedFired: false,
@@ -117,6 +141,7 @@ var SchedulingRequestsList = React.createClass({
                     <th>Template</th>
                     <th>By</th>
                     <th>Created</th>
+                    <th>Add Users</th>
                     <th>Status</th>
                     <th>Delete</th>
                 </tr>
@@ -127,8 +152,9 @@ var SchedulingRequestsList = React.createClass({
                             key={r.id}
                             model={r}
                             usersById={this.state.usersById}
+                            userTextById={this.state.userTextById}
+                            alphabeticalUserIds={this.state.alphabeticalUserIds}
                             scheduleTemplById={this.state.scheduleTemplById}
-
                             onRescheduleSubmit={this.rescheduleSubmit}
                             onRescheduleError={this.rescheduleError}
                             onRescheduleSuccess={this.rescheduleSuccess}
@@ -150,8 +176,9 @@ var SchedulingRequest = React.createClass({
     propTypes: {
         model: React.PropTypes.object.isRequired,
         usersById: React.PropTypes.object.isRequired,
+        userTextById: React.PropTypes.object.isRequired,
+        alphabeticalUserIds: React.PropTypes.array.isRequired,
         scheduleTemplById: React.PropTypes.object.isRequired,
-
         onRescheduleSubmit: React.PropTypes.func.isRequired,
         // onRescheduleError(errorMessage)
         onRescheduleError: React.PropTypes.func.isRequired,
@@ -162,7 +189,8 @@ var SchedulingRequest = React.createClass({
             showDeleteBtn: true,
             showException: false,
             ajaxInFlight: '',
-            ajaxErr: ''
+            ajaxErr: '',
+            selectedUsers: []
         };
     },
     delete: function() {
@@ -240,6 +268,53 @@ var SchedulingRequest = React.createClass({
             });
         }
     },
+
+    removeUser: function(id) {
+        var selectedUsers = this.state.selectedUsers.filter(function(x) {
+            return x.id != id;
+        });
+        var state = this.state;
+        state.selectedUsers = selectedUsers;
+        this.setState(state);
+
+    },
+    addUser: function(id) {
+        var user = this.props.usersById[id];
+        if (!user) {
+            console.error('User with id', id, 'not found');
+            return;
+        }
+
+        var selectedUsers = this.state.selectedUsers.filter(function(x) {
+            return x.id != id;
+        });
+        selectedUsers.push(user);
+
+        var state = this.state;
+        state.selectedUsers = selectedUsers;
+        this.setState(state);
+    },
+
+    sendUsers: function(){
+        $.ajax({
+            url: '/futuschedule/add-users-to-schedule/' + this.props.model.id +'/',
+            type: 'POST',
+            contentType: 'application/json; charset=UTF-8',
+            headers: {'X-CSRFToken': $.cookie('csrftoken')},
+            data: JSON.stringify({'users': this.state.selectedUsers}),
+            success: (function(data) {
+               this.setState({
+                     ajaxErr: '',
+                     selectedUsers: []
+                    });
+           }).bind(this),
+           error: (function(xhr, txtStatus, saveErr) {
+                    this.setState({ajaxErr: getAjaxErr.apply(this, arguments)});
+           }).bind(this)
+        })
+    },
+
+
     render: function() {
         var userName = getUserName(this.props.model.requestedBy,
                 this.props.usersById),
@@ -265,6 +340,21 @@ var SchedulingRequest = React.createClass({
                 <span className='info'>Deleted</span>
             </div>;
         }
+
+        var addUsersBox = 
+            <div>
+                 <MultiSelect
+                    itemTextById={this.props.userTextById}
+                    sortedIds={this.props.alphabeticalUserIds}
+                    selectedIds={this.state.selectedUsers.map(
+                        function(u) { return u.id; }
+                    )}
+                    onRemove={this.removeUser}
+                    onAdd={this.addUser}
+                    disabled={false}
+                    />
+                    <button type="button" onClick={this.sendUsers} disabled={this.state.selectedUsers.length == 0}>Add users</button>
+            </div>
 
         var status = this.props.model.status,
             modelJson = JSON.parse(this.props.model.json),
@@ -323,6 +413,7 @@ var SchedulingRequest = React.createClass({
             <td>{templName}</td>
             <td>{userName}</td>
             <td>{dateElem}</td>
+            <td>{addUsersBox}</td>
             <td className="sched-req-status">{statusElem}</td>
             <td>{deleteBox}</td>
         </tr>;

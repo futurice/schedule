@@ -2,7 +2,9 @@ import datetime
 from django.http import HttpResponse
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
+from django.conf import settings
 import json
+from django.contrib.auth import get_user_model
 
 from futuschedule import calendar, models, tasksched
 
@@ -114,6 +116,23 @@ def schedulingRequestDetail(request, sr_id):
     else:
         return HttpResponse(json.dumps({'error': 'Method ' + request.method +
             ' not allowed.'}), content_type="application/json", status=405)
+
+def addUsersToSchedule(request, sr_id):
+    
+    data = json.loads(request.body)
+    sr = models.SchedulingRequest.objects.get(id=sr_id)
+    task = models.AddUsersTask(schedReq=sr)
+    task.save()
+    for user in data['users']:
+        task.usersToAdd.add(get_user_model().objects.get(id=user['id']))
+    sr.status = models.SchedulingRequest.IN_PROGRESS
+    sr.save()
+    task.save()
+    tasksched.enqueue(tasksched.ADD_USERS_TASK, task.id)
+    return HttpResponse('', status=200)
+    
+    #return HttpResponse('', status=400)
+
 
 def schedules(request):
     return render(request, 'futuschedule/schedules.html')

@@ -297,7 +297,7 @@ var MultiSelect = React.createClass({
         return this.props.sortedIds.filter((function(id) {
             var itemTxt = this.props.itemTextById[id].toLowerCase();
             return itemTxt.indexOf(searchText) != -1;
-        }).bind(this));
+        }).bind(this)).slice(0,10);
     },
     handleSearchTextChange: function(ev) {
         var txt = getTargetValue(ev),

@@ -7,10 +7,12 @@ from oauth2client.file import Storage
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.utils.timezone import utc
 from futuschedule.models import CalendarResource
 
 import httplib2
 import json
+import datetime
 
 
 def ensureOAuthCredentials(secrets_file='client_secrets.json', storage_file='a_credentials_file', redirect_uri='https://localhost:8000/oauth2callback',
@@ -126,3 +128,18 @@ def updateMeetingRooms():
     for r in CalendarResource.objects.filter():
         if r.resourceId not in crt_res_ids:
             r.delete()
+
+# returns a datetime object combing date (YY-MM-DD) and time (HH:MM or HH-MM-SS), both as strings.
+def parseDate(datestring, timestring):
+
+    date = datetime.datetime.strptime(datestring,
+                    '%Y-%m-%d').date()
+    # [:5] drops seconds from 'HH:MM:SS' if present
+    time = datetime.datetime.strptime(timestring[:5],
+        '%H:%M').time()
+    return datetime.datetime.combine(date, time).replace(tzinfo=utc)
+
+def getNaive(dt):
+    """Return a naive datetime object for a possibly tz-aware one."""
+    return datetime.datetime(dt.year, dt.month, dt.day, dt.hour, dt.minute)
+    

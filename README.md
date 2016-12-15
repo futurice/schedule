@@ -40,6 +40,10 @@ docker run --rm -itp 8000:8000 \
 ```
 docker exec schedule ./schedulesite/manage.py refresh_users
 ```
+### Updating meeting rooms to database 
+```
+docker exec schedule ./schedulesite/manage.py update_meeting_rooms
+```
 
 ## Setup
 ```bash

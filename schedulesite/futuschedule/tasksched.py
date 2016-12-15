@@ -23,8 +23,9 @@ import traceback
 
 from futuschedule.models import (Task, Schedule, CalendarResource, EventTask,
         EventTemplate, SchedulingRequest, ScheduleTemplate, Event,
-        DeletionTask, LastApiCall)
-from futuschedule import calendar
+        DeletionTask, LastApiCall, AddUsersTask)
+from futuschedule import calendar, util
+import dateutil.parser
 
 logging.basicConfig()
 
@@ -113,15 +114,8 @@ def processSchedulingRequest(modelId):
 
             rooms = list(CalendarResource.objects.filter(
                     id__in=ev['data']['locations']))
-            d = datetime.datetime.strptime(ev['data']['date'],
-                    '%Y-%m-%d').date()
-            # [:5] drops seconds from 'HH:MM:SS' if present
-            sTime = datetime.datetime.strptime(ev['data']['startTime'][:5],
-                    '%H:%M').time()
-            eTime = datetime.datetime.strptime(ev['data']['endTime'][:5],
-                    '%H:%M').time()
-            startDt = datetime.datetime.combine(d, sTime).replace(tzinfo=utc)
-            endDt = datetime.datetime.combine(d, eTime).replace(tzinfo=utc)
+            startDt = util.parseDate(ev['data']['date'], ev['data']['startTime'])
+            endDt = util.parseDate(ev['data']['date'], ev['data']['endTime'])
 
             evTempl = None
             try:
@@ -195,6 +189,59 @@ def processEventTask(modelId):
     finally:
         evTask.delete()
 
+
+def processAddUsersRequest(modelId):
+    """
+    AddUsersTask model contains users to add and the scheduling request in question. These users are added to the collective events and new copies of non-collective events are created for each user. Each non-collective event is created by adding an event creation task to the queue. After all tasks are completed succesfully, state of the scheduling request is returned to 'SUCCESS'
+    """
+    
+    task = AddUsersTask.objects.get(id=modelId)
+
+    usersToAdd = list(get_user_model().objects.filter(adduserstask=task))
+    #choose the first of the schedules in the schReq to be the base for new schedules
+    schedule = Schedule.objects.filter(schedulingRequest=task.schedReq)[0]
+
+    #remove users who already have schedules in the request
+    for schedule in Schedule.objects.filter(schedulingRequest=task.schedReq):
+        if(schedule.forUser in usersToAdd):
+            usersToAdd.remove(schedule.forUser)
+
+    #Create schedules for all new users
+    for user in usersToAdd:
+        Schedule.objects.create(schedulingRequest=task.schedReq, forUser=user, template=schedule.template)
+
+    for event in Event.objects.filter(schedules=schedule):
+        eventData = json.loads(event.json)
+
+        #In the collective event case, all users are added to the existing event
+        if event.template.isCollective:
+            users = list(usersToAdd)
+            if(event.template.inviteSupervisors):
+                users += map(user.supervisor, users)
+            calendar.addUsersToEvent(schedule.template.calendar.email, eventData['id'], users, sendNotifications=False)
+            for user in usersToAdd:
+                event.schedules.add(Schedule.objects.get(forUser=user, schedulingRequest=task.schedReq))
+        
+        #On a non-collective event, a copy of the event is created for all users
+        else:
+            for user in usersToAdd:
+                newEvent = EventTask.objects.create(
+                    summary=eventData['summary'],
+                    startDt=util.getNaive(dateutil.parser.parse(eventData['start']['dateTime'])),
+                    endDt=util.getNaive(dateutil.parser.parse(eventData['end']['dateTime'])),
+                    template=event.template)
+
+                if 'description' in eventData:
+                    newEvent.description = eventData['description']
+
+                newEvent.schedules.add(Schedule.objects.get(forUser=user, schedulingRequest=task.schedReq))
+                newEvent.attendees.add(user)
+                if event.template.inviteSupervisors and user.supervisor:
+                    newEvent.attendees.add(user.supervisor)
+                newEvent.save()
+                enqueue(EVENT_TASK, newEvent.id)
+
+    enqueue(MARK_SCHED_REQ_SUCCESS, task.schedReq.id)
 
 def processMarkSchedReqSuccess(modelId):
     """
@@ -305,6 +352,8 @@ MARK_SCHED_REQ_SUCCESS = 'mark-scheduling-request-successful'
 CLEANUP_SCHED_REQ = 'cleanup-scheduling-request'
 DELETION_TASK = 'deletion-task'
 DELETE_SCHED_REQ = 'delete-scheduling-request'
+ADD_USERS_TASK = 'add-users-task'
+
 implForName = {
         SCHED_REQ: processSchedulingRequest,
         EVENT_TASK: processEventTask,
@@ -312,4 +361,5 @@ implForName = {
         CLEANUP_SCHED_REQ: processCleanupSchedulingRequest,
         DELETION_TASK: processDeletionTask,
         DELETE_SCHED_REQ: processDeleteSchedulingRequest,
+        ADD_USERS_TASK: processAddUsersRequest
 }

@@ -23,5 +23,6 @@ urlpatterns = [
     url(r'^schedules/$', views.schedules, name='schedules'),
     url(r'^schedule/(?P<s_id>\d+)/$', views.scheduleDetail,
         name='schedule-detail'),
+    url(r'^add-users-to-schedule/(?P<sr_id>\d+)/$', views.addUsersToSchedule, name='add-users-to-schedule'),
     url(r'^test/', views.test, name='test'),
 ]
