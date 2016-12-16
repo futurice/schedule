@@ -226,7 +226,7 @@ def processAddUsersRequest(modelId):
         else:
             for user in usersToAdd:
                 newEvent = EventTask.objects.create(
-                    summary=eventData['summary'],
+                    summary=event.template.summary + " - " + user.first_name + " " + user.last_name,
                     startDt=util.getNaive(dateutil.parser.parse(eventData['start']['dateTime'])),
                     endDt=util.getNaive(dateutil.parser.parse(eventData['end']['dateTime'])),
                     template=event.template)

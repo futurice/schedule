@@ -32,6 +32,9 @@ docker run --rm -itp 8000:8000 \
  -e FUM_API_TOKEN="" \
  -e TEST_CALENDAR_ID="" \
  -e CALENDAR_DOMAIN="" \
+ -e DEBUG=true \
+ -e FAKE_LOGIN=true \
+ -e REMOTE_USER=me \
  --link schedule-postgres:schedule-postgres \
  --name schedule schedule
 ```

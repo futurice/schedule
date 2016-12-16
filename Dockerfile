@@ -29,6 +29,10 @@ COPY .bowerrc /opt/app/.bowerrc
 COPY bower.json /opt/app/bower.json
 RUN /opt/node_modules/bower/bin/bower install --allow-root
 
+RUN groupadd -r schedule_group && useradd -r -g schedule_group schedule_user
+RUN ln -s /etc/nginx/uwsgi_params /etc/nginx/sites-enabled/
+RUN mkdir /opt/static/futuschedule/css
+COPY schedulesite/futuschedule/static/futuschedule/css/style.css /opt/static/futuschedule/css/style.css
 COPY . /opt/app/
 
 EXPOSE 8000

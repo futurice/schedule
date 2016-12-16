@@ -40,6 +40,7 @@ INSTALLED_APPS = (
 )
 
 MIDDLEWARE_CLASSES = (
+    'middleware.SetUserMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -47,6 +48,7 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.auth.middleware.RemoteUserMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'middleware.CustomHeaderMiddleware',
 )
 
 AUTH_USER_MODEL = 'futuschedule.FutuUser'
@@ -103,7 +105,10 @@ CALENDAR_DOMAIN = os.getenv('CALENDAR_DOMAIN', None)
 TEST_CALENDAR_ID = os.getenv('TEST_CALENDAR_ID', None)
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv('DEBUG', True)
+DEBUG = os.getenv('DEBUG', 'false').lower() == 'true'
+
+# SECURITY WARNING: don't run with fake_login turned on in production!
+FAKE_LOGIN = os.getenv('FAKE_LOGIN', 'false').lower() == 'true'
 
 # Database
 # https://docs.djangoproject.com/en/1.6/ref/settings/#databases
