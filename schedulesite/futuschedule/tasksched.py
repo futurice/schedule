@@ -218,7 +218,9 @@ def processAddUsersRequest(modelId):
             users = list(usersToAdd)
             if(event.template.inviteSupervisors):
                 users += map(user.supervisor, users)
-            calendar.addUsersToEvent(schedule.template.calendar.email, eventData['id'], users, sendNotifications=False)
+            updated_event = calendar.addUsersToEvent(schedule.template.calendar.email, eventData['id'], users, event, sendNotifications=False)
+            event.json = json.dumps(updated_event)
+            event.save()
             for user in usersToAdd:
                 event.schedules.add(Schedule.objects.get(forUser=user, schedulingRequest=task.schedReq))
         
@@ -240,6 +242,12 @@ def processAddUsersRequest(modelId):
                     newEvent.attendees.add(user.supervisor)
                 newEvent.save()
                 enqueue(EVENT_TASK, newEvent.id)
+    
+    #Add new users to scheduling request json
+    schedReqJson = json.loads(task.schedReq.json)
+    schedReqJson['users'] += map(lambda user: user.id, usersToAdd)
+    task.schedReq.json = json.dumps(schedReqJson)
+    task.schedReq.save()
 
     enqueue(MARK_SCHED_REQ_SUCCESS, task.schedReq.id)
 
