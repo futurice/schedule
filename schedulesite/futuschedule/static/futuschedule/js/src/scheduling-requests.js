@@ -392,6 +392,13 @@ var SchedulingRequest = React.createClass({
                             Re-Schedule…
                         </button>
                     </div>;
+                case 'UPDATE_FAILED':
+                    return <div>
+                        <a href="" onClick={this.toggleException}
+                            title="Show error details">
+                            <span className='error'>{status}</span>
+                        </a>
+                    </div>;
                 default:
                     return <span className='info'>{status}</span>;
             }

@@ -200,6 +200,9 @@ def processAddUsersRequest(modelId):
     usersToAdd = list(get_user_model().objects.filter(adduserstask=task))
     #choose the first of the schedules in the schReq to be the base for new schedules
     schedule = Schedule.objects.filter(schedulingRequest=task.schedReq)[0]
+    if not schedule.template:
+        failUpdatingRequest(task.schedReq.id, "Schedule template has been removed. This scheduling request cannot be updated.")
+        return
 
     #remove users who already have schedules in the request
     for schedule in Schedule.objects.filter(schedulingRequest=task.schedReq):
@@ -212,6 +215,10 @@ def processAddUsersRequest(modelId):
 
     for event in Event.objects.filter(schedules=schedule):
         eventData = json.loads(event.json)
+
+        if not event.template:
+            failUpdatingRequest(task.schedReq.id, "Event template has been removed. This scheduling request cannot be updated.")
+            return
 
         #In the collective event case, all users are added to the existing event
         if event.template.isCollective:
@@ -250,6 +257,7 @@ def processAddUsersRequest(modelId):
     task.schedReq.save()
 
     enqueue(MARK_SCHED_REQ_SUCCESS, task.schedReq.id)
+
 
 def processMarkSchedReqSuccess(modelId):
     """
@@ -300,6 +308,14 @@ def failSchedulingRequest(modelId, errTxt=''):
         sr.save()
         enqueue(CLEANUP_SCHED_REQ, modelId)
 
+def failUpdatingRequest(modelId, errTxt=''):
+    sr = SchedulingRequest.objects.get(id=modelId)
+    # allow this function to be called multiple times
+    if sr.status != SchedulingRequest.UPDATE_FAILED:
+        sr.status = SchedulingRequest.UPDATE_FAILED
+        if errTxt:
+            sr.error = errTxt
+        sr.save()
 
 def processDeletionTask(modelId):
     """
