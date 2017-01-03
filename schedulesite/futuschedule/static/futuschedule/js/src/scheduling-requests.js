@@ -142,6 +142,7 @@ var SchedulingRequestsList = React.createClass({
                     <th>By</th>
                     <th>Created</th>
                     <th>Add Users</th>
+                    <th>Generate pdf</th>
                     <th>Status</th>
                     <th>Delete</th>
                 </tr>
@@ -314,6 +315,20 @@ var SchedulingRequest = React.createClass({
         })
     },
 
+    generatePdf: function(){
+        $.ajax({
+            url: '/futuschedule/generate-pdf/' + this.props.model.id +'/',
+            type: 'GET',
+            headers: {'X-CSRFToken': $.cookie('csrftoken')},
+            success: (function(data) {
+                return;
+           }).bind(this),
+           error: (function(xhr, txtStatus, saveErr) {
+                    this.setState({ajaxErr: getAjaxErr.apply(this, arguments)});
+           }).bind(this)
+        })
+    },
+
 
     render: function() {
         var userName = getUserName(this.props.model.requestedBy,
@@ -355,7 +370,14 @@ var SchedulingRequest = React.createClass({
                     />
                     <button type="button" onClick={this.sendUsers} disabled={this.state.selectedUsers.length == 0}>Add users</button>
             </div>
-
+        var  generatePdfBox = 
+            <div>
+                <button type="button" onClick={this.generatePdf}>generate</button>
+                <br/>
+                {
+                    (this.props.model.pdfUrl) ? <a href={this.props.model.pdfUrl}>download</a> : null
+                }
+            </div>
         var status = this.props.model.status,
             modelJson = JSON.parse(this.props.model.json),
             link = <span>
@@ -421,6 +443,7 @@ var SchedulingRequest = React.createClass({
             <td>{userName}</td>
             <td>{dateElem}</td>
             <td>{addUsersBox}</td>
+            <td>{generatePdfBox}</td>
             <td className="sched-req-status">{statusElem}</td>
             <td>{deleteBox}</td>
         </tr>;

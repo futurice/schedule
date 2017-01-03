@@ -1,0 +1,26 @@
+\documentclass{article}
+\usepackage{xcolor}
+\usepackage[fontsize=13pt]{scrextend}
+\usepackage{fontspec}
+\usepackage{setspace}
+\usepackage{color}
+
+\setmainfont[BoldFont=futuricebeta02bold]{futuricebeta02monospaced}
+
+%omit indentation
+\setlength{\parindent}{0cm}
+
+\definecolor{futugreen}{RGB}{50, 158, 65}
+
+%adjust margins and text width accordingly
+\addtolength{\oddsidemargin}{-.66in}
+\addtolength{\textwidth}{.66in}
+\addtolength{\topmargin}{1in}
+
+%hide page numbering
+\pagenumbering{gobble}
+
+\begin{document}
+\onehalfspacing
+\nopagecolor
+\raggedright

@@ -165,6 +165,8 @@ class SchedulingRequest(models.Model):
     requestedBy = models.ForeignKey(settings.AUTH_USER_MODEL, null=True,
             blank=True, on_delete=models.SET_NULL)
     requestedAt = models.DateTimeField(auto_now_add=True)
+    #when a pdf is generated from this schedule, the pdf location will be updated here
+    pdfUrl = models.TextField(blank=True)
 
     IN_PROGRESS = 'IN_PROGRESS'
     SUCCESS = 'SUCCESS'

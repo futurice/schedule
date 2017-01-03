@@ -14,7 +14,11 @@ RUN apt-get update && apt-get install -y \
     vim \
     git \
     supervisor \
-    nginx-full
+    nginx-full \
+    pdftk \
+    texlive \
+    texlive-xetex \
+    texlive-luatex
 
 RUN curl -sL https://deb.nodesource.com/setup_6.x | bash -
 RUN apt-get install -y nodejs
@@ -33,14 +37,17 @@ RUN groupadd -r schedule_group && useradd -r -g schedule_group schedule_user
 RUN ln -s /etc/nginx/uwsgi_params /etc/nginx/sites-enabled/
 RUN mkdir /opt/static/futuschedule/css
 COPY schedulesite/futuschedule/static/futuschedule/css/style.css /opt/static/futuschedule/css/style.css
-COPY . /opt/app/
 
-EXPOSE 8000
+COPY pdf-generator/fonts/* /usr/share/fonts/
+RUN mkdir /opt/download
 
 ENV DJANGO_SETTINGS_MODULE schedulesite.settings_docker
 ENV UWSGI_PARAMS ""
 
 COPY docker/nginx.conf /etc/nginx/nginx.conf
 COPY docker/supervisord.conf /etc/supervisor/supervisord.conf
+
+COPY . /opt/app/
+EXPOSE 8000
 
 CMD ["bash", "docker/start.sh"]

@@ -20,11 +20,12 @@ import signal
 import sys
 import time
 import traceback
+import os
 
 from futuschedule.models import (Task, Schedule, CalendarResource, EventTask,
         EventTemplate, SchedulingRequest, ScheduleTemplate, Event,
         DeletionTask, LastApiCall, AddUsersTask)
-from futuschedule import calendar, util
+from futuschedule import calendar, util, pdfgenerator
 import dateutil.parser
 
 logging.basicConfig()
@@ -340,6 +341,22 @@ def processDeletionTask(modelId):
     finally:
         deleteTask.delete()
 
+def processPdfRequest(modelId):
+    sr = SchedulingRequest.objects.get(id=modelId)
+    schedule = Schedule.objects.filter(schedulingRequest=sr)[0]
+    #TODO check that all templates exist before generating pdf?
+
+    directory = '/opt/app/pdf-generator/'
+    filename = 'intro_schedule'+str(sr.id)
+    pdfgenerator.generatePdf(schedule, directory, filename, "/opt/app/pdf-generator/intro_template.txt", "/opt/app/pdf-generator/intro_background.pdf")
+
+    #copy final pdf to the downloads folder
+    os.system("cp "+directory+filename+".pdf /opt/download/")
+    #remove all files generated during the process
+    os.system("rm "+directory+filename+"*")
+
+    sr.pdfUrl = "/download/"+filename+".pdf"
+    sr.save()
 
 def processDeleteSchedulingRequest(modelId):
     sr = SchedulingRequest.objects.get(id=modelId)
@@ -377,6 +394,7 @@ CLEANUP_SCHED_REQ = 'cleanup-scheduling-request'
 DELETION_TASK = 'deletion-task'
 DELETE_SCHED_REQ = 'delete-scheduling-request'
 ADD_USERS_TASK = 'add-users-task'
+GENERATE_PDF = 'generate-pdf'
 
 implForName = {
         SCHED_REQ: processSchedulingRequest,
@@ -385,5 +403,6 @@ implForName = {
         CLEANUP_SCHED_REQ: processCleanupSchedulingRequest,
         DELETION_TASK: processDeletionTask,
         DELETE_SCHED_REQ: processDeleteSchedulingRequest,
-        ADD_USERS_TASK: processAddUsersRequest
+        ADD_USERS_TASK: processAddUsersRequest,
+        GENERATE_PDF: processPdfRequest
 }

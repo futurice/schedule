@@ -5,7 +5,6 @@ from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
 import json
 from django.contrib.auth import get_user_model
-
 from futuschedule import calendar, models, tasksched
 
 
@@ -130,8 +129,6 @@ def addUsersToSchedule(request, sr_id):
     task.save()
     tasksched.enqueue(tasksched.ADD_USERS_TASK, task.id)
     return HttpResponse('', status=200)
-    
-    #return HttpResponse('', status=400)
 
 
 def schedules(request):
@@ -140,6 +137,10 @@ def schedules(request):
 def scheduleDetail(request, s_id):
     context = {'s_id': s_id}
     return render(request, 'futuschedule/schedule-detail.html', context)
+
+def generatePdf(request, sr_id):
+    tasksched.enqueue(tasksched.GENERATE_PDF, sr_id)
+    return HttpResponse('', status=200)
 
 def test(request):
     return render(request, 'futuschedule/test')
