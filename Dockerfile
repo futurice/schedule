@@ -18,7 +18,8 @@ RUN apt-get update && apt-get install -y \
     pdftk \
     texlive \
     texlive-xetex \
-    texlive-luatex
+    texlive-luatex \
+    redis-server
 
 RUN curl -sL https://deb.nodesource.com/setup_6.x | bash -
 RUN apt-get install -y nodejs
@@ -43,6 +44,9 @@ RUN mkdir /opt/download
 
 ENV DJANGO_SETTINGS_MODULE schedulesite.settings_docker
 ENV UWSGI_PARAMS ""
+
+ENV CELERY_LOG_LEVEL DEBUG
+ENV PYTHONPATH /opt/app/:/opt/app/schedulesite/
 
 COPY docker/nginx.conf /etc/nginx/nginx.conf
 COPY docker/supervisord.conf /etc/supervisor/supervisord.conf

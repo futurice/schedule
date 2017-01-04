@@ -9,6 +9,7 @@ https://docs.djangoproject.com/en/1.6/howto/deployment/wsgi/
 
 import sys
 sys.path.append("/opt/app/schedulesite")
+sys.path.append("/opt/app/schedulesite/futuschedule")
 
 from django.core.wsgi import get_wsgi_application
 application = get_wsgi_application()
