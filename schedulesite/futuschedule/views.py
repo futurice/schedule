@@ -6,6 +6,7 @@ from django.conf import settings
 import json
 from django.contrib.auth import get_user_model
 from futuschedule import calendar, models, tasksched
+from futuschedule.tasksched_tasks import processSchedulingRequest, processDeletionTask, processAddUsersRequest, processGeneratePdf
 
 
 def scheduleTemplates(request):
@@ -91,7 +92,7 @@ def createSchedules(request):
                 json=json.dumps(json.load(request)),
                 requestedBy=request.user,
                 status=models.SchedulingRequest.IN_PROGRESS)
-        tasksched.enqueue(tasksched.SCHED_REQ, schedReq.id)
+        processSchedulingRequest.delay(schedReq.id)
         return HttpResponse('', status=202)
 
     return HttpResponse(json.dumps({'error': 'Method ' + request.method +
@@ -106,7 +107,7 @@ def schedulingRequestDetail(request, sr_id):
         sr = models.SchedulingRequest.objects.get(id=sr_id)
         dr = models.DeletionTask.objects.create(schedReq=sr,
                 requestedByUser=request.user)
-        tasksched.enqueue(tasksched.DELETION_TASK, dr.id)
+        processDeletionTask.delay(dr.id)
         return HttpResponse('')
     elif request.method == 'GET':
         context = {'sr_id': sr_id}
@@ -127,7 +128,7 @@ def addUsersToSchedule(request, sr_id):
     sr.status = models.SchedulingRequest.IN_PROGRESS
     sr.save()
     task.save()
-    tasksched.enqueue(tasksched.ADD_USERS_TASK, task.id)
+    processAddUsersRequest.delay(task.id)
     return HttpResponse('', status=200)
 
 
@@ -139,7 +140,7 @@ def scheduleDetail(request, s_id):
     return render(request, 'futuschedule/schedule-detail.html', context)
 
 def generatePdf(request, sr_id):
-    tasksched.enqueue(tasksched.GENERATE_PDF, sr_id)
+    processGeneratePdf.delay(sr_id)
     return HttpResponse('', status=200)
 
 def test(request):

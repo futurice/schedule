@@ -20,6 +20,8 @@ CELERY_TASK_SERIALIZER = 'myjson'
 CELERY_RESULT_SERIALIZER = CELERY_TASK_SERIALIZER
 CELERY_ACCEPT_CONTENT = [CELERY_TASK_SERIALIZER, ]
 
+CELERY_IMPORTS=('futuschedule.tasksched_tasks')
+
 CELERYBEAT_SCHEDULE = {
     'refresh-users': {
         'task': 'futuschedule.tasks.refresh_users',
