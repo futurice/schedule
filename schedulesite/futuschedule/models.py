@@ -222,18 +222,6 @@ class Event(models.Model):
     def __unicode__(self):
         return 'Event (on ' + str(self.schedules.count()) + ' schedule(s))'
 
-
-class Task(models.Model):
-    """
-    Task model for our Task Queue, used by tasksched.py but placed here so
-    Django finds it.
-    Was the fastest thing to use, but can easily replace with an existing
-    task queue system.
-    """
-    taskType = models.CharField(max_length=100)
-    modelId = models.IntegerField()
-
-
 class EventTask(models.Model):
     """
     Describes an event to create in both Google Calendar and our model.
@@ -247,10 +235,6 @@ class EventTask(models.Model):
     schedules = models.ManyToManyField(Schedule)
     template = models.ForeignKey(EventTemplate, null=True, blank=True,
             on_delete=models.SET_NULL)
-
-class AddUsersTask(models.Model):
-    schedReq = models.ForeignKey(SchedulingRequest)
-    usersToAdd = models.ManyToManyField(settings.AUTH_USER_MODEL, blank=True)
 
 
 class DeletionTask(models.Model):

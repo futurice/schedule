@@ -52,53 +52,6 @@ def calendar_resource():
     token = OAuth2TokenFromCredentials(ensureOAuthCredentials())
     return token.authorize(client)
 
-def updateUsers(jsonDumpFile):
-    """
-    Create or Update Users from a .json file dumped from FUM (see README).
-
-    The users we create will have different IDs than the json dump.
-    """
-    UM = get_user_model()
-    with open(jsonDumpFile, 'r') as f:
-        dump = list(filter(lambda u:
-            u['username'] and u['email'] and
-            u['first_name'] and u['last_name'] and
-            u['google_status'] == 'activeperson' and u['status'] == 'active',
-            json.load(f)))
-    # de-duplicate first (the dump has a duplicate)
-    userById = {u['id']: u for u in dump}
-
-    # Delete existing DB users not present in this dump
-    keepUsernames = {u['username'] for u in dump}
-    for oldUser in UM.objects.all():
-        if oldUser.username not in keepUsernames:
-            oldUser.delete()
-
-    for u in userById.values():
-        try:
-            newUser = UM.objects.get(username=u['username'])
-            newUser.email = u['email']
-            newUser.first_name = u['first_name']
-            newUser.last_name = u['last_name']
-        except UM.DoesNotExist as e:
-            newUser = UM.objects.create_user(u['username'], u['email'],
-                    u['first_name'], u['last_name'])
-
-        # TODO: make HC and IT admins
-        if False:
-            newUser.is_admin = True
-        newUser.save()
-
-    for u in userById.values():
-        if u['supervisor']:
-            a = UM.objects.get(username=u['username'])
-            try:
-                a.supervisor = UM.objects.get(
-                        username=userById[u['supervisor']]['username'])
-            except Exception as e:
-                print(e)
-            a.save()
-
 def updateMeetingRooms():
     # TODO: pagination
     # In May 2014 only getting a single page of results and can't figure out

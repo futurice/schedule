@@ -7,10 +7,18 @@ from django.db import models, migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('futuschedule', '0003_adduserstask'),
+        ('futuschedule', '0002_auto_20150407_1000'),
     ]
 
     operations = [
+        migrations.DeleteModel(
+            name='Task',
+        ),
+        migrations.AddField(
+            model_name='schedulingrequest',
+            name='pdfUrl',
+            field=models.TextField(blank=True),
+        ),
         migrations.AlterField(
             model_name='schedulingrequest',
             name='status',

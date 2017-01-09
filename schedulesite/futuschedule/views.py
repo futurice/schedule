@@ -5,8 +5,8 @@ from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
 import json
 from django.contrib.auth import get_user_model
-from futuschedule import calendar, models, tasksched
-from futuschedule.tasksched_tasks import processSchedulingRequest, processDeletionTask, processAddUsersRequest, processGeneratePdf
+from futuschedule import calendar, models
+from futuschedule.tasks import processSchedulingRequest, processDeletionTask, processAddUsersRequest, processGeneratePdf
 
 
 def scheduleTemplates(request):
@@ -121,14 +121,10 @@ def addUsersToSchedule(request, sr_id):
     
     data = json.loads(request.body)
     sr = models.SchedulingRequest.objects.get(id=sr_id)
-    task = models.AddUsersTask(schedReq=sr)
-    task.save()
-    for user in data['users']:
-        task.usersToAdd.add(get_user_model().objects.get(id=user['id']))
+    usersToAdd = map(lambda user: user['id'], data['users'])
     sr.status = models.SchedulingRequest.IN_PROGRESS
     sr.save()
-    task.save()
-    processAddUsersRequest.delay(task.id)
+    processAddUsersRequest.delay(sr_id, usersToAdd)
     return HttpResponse('', status=200)
 
 
