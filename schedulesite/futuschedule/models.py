@@ -171,16 +171,16 @@ class SchedulingRequest(models.Model):
     IN_PROGRESS = 'IN_PROGRESS'
     SUCCESS = 'SUCCESS'
     ERROR = 'ERROR'
-    UPDATE_FAILED = 'UPDATE_FAILED'
+    ACTION_FAILED = 'ACTION_FAILED'
     status = models.CharField(
-            max_length=max(map(len, (IN_PROGRESS, SUCCESS, ERROR, UPDATE_FAILED))),
+            max_length=max(map(len, (IN_PROGRESS, SUCCESS, ERROR, ACTION_FAILED))),
             choices = (
                 (IN_PROGRESS, 'In progress'),
                 (SUCCESS, 'Successfully completed'),
                 (ERROR, 'Error'),
-                (UPDATE_FAILED, 'Update failed')
+                (ACTION_FAILED, 'Action failed')
             ), null=False, blank=False, default=IN_PROGRESS)
-    # error description if status is ERROR or UPDATE_FAILED
+    # error description if status is ERROR or ACTION_FAILED
     error = models.TextField(blank=True)
 
 

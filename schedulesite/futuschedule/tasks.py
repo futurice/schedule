@@ -161,8 +161,13 @@ def processAddUsersRequest(sr_id, userIdsToAdd):
     #choose the first of the schedules in the schReq to be the base for new schedules
     schedule = Schedule.objects.filter(schedulingRequest=schedReq)[0]
     if not schedule.template:
-        failUpdatingRequest(schedReq.id, "Schedule template has been removed. This scheduling request cannot be updated.")
+        failAction(schedReq.id, "Schedule template has been removed. This scheduling request cannot be updated.")
         return
+    #all event templates have to exist
+    for event in Event.objects.filter(schedules=schedule):
+        if not event.template:
+            failAction(sr.id, "This scheduling request cannot be updated because some of the event templates are missing")
+            return
 
     #remove users who already have schedules in the request
     for schedule in Schedule.objects.filter(schedulingRequest=schedReq):
@@ -176,15 +181,17 @@ def processAddUsersRequest(sr_id, userIdsToAdd):
     for event in Event.objects.filter(schedules=schedule):
         eventData = json.loads(event.json)
 
-        if not event.template:
-            failUpdatingRequest(schedReq.id, "Event template has been removed. This scheduling request cannot be updated.")
-            return
-
         #In the collective event case, all users are added to the existing event
         if event.template.isCollective:
             users = list(usersToAdd)
-            if(event.template.inviteSupervisors):
-                users += map(user.supervisor, users)
+            
+            if event.template.inviteSupervisors:
+                supervisors = []
+                for user in users:
+                    if user.supervisor is not None:
+                        supervisors += [user.supervisor]
+                users += supervisors
+
             updated_event = calendar.addUsersToEvent(schedule.template.calendar.email, eventData['id'], users, event, sendNotifications=False)
             event.json = json.dumps(updated_event)
             event.save()
@@ -270,11 +277,12 @@ def failSchedulingRequest(modelId, errTxt=''):
         sr.save()
         cleanupSchedulingRequest.delay(modelId)
 
-def failUpdatingRequest(modelId, errTxt=''):
+# function that is called when any other action than scheduling requets fails
+def failAction(modelId, errTxt=''):
     sr = SchedulingRequest.objects.get(id=modelId)
     # allow this function to be called multiple times
-    if sr.status != SchedulingRequest.UPDATE_FAILED:
-        sr.status = SchedulingRequest.UPDATE_FAILED
+    if sr.status != SchedulingRequest.ACTION_FAILED:
+        sr.status = SchedulingRequest.ACTION_FAILED
         if errTxt:
             sr.error = errTxt
         sr.save()
@@ -308,6 +316,12 @@ def processGeneratePdf(modelId):
     sr = SchedulingRequest.objects.get(id=modelId)
     schedule = Schedule.objects.filter(schedulingRequest=sr)[0]
     #TODO check that all templates exist before generating pdf?
+
+    #check that all event templates exist
+    for event in Event.objects.filter(schedules=schedule):
+        if not event.template:
+            failAction(sr.id, "Pdf cannot be generated for this scheduling request because some of the event templates are missing")
+            return
 
     directory = '/opt/app/pdf-generator/'
     filename = 'intro_schedule'+str(sr.id)

@@ -385,7 +385,7 @@ var SchedulingRequest = React.createClass({
                     return getUserName(uid, this.props.usersById);
                 }).bind(this)))}
             </span>;
-        if (status == 'SUCCESS') {
+        if (status == 'SUCCESS' || status == 'ACTION_FAILED') {
             link = <a href={'../scheduling-request/' + this.props.model.id}>
                     {link}
                 </a>;
@@ -414,7 +414,7 @@ var SchedulingRequest = React.createClass({
                             Re-Schedule…
                         </button>
                     </div>;
-                case 'UPDATE_FAILED':
+                case 'ACTION_FAILED':
                     return <div>
                         <a href="" onClick={this.toggleException}
                             title="Show error details">

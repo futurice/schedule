@@ -42,7 +42,7 @@ COPY schedulesite/futuschedule/static/futuschedule/css/style.css /opt/static/fut
 COPY pdf-generator/fonts/* /usr/share/fonts/
 RUN mkdir /opt/download
 
-ENV DJANGO_SETTINGS_MODULE schedulesite.settings_docker
+ENV DJANGO_SETTINGS_MODULE schedulesite.settings
 ENV UWSGI_PARAMS ""
 
 ENV CELERY_LOG_LEVEL DEBUG
