@@ -35,6 +35,7 @@ docker run --rm -itp 8000:8000 \
  -e DEBUG=true \
  -e FAKE_LOGIN=true \
  -e REMOTE_USER=me \
+ -e SECRET_KEY=secret \
  --link schedule-postgres:schedule-postgres \
  --name schedule schedule
 ```

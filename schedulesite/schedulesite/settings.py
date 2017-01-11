@@ -98,7 +98,7 @@ REST_FRAMEWORK = {
 FUM_API_URL = os.getenv('FUM_API_URL', None)
 FUM_API_TOKEN = os.getenv('FUM_API_TOKEN', None)
 
-SECRET_KEY = 'some random string'
+SECRET_KEY = os.getenv('SECRET_KEY', 'secret')
 
 CALENDAR_DOMAIN = os.getenv('CALENDAR_DOMAIN', None)
 # Used by unit tests which also create 'a_credentials_file' used by the app
