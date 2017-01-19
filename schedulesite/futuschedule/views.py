@@ -1,7 +1,7 @@
 import datetime
 from django.http import HttpResponse
 from django.shortcuts import render
-from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.csrf import ensure_csrf_cookie
 from django.conf import settings
 import json
 from django.contrib.auth import get_user_model
@@ -12,6 +12,7 @@ from futuschedule.tasks import processSchedulingRequest, processDeletionTask, pr
 def scheduleTemplates(request):
     return render(request, 'futuschedule/schedule-templates.html')
 
+@ensure_csrf_cookie
 def index(request):
     return render(request, 'futuschedule/base.html')
 
@@ -126,7 +127,7 @@ def addUsersToSchedule(request, sr_id):
     sr.save()
     processAddUsersRequest.delay(sr_id, usersToAdd)
     return HttpResponse('', status=200)
-
+    
 
 def schedules(request):
     return render(request, 'futuschedule/schedules.html')
