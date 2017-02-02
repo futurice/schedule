@@ -39,22 +39,16 @@ def createEvent(calendarId, sendNotifications, summary, description, location,
     return calSvc.events().insert(calendarId=calendarId,
             sendNotifications=sendNotifications, body=event).execute()
 
-def addUsersToEvent(calendarId, eventId, users, event, sendNotifications=False):
+def addUsersToEvent(calendarId, eventId, users, newSummary, sendNotifications=False):
     calSvc = util.buildCalendarSvc()
     eventJson = calSvc.events().get(calendarId=calendarId, eventId=eventId).execute()
     userDicts = map(lambda x: {'email': x.email}, users)
     eventJson['attendees'] += userDicts
-
-    attendees = map(lambda user: get_user_model().objects.get(email=user['email']), eventJson['attendees'])
-
-    #Update the event summary to include new users
-    user_names = map(lambda user: user.first_name + " " + user.last_name, attendees)
-    if len(user_names) > 1:
-        eventJson['summary'] = event.template.summary + " - "
-        eventJson['summary'] += ', '.join(user_names[:(len(user_names)-1)])
-        eventJson['summary'] += ' and ' + user_names[len(user_names)-1]
-    else:
-        eventJson['summary'] = event.template.summary + " - " + user_names[0]
+    eventJson['summary'] = newSummary
+    
+    #Create list of all human attendees as users (filter calendarResources like rooms out)
+    attendeesList = filter(lambda a: not(a.has_key('resource') and a['resource']), eventJson['attendees'])
+    attendees = map(lambda user: get_user_model().objects.get(email=user['email']), attendeesList)
 
     return calSvc.events().update(calendarId=calendarId, eventId=eventId, body=eventJson, sendNotifications=sendNotifications).execute()
 

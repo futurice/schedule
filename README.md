@@ -58,6 +58,8 @@ docker exec schedule ./schedulesite/manage.py test futuschedule --settings=sched
 ## Authorizing the app
 The app needs to be authorized with google before events can be created, edited or removed. To authorize the app you need to have `client-secrets.json` file in the directory (can be found or created from google project page). To start the authorization, do some action that requires authorization, for example run tests. The authorization link will be printed to the terminal. Go to that link in browser and click accept. NOTE you have to be signed in in google with the account whose calendar you want to create the events in. After clicking 'accept', copy the code from the url and paste it to the terminal where you started the authorization.
 
+`a_credentials_file`should be located both in project root `/opt/app` and in `/opt/app/schedulesite`.
+
 If this doesn't work, check that you have removed all previous `a_credentials_file`s in the project directory. 
 
 TODO: nice way to authorize the app, as automatic as possible

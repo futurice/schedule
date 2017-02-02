@@ -192,7 +192,12 @@ def processAddUsersRequest(sr_id, userIdsToAdd):
                         supervisors += [user.supervisor]
                 users += supervisors
 
-            updated_event = calendar.addUsersToEvent(schedule.template.calendar.email, eventData['id'], users, event, sendNotifications=False)
+            #Create new summary for the event:
+            schedules = Schedule.objects.filter(schedulingRequest=schedReq)
+            users = map(lambda s: s.forUser, schedules)
+            summary = createSummary(event.template.summary, users)
+        
+            updated_event = calendar.addUsersToEvent(schedule.template.calendar.email, eventData['id'], users, summary, sendNotifications=False)
             event.json = json.dumps(updated_event)
             event.save()
             for user in usersToAdd:
@@ -225,6 +230,12 @@ def processAddUsersRequest(sr_id, userIdsToAdd):
 
     markSchedReqSuccess.delay(schedReq.id)
 
+def createSummary(title, users):
+    userNames = map(lambda u: u.first_name + " "+ u.last_name, users)
+    if len(userNames) > 1:
+        return title + " - " + ', '.join(userNames[:(len(userNames)-1)]) + " and " + userNames[len(userNames)-1]
+    else:
+        return title + " - " + userNames[0]
 
 @app.task
 def markSchedReqSuccess(modelId):
