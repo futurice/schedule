@@ -509,7 +509,7 @@ var NewSchedule;
                 return result;
             }
             $.ajax({
-                url: '/futuschedule/create-schedules/',
+                url: '/create-schedules/',
                 type: 'POST',
                 contentType: 'application/json; charset=UTF-8',
                 headers: {'X-CSRFToken': $.cookie('csrftoken')},

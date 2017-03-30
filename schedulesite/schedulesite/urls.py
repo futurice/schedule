@@ -7,5 +7,5 @@ admin.autodiscover()
 
 urlpatterns = [
     url(r'^admin/', include(admin.site.urls)),
-    url(r'^futuschedule/', include(futuschedule.urls)),
+    url(r'^', include(futuschedule.urls)),
 ]

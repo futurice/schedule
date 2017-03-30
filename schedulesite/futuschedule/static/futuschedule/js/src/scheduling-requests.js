@@ -205,7 +205,7 @@ var SchedulingRequest = React.createClass({
                 ajaxInFlight: 'Deleting…'
             });
             $.ajax({
-                url: '/futuschedule/scheduling-request/' +
+                url: '/scheduling-request/' +
                     this.props.model.id + '/',
                 type: 'DELETE',
                 headers: {'X-CSRFToken': $.cookie('csrftoken')},
@@ -254,7 +254,7 @@ var SchedulingRequest = React.createClass({
         if (confirm(confirmMsg)) {
             this.props.onRescheduleSubmit();
             $.ajax({
-                url: '/futuschedule/create-schedules/',
+                url: '/create-schedules/',
                 type: 'POST',
                 contentType: 'application/json; charset=UTF-8',
                 headers: {'X-CSRFToken': $.cookie('csrftoken')},
@@ -298,7 +298,7 @@ var SchedulingRequest = React.createClass({
 
     sendUsers: function(){
         $.ajax({
-            url: '/futuschedule/add-users-to-schedule/' + this.props.model.id +'/',
+            url: '/add-users-to-schedule/' + this.props.model.id +'/',
             type: 'POST',
             contentType: 'application/json; charset=UTF-8',
             headers: {'X-CSRFToken': $.cookie('csrftoken')},
@@ -317,7 +317,7 @@ var SchedulingRequest = React.createClass({
 
     generatePdf: function(){
         $.ajax({
-            url: '/futuschedule/generate-pdf/' + this.props.model.id +'/',
+            url: '/generate-pdf/' + this.props.model.id +'/',
             type: 'GET',
             headers: {'X-CSRFToken': $.cookie('csrftoken')},
             success: (function(data) {

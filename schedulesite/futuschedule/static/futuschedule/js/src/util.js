@@ -1,4 +1,4 @@
-var apiRoot = '/futuschedule/api/';
+var apiRoot = '/api/';
 
 function noop() {
 }
