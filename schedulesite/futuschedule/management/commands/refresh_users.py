@@ -43,6 +43,7 @@ class Command(BaseCommand):
                 newUser.email = u['email']
                 newUser.first_name = u['first_name']
                 newUser.last_name = u['last_name']
+                newUser.save()
             except UM.DoesNotExist as e:
                 newUser = UM.objects.create_user(u['username'], u['email'],
                     u['first_name'], u['last_name'])
