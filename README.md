@@ -7,7 +7,64 @@ See the `DEPLOY` file for a suggested way of doing this on a remote server.
 
 For licensing (BSD 3-clause), see `COPYING`.
 
-## Setup
+## Running locally on Docker
+
+Install [Docker](https://www.docker.com/)
+```
+docker build --rm -t schedule .
+```
+
+```
+docker run -d --restart always \
+ -e POSTGRES_PASSWORD=secret \
+ --name schedule-postgres postgres
+```
+```
+docker exec -it schedule-postgres sh -c "createdb -Upostgres schedule"
+```
+```
+docker run --rm -itp 8000:8000 \
+ -e DB_HOST=schedule-postgres \
+ -e DB_USER=postgres \
+ -e DB_NAME=schedule \
+ -e DB_PASSWORD=secret \
+ -e FUM_API_URL="" \
+ -e FUM_API_TOKEN="" \
+ -e TEST_CALENDAR_ID="" \
+ -e CALENDAR_DOMAIN="" \
+ -e DEBUG=true \
+ -e FAKE_LOGIN=true \
+ -e REMOTE_USER=me \
+ -e SECRET_KEY=secret \
+ --link schedule-postgres:schedule-postgres \
+ --name schedule schedule
+```
+[localhost:8000](localhost:8000)
+### Fetching users from FUM
+```
+docker exec schedule ./schedulesite/manage.py refresh_users
+```
+### Updating meeting rooms to database 
+```
+docker exec schedule ./schedulesite/manage.py update_meeting_rooms
+```
+
+### Run tests
+Tests in test_live.py are failing, no worries if that happens. Tests use google calendar, so the schedule should have been authorized to use the test calendar before running tests. Tests can be used to authorize the app, just run tests and follow the instructions.
+```
+docker exec schedule ./schedulesite/manage.py test futuschedule --settings=schedulesite.settings_test
+```
+
+## Authorizing the app
+The app needs to be authorized with google before events can be created, edited or removed. To authorize the app you need to have `client-secrets.json` file in the directory (can be found or created from google project page). To start the authorization, do some action that requires authorization, for example run tests. The authorization link will be printed to the terminal. Go to that link in browser and click accept. NOTE you have to be signed in in google with the account whose calendar you want to create the events in. After clicking 'accept', copy the code from the url and paste it to the terminal where you started the authorization.
+
+`a_credentials_file`should be located both in project root `/opt/app` and in `/opt/app/schedulesite`.
+
+If this doesn't work, check that you have removed all previous `a_credentials_file`s in the project directory. 
+
+TODO: nice way to authorize the app, as automatic as possible
+
+## Setup (old)
 ```bash
 # Create settings.py for Django:
 cd schedulesite/schedulesite
@@ -38,36 +95,15 @@ an access token in the URL fragment at the end.
 Credentials are stored in `a_credentials_file` in your current dir.
 Trigger this e.g. by running the unit tests (see below).
 
-### Populate your DB with FUM users
 
-Get a JSON dump of FUM users (you need an API token for FUM)
-```bash
-go run dump-fum-users.go -o users.json «AccessToken»
-```
-
-Create Django users from this dump:
-```python
-./schedulesite/manage.py shell
-import futuschedule.util
-futuschedule.util.updateUsers('users.json')
-```
-
-### Populate your DB with Meeting Rooms
-```python
-./schedulesite/manage.py shell
-import futuschedule.util
-futuschedule.util.updateMeetingRooms()
-```
-
-
-## Test
+## Test (old)
 ```bash
 PATH=./node_modules/.bin:$PATH jsx --no-cache-dir schedulesite/futuschedule/static/futuschedule/js/src schedulesite/futuschedule/static/futuschedule/js/build
 ./schedulesite/manage.py test futuschedule
 ```
 
 
-## Running
+## Running (old)
 
 ```bash
 ./schedulesite/manage.py migrate

@@ -1,4 +1,4 @@
-var apiRoot = '/futuschedule/api/';
+var apiRoot = '/api/';
 
 function noop() {
 }
@@ -184,7 +184,11 @@ function getAjaxErr(xhr, txtStatus, errThrown) {
             // JSON response is an explanation of the problem.
             // Anything else is probably a huge html page
             // describing server misconfiguration.
-            errTxt += ': ' + JSON.stringify(JSON.parse(xhr.responseText));
+            if(JSON.parse(xhr.responseText)['error']){
+                errTxt += ': ' + JSON.parse(xhr.responseText)['error'];
+            } else {
+                errTxt += ': ' + JSON.stringify(JSON.parse(xhr.responseText));
+            }
         } catch (exc) {
             // json parsing error
         }
@@ -293,7 +297,7 @@ var MultiSelect = React.createClass({
         return this.props.sortedIds.filter((function(id) {
             var itemTxt = this.props.itemTextById[id].toLowerCase();
             return itemTxt.indexOf(searchText) != -1;
-        }).bind(this));
+        }).bind(this)).slice(0,10);
     },
     handleSearchTextChange: function(ev) {
         var txt = getTargetValue(ev),
@@ -380,7 +384,7 @@ var MultiSelect = React.createClass({
     },
     handleSuggestionClick: function(id) {
         this.props.onAdd(id);
-        React.findDOMNode(this.refs.searchbox).focus();
+        ReactDOM.findDOMNode(this.refs.searchbox).focus();
     },
     handleSuggestionMouseEnter: function(idx) {
         this.setState({

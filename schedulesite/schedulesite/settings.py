@@ -10,6 +10,7 @@ https://docs.djangoproject.com/en/1.6/ref/settings/
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
+
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
 
@@ -22,7 +23,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
 TEMPLATE_DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -40,13 +41,14 @@ INSTALLED_APPS = (
 )
 
 MIDDLEWARE_CLASSES = (
+    'middleware.SetUserMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.auth.middleware.RemoteUserMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'middleware.CustomHeaderMiddleware',
 )
 
 AUTH_USER_MODEL = 'futuschedule.FutuUser'
@@ -91,4 +93,75 @@ REST_FRAMEWORK = {
         'rest_framework.filters.SearchFilter',
         'rest_framework.filters.OrderingFilter',
     ),
+}
+
+FUM_API_URL = os.getenv('FUM_API_URL', None)
+FUM_API_TOKEN = os.getenv('FUM_API_TOKEN', None)
+
+SECRET_KEY = os.getenv('SECRET_KEY', 'secret')
+
+CALENDAR_DOMAIN = os.getenv('CALENDAR_DOMAIN', None)
+# Used by unit tests which also create 'a_credentials_file' used by the app
+TEST_CALENDAR_ID = os.getenv('TEST_CALENDAR_ID', None)
+
+# SECURITY WARNING: don't run with debug turned on in production!
+DEBUG = os.getenv('DEBUG', 'false').lower() == 'true'
+
+# SECURITY WARNING: don't run with fake_login turned on in production!
+FAKE_LOGIN = os.getenv('FAKE_LOGIN', 'false').lower() == 'true'
+
+# Database
+# https://docs.djangoproject.com/en/1.6/ref/settings/#databases
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': os.getenv('DB_NAME', None),
+        'HOST': os.getenv('DB_HOST', None),
+        'USER': os.getenv('DB_USER', None),
+        'PASSWORD': os.getenv('DB_PASSWORD', None),
+        'PORT': os.getenv('DB_PORT', '5432'),
+    }
+}
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'filters': {
+        'require_debug_false': {
+            '()': 'django.utils.log.RequireDebugFalse'
+        }
+    },
+    'formatters': {
+        'verbose': {
+            'format': '%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s'
+        },
+        'simple': {
+            'format': '%(levelname)s %(message)s'
+        },
+    },
+    'handlers': {
+        'mail_admins': {
+            'level': 'ERROR',
+            'filters': ['require_debug_false'],
+            'class': 'django.utils.log.AdminEmailHandler'
+        },
+        'console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose'
+        }
+    },
+    'loggers': {
+        'django.request': {
+            'handlers': ['mail_admins'],
+            'level': 'ERROR',
+            'propagate': True,
+        },
+        'project':{
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False
+        }
+    }
 }

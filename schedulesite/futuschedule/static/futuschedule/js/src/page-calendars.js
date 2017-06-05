@@ -1,2 +1,2 @@
-React.render(<CalendarList />,
+ReactDOM.render(<CalendarList />,
   document.getElementById('calendars-main-content'));

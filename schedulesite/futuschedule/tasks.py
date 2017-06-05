@@ -20,69 +20,28 @@ import signal
 import sys
 import time
 import traceback
+import os
 
-from futuschedule.models import (Task, Schedule, CalendarResource, EventTask,
+from futuschedule.models import (Schedule, CalendarResource, EventTask,
         EventTemplate, SchedulingRequest, ScheduleTemplate, Event,
         DeletionTask, LastApiCall)
-from futuschedule import calendar
+from futuschedule import calendar, util, pdfgenerator
+import dateutil.parser
+from futuschedule.celery import app
+from django.core import management
 
 logging.basicConfig()
 
+@app.task
+def update_meeting_rooms():
+    management.call_command('update_meeting_rooms')
 
-def enqueue(taskType, modelId):
-    """
-    Enqueue a task with the given type and modelId parameter.
-
-    The modelId is passed to the task implementation and should be the ID of a
-    model object which tells the task what it must do (i.e. it holds the task's
-    parameters).
-    """
-    # right now delegating to our own implementation because it was the fastest
-    # thing to get running. Can easily replace with another task system.
-    Task.objects.create(taskType=taskType, modelId=modelId)
+@app.task
+def refresh_users():
+    management.call_command('refresh_users')
 
 
-def process(taskType, modelId):
-    if taskType not in implForName:
-        logging.error('Invalid task type ' + str(taskType))
-        return
-    handler = implForName[taskType]
-    handler(modelId)
-
-
-_exitLoop = False
-def loop():
-    """
-    Loop forever looking for tasks and processing them in order.
-    """
-    global _exitLoop
-    _exitLoop = False
-
-    def sigtermHandler(signum, frame):
-        global _exitLoop
-        logging.info('Received signal, ' +
-                'will end processing after current task completes')
-        _exitLoop = True
-    signal.signal(signal.SIGTERM, sigtermHandler)
-    signal.signal(signal.SIGINT, sigtermHandler)
-
-    while True:
-        try:
-            if _exitLoop:
-                logging.info('Task processing loop exiting')
-                return
-            if not Task.objects.count():
-                time.sleep(3)
-                continue
-            minId = Task.objects.aggregate(models.Min('id'))['id__min']
-            t = Task.objects.get(id=minId)
-            t.delete()
-            process(t.taskType, t.modelId)
-        except:
-            # recover from an unexpected exception thrown by the task processor
-            logging.error(traceback.format_exc())
-
-
+@app.task
 def processSchedulingRequest(modelId):
     def makeSchedules():
         schedules = []
@@ -113,15 +72,8 @@ def processSchedulingRequest(modelId):
 
             rooms = list(CalendarResource.objects.filter(
                     id__in=ev['data']['locations']))
-            d = datetime.datetime.strptime(ev['data']['date'],
-                    '%Y-%m-%d').date()
-            # [:5] drops seconds from 'HH:MM:SS' if present
-            sTime = datetime.datetime.strptime(ev['data']['startTime'][:5],
-                    '%H:%M').time()
-            eTime = datetime.datetime.strptime(ev['data']['endTime'][:5],
-                    '%H:%M').time()
-            startDt = datetime.datetime.combine(d, sTime).replace(tzinfo=utc)
-            endDt = datetime.datetime.combine(d, eTime).replace(tzinfo=utc)
+            startDt = util.parseDate(ev['data']['date'], ev['data']['startTime'])
+            endDt = util.parseDate(ev['data']['date'], ev['data']['endTime'])
 
             evTempl = None
             try:
@@ -137,7 +89,8 @@ def processSchedulingRequest(modelId):
             evTask.locations.add(*rooms)
             evTask.attendees.add(*invitees)
             evTask.schedules.add(*evSchedules)
-            enqueue(EVENT_TASK, evTask.id)
+
+            processEventTask.delay(evTask.id)
 
     try:
         UM = get_user_model()
@@ -147,12 +100,13 @@ def processSchedulingRequest(modelId):
             id=body['scheduleTemplate'])
         schedules = makeSchedules()
         makeEventTasks()
-        enqueue(MARK_SCHED_REQ_SUCCESS, modelId)
+        markSchedReqSuccess.delay(modelId)
+
     except:
         logging.error(traceback.format_exc())
         failSchedulingRequest(modelId, traceback.format_exc())
 
-
+@app.task
 def processEventTask(modelId):
     evTask = EventTask.objects.get(id=modelId)
     schedReq = None
@@ -195,8 +149,96 @@ def processEventTask(modelId):
     finally:
         evTask.delete()
 
+@app.task
+def processAddUsersRequest(sr_id, userIdsToAdd):
+    """
+    AddUsersTask model contains users to add and the scheduling request in question. These users are added to the collective events and new copies of non-collective events are created for each user. Each non-collective event is created by adding an event creation task to the queue. After all tasks are completed succesfully, state of the scheduling request is returned to 'SUCCESS'
+    """
+    
+    schedReq = SchedulingRequest.objects.get(id=sr_id)
+    usersToAdd = map(lambda user_id: get_user_model().objects.get(id=user_id), userIdsToAdd)
 
-def processMarkSchedReqSuccess(modelId):
+    #choose the first of the schedules in the schReq to be the base for new schedules
+    schedule = Schedule.objects.filter(schedulingRequest=schedReq)[0]
+    if not schedule.template:
+        failAction(schedReq.id, "Schedule template has been removed. This scheduling request cannot be updated.")
+        return
+    #all event templates have to exist
+    for event in Event.objects.filter(schedules=schedule):
+        if not event.template:
+            failAction(sr.id, "This scheduling request cannot be updated because some of the event templates are missing")
+            return
+
+    #remove users who already have schedules in the request
+    for schedule in Schedule.objects.filter(schedulingRequest=schedReq):
+        if(schedule.forUser in usersToAdd):
+            usersToAdd.remove(schedule.forUser)
+
+    #Create schedules for all new users
+    for user in usersToAdd:
+        Schedule.objects.create(schedulingRequest=schedReq, forUser=user, template=schedule.template)
+
+    for event in Event.objects.filter(schedules=schedule):
+        eventData = json.loads(event.json)
+
+        #In the collective event case, all users are added to the existing event
+        if event.template.isCollective:
+            users = list(usersToAdd)
+            
+            if event.template.inviteSupervisors:
+                supervisors = []
+                for user in users:
+                    if user.supervisor is not None:
+                        supervisors += [user.supervisor]
+                users += supervisors
+
+            #Create new summary for the event:
+            schedules = Schedule.objects.filter(schedulingRequest=schedReq)
+            users = map(lambda s: s.forUser, schedules)
+            summary = createSummary(event.template.summary, users)
+        
+            updated_event = calendar.addUsersToEvent(schedule.template.calendar.email, eventData['id'], users, summary, sendNotifications=False)
+            event.json = json.dumps(updated_event)
+            event.save()
+            for user in usersToAdd:
+                event.schedules.add(Schedule.objects.get(forUser=user, schedulingRequest=schedReq))
+        
+        #On a non-collective event, a copy of the event is created for all users
+        else:
+            for user in usersToAdd:
+                newEvent = EventTask.objects.create(
+                    summary=event.template.summary + " - " + user.first_name + " " + user.last_name,
+                    startDt=util.getNaive(dateutil.parser.parse(eventData['start']['dateTime'])),
+                    endDt=util.getNaive(dateutil.parser.parse(eventData['end']['dateTime'])),
+                    template=event.template)
+
+                if 'description' in eventData:
+                    newEvent.description = eventData['description']
+
+                newEvent.schedules.add(Schedule.objects.get(forUser=user, schedulingRequest=schedReq))
+                newEvent.attendees.add(user)
+                if event.template.inviteSupervisors and user.supervisor:
+                    newEvent.attendees.add(user.supervisor)
+                newEvent.save()
+                processEventTask.delay(newEvent.id)
+    
+    #Add new users to scheduling request json
+    schedReqJson = json.loads(schedReq.json)
+    schedReqJson['users'] += map(lambda user: user.id, usersToAdd)
+    schedReq.json = json.dumps(schedReqJson)
+    schedReq.save()
+
+    markSchedReqSuccess.delay(schedReq.id)
+
+def createSummary(title, users):
+    userNames = map(lambda u: u.first_name + " "+ u.last_name, users)
+    if len(userNames) > 1:
+        return title + " - " + ', '.join(userNames[:(len(userNames)-1)]) + " and " + userNames[len(userNames)-1]
+    else:
+        return title + " - " + userNames[0]
+
+@app.task
+def markSchedReqSuccess(modelId):
     """
     Mark scheduling request status as SUCCESS if status is IN_PROGRESS.
 
@@ -211,7 +253,8 @@ def processMarkSchedReqSuccess(modelId):
         schReq.save()
 
 
-def processCleanupSchedulingRequest(modelId):
+@app.task
+def cleanupSchedulingRequest(modelId):
     """
     Delete what got created in Google Calendar, our Events and Schedules.
 
@@ -243,9 +286,19 @@ def failSchedulingRequest(modelId, errTxt=''):
         if errTxt:
             sr.error = errTxt
         sr.save()
-        enqueue(CLEANUP_SCHED_REQ, modelId)
+        cleanupSchedulingRequest.delay(modelId)
 
+# function that is called when any other action than scheduling requets fails
+def failAction(modelId, errTxt=''):
+    sr = SchedulingRequest.objects.get(id=modelId)
+    # allow this function to be called multiple times
+    if sr.status != SchedulingRequest.ACTION_FAILED:
+        sr.status = SchedulingRequest.ACTION_FAILED
+        if errTxt:
+            sr.error = errTxt
+        sr.save()
 
+@app.task
 def processDeletionTask(modelId):
     """
     Process the user's request to delete a scheduling request.
@@ -265,15 +318,38 @@ def processDeletionTask(modelId):
                 str(deleteTask.requestedAt))
         failSchedulingRequest(deleteTask.schedReq.id,
                 'Deleting, as requested by user')
-        enqueue(DELETE_SCHED_REQ, deleteTask.schedReq.id)
+        deleteSchedulingRequest.delay(deleteTask.schedReq.id)
     finally:
         deleteTask.delete()
 
+@app.task
+def processGeneratePdf(modelId):
+    sr = SchedulingRequest.objects.get(id=modelId)
+    schedule = Schedule.objects.filter(schedulingRequest=sr)[0]
+    #TODO check that all templates exist before generating pdf?
 
-def processDeleteSchedulingRequest(modelId):
+    #check that all event templates exist
+    for event in Event.objects.filter(schedules=schedule):
+        if not event.template:
+            failAction(sr.id, "Pdf cannot be generated for this scheduling request because some of the event templates are missing")
+            return
+
+    directory = '/opt/app/pdf-generator/'
+    filename = 'intro_schedule'+str(sr.id)
+    pdfgenerator.generatePdf(schedule, directory, filename, "/opt/app/pdf-generator/intro_template.txt", "/opt/app/pdf-generator/intro_background.pdf")
+
+    #copy final pdf to the downloads folder
+    os.system("cp "+directory+filename+".pdf /opt/download/")
+    #remove all files generated during the process
+    os.system("rm "+directory+filename+"*")
+
+    sr.pdfUrl = "/download/"+filename+".pdf"
+    sr.save()
+
+@app.task
+def deleteSchedulingRequest(modelId):
     sr = SchedulingRequest.objects.get(id=modelId)
     sr.delete()
-
 
 def sleepForRateLimit():
     """
@@ -297,19 +373,3 @@ def sleepForRateLimit():
         toSleep = minDelta - delta
         time.sleep(toSleep.seconds + toSleep.microseconds/1000000.)
     last.save()
-
-
-SCHED_REQ = 'scheduling-request'
-EVENT_TASK = 'event-task'
-MARK_SCHED_REQ_SUCCESS = 'mark-scheduling-request-successful'
-CLEANUP_SCHED_REQ = 'cleanup-scheduling-request'
-DELETION_TASK = 'deletion-task'
-DELETE_SCHED_REQ = 'delete-scheduling-request'
-implForName = {
-        SCHED_REQ: processSchedulingRequest,
-        EVENT_TASK: processEventTask,
-        MARK_SCHED_REQ_SUCCESS: processMarkSchedReqSuccess,
-        CLEANUP_SCHED_REQ: processCleanupSchedulingRequest,
-        DELETION_TASK: processDeletionTask,
-        DELETE_SCHED_REQ: processDeleteSchedulingRequest,
-}

@@ -1,5 +1,7 @@
 import datetime
 from futuschedule import util
+from django.contrib.auth import get_user_model
+import pytz
 
 
 def createEvent(calendarId, sendNotifications, summary, description, location,
@@ -17,11 +19,7 @@ def createEvent(calendarId, sendNotifications, summary, description, location,
     without the 'timezone' field.
     """
 
-    def getNaive(dt):
-        """Return a naive datetime object for a possibly tz-aware one."""
-        return datetime.datetime(dt.year, dt.month, dt.day, dt.hour, dt.minute)
-
-    startDt, endDt = map(getNaive, (startDt, endDt))
+    startDt, endDt = map(util.getNaive, (startDt, endDt))
 
     event = {
             'summary': summary,
@@ -41,6 +39,18 @@ def createEvent(calendarId, sendNotifications, summary, description, location,
     return calSvc.events().insert(calendarId=calendarId,
             sendNotifications=sendNotifications, body=event).execute()
 
+def addUsersToEvent(calendarId, eventId, users, newSummary, sendNotifications=False):
+    calSvc = util.buildCalendarSvc()
+    eventJson = calSvc.events().get(calendarId=calendarId, eventId=eventId).execute()
+    userDicts = map(lambda x: {'email': x.email}, users)
+    eventJson['attendees'] += userDicts
+    eventJson['summary'] = newSummary
+    
+    #Create list of all human attendees as users (filter calendarResources like rooms out)
+    attendeesList = filter(lambda a: not(a.has_key('resource') and a['resource']), eventJson['attendees'])
+    attendees = map(lambda user: get_user_model().objects.get(email=user['email']), attendeesList)
+
+    return calSvc.events().update(calendarId=calendarId, eventId=eventId, body=eventJson, sendNotifications=sendNotifications).execute()
 
 def deleteEvent(calendarId, eventId, sendNotifications=False):
     """
@@ -49,3 +59,18 @@ def deleteEvent(calendarId, eventId, sendNotifications=False):
     calSvc = util.buildCalendarSvc()
     calSvc.events().delete(calendarId=calendarId, eventId=eventId,
             sendNotifications=sendNotifications).execute()
+
+#Returns True if the calendar with given calendarId has an event during the given timeframe
+def isOccupied(calendarId, timeStart, timeEnd, timeZoneName):
+
+    tz = pytz.timezone(timeZoneName)
+    #one minute is added to the even starting time, because timeMin (minimum ending time to filter by) is inclusive (timeMax, on the other hand, is not)
+    timeStart = tz.localize(util.getNaive(timeStart))+datetime.timedelta(minutes=1)
+    timeEnd = tz.localize(util.getNaive(timeEnd))
+
+    calSvc = util.buildCalendarSvc()
+    events = calSvc.events().list(calendarId=calendarId, timeMin=timeStart.isoformat(), timeMax=timeEnd.isoformat(), timeZone=timeZoneName).execute()
+    
+    if events['items'] == []:
+        return False
+    return True

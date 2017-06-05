@@ -9,7 +9,7 @@ from django.db.models import ProtectedError
 from django.test import TestCase
 
 from futuschedule import calendar, util, testutil
-from futuschedule import models, tasksched
+from futuschedule import models, tasks
 
 
 class GoogleCalendarTest(TestCase):
@@ -24,7 +24,7 @@ class GoogleCalendarTest(TestCase):
         endDt = startDt + datetime.timedelta(minutes=30)
         attendingEmails = [testutil.Alice_email, testutil.Brad_email]
 
-        tasksched.sleepForRateLimit()
+        tasks.sleepForRateLimit()
         ev = calendar.createEvent(calId, False, 'TEST: sample event',
                 'Test: create & delete a simple event', 'Reception',
                 startDt, endDt, tzName, attendingEmails)
@@ -54,8 +54,29 @@ class GoogleCalendarTest(TestCase):
         self.assertTrue({x for x in attendingEmails}
                 == {x['email'] for x in ev['attendees']})
 
-        tasksched.sleepForRateLimit()
+        tasks.sleepForRateLimit()
         calendar.deleteEvent(calId, ev['id'])
+
+
+    def testIsOccupied(self):
+        calId = settings.TEST_CALENDAR_ID
+        tzName = 'Europe/Berlin'
+        # if this test fails, check that there are no other events in the test calendar on the chosen day!
+        eventStart = datetime.datetime(2016, 11, 26, 9, 0)
+        eventEnd = eventStart + datetime.timedelta(hours=1)
+        event = calendar.createEvent(calId, False, 'TEST: sample event', 'Test: test isOccupied', 'Location', eventStart, eventEnd, tzName, [])
+
+        timeBeforeEvent = eventStart - datetime.timedelta(minutes=30)
+        timeAfterEvent = eventEnd + datetime.timedelta(minutes=30)
+        timeMiddleOfEvent = eventStart + datetime.timedelta(minutes=30)
+
+        self.assertTrue(calendar.isOccupied(calId, eventStart, eventEnd, tzName))
+        self.assertFalse(calendar.isOccupied(calId, timeBeforeEvent, eventStart, tzName))
+        self.assertFalse(calendar.isOccupied(calId, eventEnd, timeAfterEvent, tzName))
+        self.assertTrue(calendar.isOccupied(calId, timeBeforeEvent, timeMiddleOfEvent, tzName))
+        self.assertTrue(calendar.isOccupied(calId, timeMiddleOfEvent, timeAfterEvent, tzName))
+
+        calendar.deleteEvent(calId, event['id'])
 
 
     def testEmptyEventSummaryDescriptionLocation(self):
@@ -68,7 +89,7 @@ class GoogleCalendarTest(TestCase):
         endDt = startDt + datetime.timedelta(minutes=30)
         attendingEmails = [testutil.Alice_email, testutil.Brad_email]
 
-        tasksched.sleepForRateLimit()
+        tasks.sleepForRateLimit()
         ev = calendar.createEvent(calId, False, '', '', '',
                 startDt, endDt, tzName, attendingEmails)
 
@@ -76,7 +97,7 @@ class GoogleCalendarTest(TestCase):
             # The empty fields are missing from the response
             self.assertFalse(fName in ev)
 
-        tasksched.sleepForRateLimit()
+        tasks.sleepForRateLimit()
         calendar.deleteEvent(calId, ev['id'])
 
 
@@ -101,7 +122,7 @@ class GoogleCalendarTest(TestCase):
         longDescription = 'ef gh' * 1000
         longLocation = 'ij k' * 256
 
-        tasksched.sleepForRateLimit()
+        tasks.sleepForRateLimit()
         ev = calendar.createEvent(calId, False, longSummary, longDescription,
                 longLocation, startDt, endDt, tzName, attendingEmails)
 
@@ -109,7 +130,7 @@ class GoogleCalendarTest(TestCase):
         self.assertEqual(ev['description'], longDescription)
         self.assertEqual(ev['location'], longLocation)
 
-        tasksched.sleepForRateLimit()
+        tasks.sleepForRateLimit()
         calendar.deleteEvent(calId, ev['id'])
 
 
@@ -229,12 +250,12 @@ class ApiCallsRateLimits(TestCase):
         # If this test fails, set minDelta to 0.8 seconds or so.
         minDelta = datetime.timedelta(seconds=1)
 
-        tasksched.sleepForRateLimit()
+        tasks.sleepForRateLimit()
         lastDt = datetime.datetime.utcnow()
         lastDb = models.LastApiCall.objects.get().dt
 
         for i in range(1):
-            tasksched.sleepForRateLimit()
+            tasks.sleepForRateLimit()
             nowDt = datetime.datetime.utcnow()
             nowDb = models.LastApiCall.objects.get().dt
 

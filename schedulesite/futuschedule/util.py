@@ -7,10 +7,12 @@ from oauth2client.file import Storage
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.utils.timezone import utc
 from futuschedule.models import CalendarResource
 
 import httplib2
 import json
+import datetime
 
 
 def ensureOAuthCredentials(secrets_file='client_secrets.json', storage_file='a_credentials_file', redirect_uri='https://localhost:8000/oauth2callback',
@@ -50,53 +52,6 @@ def calendar_resource():
     token = OAuth2TokenFromCredentials(ensureOAuthCredentials())
     return token.authorize(client)
 
-def updateUsers(jsonDumpFile):
-    """
-    Create or Update Users from a .json file dumped from FUM (see README).
-
-    The users we create will have different IDs than the json dump.
-    """
-    UM = get_user_model()
-    with open(jsonDumpFile, 'r') as f:
-        dump = list(filter(lambda u:
-            u['username'] and u['email'] and
-            u['first_name'] and u['last_name'] and
-            u['google_status'] == 'activeperson' and u['status'] == 'active',
-            json.load(f)))
-    # de-duplicate first (the dump has a duplicate)
-    userById = {u['id']: u for u in dump}
-
-    # Delete existing DB users not present in this dump
-    keepUsernames = {u['username'] for u in dump}
-    for oldUser in UM.objects.all():
-        if oldUser.username not in keepUsernames:
-            oldUser.delete()
-
-    for u in userById.values():
-        try:
-            newUser = UM.objects.get(username=u['username'])
-            newUser.email = u['email']
-            newUser.first_name = u['first_name']
-            newUser.last_name = u['last_name']
-        except UM.DoesNotExist as e:
-            newUser = UM.objects.create_user(u['username'], u['email'],
-                    u['first_name'], u['last_name'])
-
-        # TODO: make HC and IT admins
-        if False:
-            newUser.is_admin = True
-        newUser.save()
-
-    for u in userById.values():
-        if u['supervisor']:
-            a = UM.objects.get(username=u['username'])
-            try:
-                a.supervisor = UM.objects.get(
-                        username=userById[u['supervisor']]['username'])
-            except Exception as e:
-                print(e)
-            a.save()
-
 def updateMeetingRooms():
     # TODO: pagination
     # In May 2014 only getting a single page of results and can't figure out
@@ -126,3 +81,18 @@ def updateMeetingRooms():
     for r in CalendarResource.objects.filter():
         if r.resourceId not in crt_res_ids:
             r.delete()
+
+# returns a datetime object combing date (YY-MM-DD) and time (HH:MM or HH-MM-SS), both as strings.
+def parseDate(datestring, timestring):
+
+    date = datetime.datetime.strptime(datestring,
+                    '%Y-%m-%d').date()
+    # [:5] drops seconds from 'HH:MM:SS' if present
+    time = datetime.datetime.strptime(timestring[:5],
+        '%H:%M').time()
+    return datetime.datetime.combine(date, time).replace(tzinfo=utc)
+
+def getNaive(dt):
+    """Return a naive datetime object for a possibly tz-aware one."""
+    return datetime.datetime(dt.year, dt.month, dt.day, dt.hour, dt.minute)
+    

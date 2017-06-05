@@ -165,18 +165,22 @@ class SchedulingRequest(models.Model):
     requestedBy = models.ForeignKey(settings.AUTH_USER_MODEL, null=True,
             blank=True, on_delete=models.SET_NULL)
     requestedAt = models.DateTimeField(auto_now_add=True)
+    #when a pdf is generated from this schedule, the pdf location will be updated here
+    pdfUrl = models.TextField(blank=True)
 
     IN_PROGRESS = 'IN_PROGRESS'
     SUCCESS = 'SUCCESS'
     ERROR = 'ERROR'
+    ACTION_FAILED = 'ACTION_FAILED'
     status = models.CharField(
-            max_length=max(map(len, (IN_PROGRESS, SUCCESS, ERROR))),
+            max_length=max(map(len, (IN_PROGRESS, SUCCESS, ERROR, ACTION_FAILED))),
             choices = (
                 (IN_PROGRESS, 'In progress'),
                 (SUCCESS, 'Successfully completed'),
                 (ERROR, 'Error'),
+                (ACTION_FAILED, 'Action failed')
             ), null=False, blank=False, default=IN_PROGRESS)
-    # error description if status is ERROR
+    # error description if status is ERROR or ACTION_FAILED
     error = models.TextField(blank=True)
 
 
@@ -217,18 +221,6 @@ class Event(models.Model):
 
     def __unicode__(self):
         return 'Event (on ' + str(self.schedules.count()) + ' schedule(s))'
-
-
-class Task(models.Model):
-    """
-    Task model for our Task Queue, used by tasksched.py but placed here so
-    Django finds it.
-    Was the fastest thing to use, but can easily replace with an existing
-    task queue system.
-    """
-    taskType = models.CharField(max_length=100)
-    modelId = models.IntegerField()
-
 
 class EventTask(models.Model):
     """

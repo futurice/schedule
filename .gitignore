@@ -3,7 +3,6 @@
 /users.json
 /env
 *.pyc
-/schedulesite/schedulesite/settings.py
 
 /schedulesite/futuschedule/static/futuschedule/bower_components/
 /node_modules/

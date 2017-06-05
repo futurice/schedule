@@ -1,15 +1,18 @@
 import datetime
 from django.http import HttpResponse
 from django.shortcuts import render
-from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.csrf import ensure_csrf_cookie
+from django.conf import settings
 import json
-
-from futuschedule import calendar, models, tasksched
+from django.contrib.auth import get_user_model
+from futuschedule import calendar, models
+from futuschedule.tasks import processSchedulingRequest, processDeletionTask, processAddUsersRequest, processGeneratePdf
 
 
 def scheduleTemplates(request):
     return render(request, 'futuschedule/schedule-templates.html')
 
+@ensure_csrf_cookie
 def index(request):
     return render(request, 'futuschedule/base.html')
 
@@ -64,12 +67,33 @@ def createSchedules(request):
     }
     """
 
+    def parsedate(date, time):
+        return datetime.datetime.strptime(date+'-'+time, '%Y-%m-%d-%H:%M')
+
+    # Check if meeting rooms are available
+    data = json.loads(request.body)
+    timezone = models.ScheduleTemplate.objects.get(id=str(data['scheduleTemplate'])).timezone.name
+    errors = []
+    
+    for event in data['events']:
+        for location in event['data']['locations']:
+            room = models.CalendarResource.objects.get(id = str(location))
+            start = parsedate(event['data']['date'], event['data']['startTime'])
+            end = parsedate(event['data']['date'], event['data']['endTime'])
+            if(calendar.isOccupied(room.email, start, end, timezone)):
+                errors += [room.name + " is not available on "+ event['data']['date'] + " at " + event['data']['startTime'] + "-" + event['data']['endTime']]
+    
+    if errors != []:
+        return HttpResponse(json.dumps({'error': ', '.join(errors)}),
+        content_type="application/json", status=400)
+
+
     if request.method == 'POST':
         schedReq = models.SchedulingRequest.objects.create(
                 json=json.dumps(json.load(request)),
                 requestedBy=request.user,
                 status=models.SchedulingRequest.IN_PROGRESS)
-        tasksched.enqueue(tasksched.SCHED_REQ, schedReq.id)
+        processSchedulingRequest.delay(schedReq.id)
         return HttpResponse('', status=202)
 
     return HttpResponse(json.dumps({'error': 'Method ' + request.method +
@@ -84,7 +108,7 @@ def schedulingRequestDetail(request, sr_id):
         sr = models.SchedulingRequest.objects.get(id=sr_id)
         dr = models.DeletionTask.objects.create(schedReq=sr,
                 requestedByUser=request.user)
-        tasksched.enqueue(tasksched.DELETION_TASK, dr.id)
+        processDeletionTask.delay(dr.id)
         return HttpResponse('')
     elif request.method == 'GET':
         context = {'sr_id': sr_id}
@@ -94,12 +118,27 @@ def schedulingRequestDetail(request, sr_id):
         return HttpResponse(json.dumps({'error': 'Method ' + request.method +
             ' not allowed.'}), content_type="application/json", status=405)
 
+def addUsersToSchedule(request, sr_id):
+    
+    data = json.loads(request.body)
+    sr = models.SchedulingRequest.objects.get(id=sr_id)
+    usersToAdd = map(lambda user: user['id'], data['users'])
+    sr.status = models.SchedulingRequest.IN_PROGRESS
+    sr.save()
+    processAddUsersRequest.delay(sr_id, usersToAdd)
+    return HttpResponse('', status=200)
+    
+
 def schedules(request):
     return render(request, 'futuschedule/schedules.html')
 
 def scheduleDetail(request, s_id):
     context = {'s_id': s_id}
     return render(request, 'futuschedule/schedule-detail.html', context)
+
+def generatePdf(request, sr_id):
+    processGeneratePdf.delay(sr_id)
+    return HttpResponse('', status=200)
 
 def test(request):
     return render(request, 'futuschedule/test')
