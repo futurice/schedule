@@ -3,13 +3,23 @@
 # Create schedule templates and make Google Calendar Events from them
 
 This file explains how to set up and run the project by hand.
-See the `DEPLOY` file for a suggested way of doing this on a remote server.
 
 For licensing (BSD 3-clause), see `COPYING`.
 
 ## Running locally on Docker
 
-Install [Docker](https://www.docker.com/)
+Schedule runs in a [Docker](https://www.docker.com/) container, with database separated from the app. In local setting, it is easiest to run database also as a docker container. In production setting you might want to have the database in more stable environment. This guide is intended for running schedule locally.
+
+### font files, background pictures & client secrets
+
+Before the build you have to add some files to the folder to include them in the image. For privacy reasons we cannot store them in the public Github repository.
+
+Schedule can create pdf timetables of created schedules. Currently there is only one template, which is meant for introduction timetables for new employees. First create directory `pdf-generator/fonts`. Add two .otf font files there; bold.otf and font.otf. Then put the chosen background picture as pdf to `pdf-generator/intro_background.pdf`.
+
+Then log in to google app console with the google account you want to create the events in and create a new project for schedule. Once the project is created, give it rights to use the calendar API and download the client secrets file. Save it in the project root as `client_secrets.json`. 
+
+## Build & run the docker containers
+
 ```
 docker build --rm -t schedule .
 ```
@@ -28,10 +38,10 @@ docker run --rm -itp 8000:8000 \
  -e DB_USER=postgres \
  -e DB_NAME=schedule \
  -e DB_PASSWORD=secret \
- -e FUM_API_URL="" \
- -e FUM_API_TOKEN="" \
- -e TEST_CALENDAR_ID="" \
- -e CALENDAR_DOMAIN="" \
+ -e FUM_API_URL=example.com \
+ -e FUM_API_TOKEN=x \
+ -e TEST_CALENDAR_ID=example.com \
+ -e CALENDAR_DOMAIN=test@example.com \
  -e DEBUG=true \
  -e FAKE_LOGIN=true \
  -e REMOTE_USER=me \
@@ -40,82 +50,26 @@ docker run --rm -itp 8000:8000 \
  --name schedule schedule
 ```
 [localhost:8000](localhost:8000)
-### Fetching users from FUM
+
+### Running Tasks
+These tasks will be run automatically every hour, but they can be also run manually.
+
+Fetching users from FUM:
 ```
 docker exec schedule ./schedulesite/manage.py refresh_users
 ```
-### Updating meeting rooms to database 
+Updating meeting rooms:
 ```
 docker exec schedule ./schedulesite/manage.py update_meeting_rooms
 ```
 
 ### Run tests
-Tests in test_live.py are failing, no worries if that happens. Tests use google calendar, so the schedule should have been authorized to use the test calendar before running tests. Tests can be used to authorize the app, just run tests and follow the instructions.
-```
-docker exec schedule ./schedulesite/manage.py test futuschedule --settings=schedulesite.settings_test
-```
+Tests are currently not working. Google credentials are stored in the database, and new test databases are always created before running tests. Test databases don't have the credentials stored, so the test fails. There should be some way to fix this.
+
 
 ## Authorizing the app
-The app needs to be authorized with google before events can be created, edited or removed. To authorize the app you need to have `client-secrets.json` file in the directory (can be found or created from google project page). To start the authorization, do some action that requires authorization, for example run tests. The authorization link will be printed to the terminal. Go to that link in browser and click accept. NOTE you have to be signed in in google with the account whose calendar you want to create the events in. After clicking 'accept', copy the code from the url and paste it to the terminal where you started the authorization.
+The app needs to be authorized with google before events can be created, edited or removed. To authorize the app you need to have `client-secrets.json` file in the directory (can be found or created from google project page). To start the authorization you have to do some action that requires authorization. There is a run() function in create_credentials.py for this purpose. run() function uses the credentials but doesn't do anything permanent.
 
-`a_credentials_file`should be located both in project root `/opt/app` and in `/opt/app/schedulesite`.
+ The authorization link will be printed to the terminal. Copy that link to your browser and the app authorization page appears. Clicking accept leads to an error page but that is intended. Copy the code from the end of the url of that page and paste it to the terminal where you started the authorization.
 
-If this doesn't work, check that you have removed all previous `a_credentials_file`s in the project directory. 
-
-TODO: nice way to authorize the app, as automatic as possible
-
-## Setup (old)
-```bash
-# Create settings.py for Django:
-cd schedulesite/schedulesite
-cp settings_dev.py.template settings.py
-# Set the SECRET_KEY in settings.py to some random string.
-# Set CALENDAR_DOMAIN and TEST_CALENDAR_ID to the calendar to make events on.
-cd -
-
-npm install
-PATH=./node_modules/.bin:$PATH bower install --config.interactive=false
-```
-
-Choose your Database by editing `settings.py`.
-If you choose `PostgreSQL` then run `createdb futuschedule`.
-
-Make a Python virtual environment however you prefer, then:
-```bash
-pip install -r req.txt
-./schedulesite/manage.py migrate
-```
-
-You need a project in the Google Developers Console. Download its
-`client-secrets.json` from there.
-
-The first time the code needs Google OAuth, it looks for `client-secrets.json`
-in your current directory, prints a URL for you to authorize the app and get
-an access token in the URL fragment at the end.
-Credentials are stored in `a_credentials_file` in your current dir.
-Trigger this e.g. by running the unit tests (see below).
-
-
-## Test (old)
-```bash
-PATH=./node_modules/.bin:$PATH jsx --no-cache-dir schedulesite/futuschedule/static/futuschedule/js/src schedulesite/futuschedule/static/futuschedule/js/build
-./schedulesite/manage.py test futuschedule
-```
-
-
-## Running (old)
-
-```bash
-./schedulesite/manage.py migrate
-
-# compile JSX files to plain JavaScript; JS files are copied unchanged
-PATH=./node_modules/.bin:$PATH jsx --watch schedulesite/futuschedule/static/futuschedule/js/src schedulesite/futuschedule/static/futuschedule/js/build
-
-# Start the webserver:
-REMOTE_USER=myusername ./schedulesite/manage.py runserver
-
-# Start the task-processor (kill with Ctrl+C (SIGINT) or SIGTERM):
-./schedulesite/manage.py shell < task-processor.py
-```
-
-[http://localhost:8000/futuschedule/](http://localhost:8000/futuschedule/)
+This has to be done only once when the app is started for the first time. The credentials are stored in the database, so restarting the app doesn't require authorization if the database remains unchanged. 
