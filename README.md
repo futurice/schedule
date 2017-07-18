@@ -10,13 +10,22 @@ For licensing (BSD 3-clause), see `COPYING`.
 
 Schedule runs in a [Docker](https://www.docker.com/) container, with database separated from the app. In local setting, it is easiest to run database also as a docker container. In production setting you might want to have the database in more stable environment. This guide is intended for running schedule locally.
 
-### font files, background pictures & client secrets
+### Font files, background pictures & client secrets
 
-Before the build you have to add some files to the folder to include them in the image. For privacy reasons we cannot store them in the public Github repository.
+Before the build you have to add some files to the folder to include them in the docker image. For privacy reasons we cannot store them in the public Github repository.
 
 Schedule can create pdf timetables of created schedules. Currently there is only one template, which is meant for introduction timetables for new employees. First create directory `pdf-generator/fonts`. Add two .otf font files there; bold.otf and font.otf. Then put the chosen background picture as pdf to `pdf-generator/intro_background.pdf`.
 
 Then log in to google app console with the google account you want to create the events in and create a new project for schedule. Once the project is created, give it rights to use the calendar API and download the client secrets file. Save it in the project root as `client_secrets.json`. 
+
+In conclusion, make sure that the following files are in the folder before building the docker image:
+
+```
+client_secrets.json
+pdf-generator/fonts/font.otf
+pdf-generator/fonts/bold.otf
+pdf-generator/intro_background.pdf
+```
 
 ## Build & run the docker containers
 
@@ -64,7 +73,11 @@ docker exec schedule ./schedulesite/manage.py update_meeting_rooms
 ```
 
 ### Run tests
-Tests are currently not working. Google credentials are stored in the database, and new test databases are always created before running tests. Test databases don't have the credentials stored, so the test fails. There should be some way to fix this.
+Tests are currently not working. Google credentials are stored in the database, and new test databases are always created before running tests. Test databases don't have the credentials stored, so the tests fail. There should be some way to fix this. However, the command for running tests is
+
+```
+docker exec schedule ./schedulesite/manage.py test futuschedule --settings=schedulesite.settings_test
+```
 
 
 ## Authorizing the app

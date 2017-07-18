@@ -1,5 +1,5 @@
 import datetime
-from futuschedule importncalendar
+from futuschedule import calendar
 from django.conf import settings
 
 # This should be run only once to create the credentials to database
