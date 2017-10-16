@@ -49,8 +49,8 @@ docker run --rm -itp 8000:8000 \
  -e DB_PASSWORD=secret \
  -e FUM_API_URL=example.com \
  -e FUM_API_TOKEN=x \
- -e TEST_CALENDAR_ID=example.com \
- -e CALENDAR_DOMAIN=test@example.com \
+ -e TEST_CALENDAR_ID=test@example.com \
+ -e CALENDAR_DOMAIN=example.com \
  -e DEBUG=true \
  -e FAKE_LOGIN=true \
  -e REMOTE_USER=me \

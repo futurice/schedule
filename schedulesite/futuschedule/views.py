@@ -141,4 +141,4 @@ def generatePdf(request, sr_id):
     return HttpResponse('', status=200)
 
 def test(request):
-    return render(request, 'futuschedule/test')
+    return render(request, 'futuschedule/test/')

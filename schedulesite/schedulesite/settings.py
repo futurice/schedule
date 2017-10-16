@@ -14,6 +14,7 @@ import os
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
 GOOGLE_OAUTH2_CLIENT_SECRETS_JSON = '/opt/app/client_secrets.json'
+OAUTH_DB_STORAGE = os.getenv('OAUTH_DB_STORAGE', 'false').lower() == 'true'
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.6/howto/deployment/checklist/
@@ -81,7 +82,10 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.8/howto/static-files/
 
 STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(os.path.dirname(BASE_DIR), 'static')
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, "static"),
+    '/opt/static/',
+]
 
 
 REST_FRAMEWORK = {

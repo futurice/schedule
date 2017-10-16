@@ -3,7 +3,8 @@ from gdata.calendar_resource.client import CalendarResourceClient
 from gdata.gauth import OAuth2TokenFromCredentials
 from oauth2client.client import flow_from_clientsecrets
 from oauth2client.client import OAuth2WebServerFlow
-from oauth2client.contrib.django_util import storage
+from oauth2client.file import Storage
+from oauth2client.contrib.django_util import storage as django_storage
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -14,6 +15,10 @@ import httplib2
 import json
 import datetime
 
+def get_oauth_storage(storage_file=None):
+    if settings.OAUTH_DB_STORAGE:
+        return django_storage.DjangoORMStorage(CredentialsModel, 'credentials_id', 0, 'credential')
+    return Storage(storage_file)
 
 def ensureOAuthCredentials(secrets_file='client_secrets.json', storage_file='a_credentials_file', redirect_uri='https://localhost:8000/oauth2callback',
         scope=['https://www.googleapis.com/auth/calendar', 'https://apps-apis.google.com/a/feeds/calendar/resource/']):
@@ -24,8 +29,8 @@ def ensureOAuthCredentials(secrets_file='client_secrets.json', storage_file='a_c
     for you to authorize the App on Google. Paste the resulting token and it
     will create a_credentials_file.
     """
-    credentialStorage = storage.DjangoORMStorage(CredentialsModel, 'credentials_id', 0, 'credential')
-    credentials = credentialStorage.get()
+    storage = get_oauth_storage(storage_file=storage_file)
+    credentials = storage.get()
     if not credentials:
         flow = flow_from_clientsecrets(filename=secrets_file,
                 scope=scope,
@@ -38,7 +43,7 @@ def ensureOAuthCredentials(secrets_file='client_secrets.json', storage_file='a_c
         print auth_uri
         code = raw_input("Auth token: ")
         credentials = flow.step2_exchange(code)
-        credentialStorage.put(credentials)
+        storage.put(credentials)
     return credentials
 
 def buildCalendarSvc():
