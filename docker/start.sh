@@ -14,8 +14,6 @@ if [[ "$USE_SECRET_FILES" == "true" ]]; then
     cp /run/secrets/client_secrets.json $APP_DIR
 fi
 
-env
-
 if [[ "$TEST" == "true" ]]; then
     apt-get update -y
     apt-get install -y firefox xvfb libnss3-dev libgconf-2-4
