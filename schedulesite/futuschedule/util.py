@@ -11,6 +11,7 @@ from django.contrib.auth import get_user_model
 from django.utils.timezone import utc
 from futuschedule.models import CalendarResource, CredentialsModel
 
+import os
 import httplib2
 import json
 import datetime
