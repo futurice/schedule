@@ -20,7 +20,7 @@ def get_oauth_storage(storage_file=None):
         return django_storage.DjangoORMStorage(CredentialsModel, 'credentials_id', 0, 'credential')
     return Storage(storage_file)
 
-def ensureOAuthCredentials(secrets_file='client_secrets.json', storage_file='a_credentials_file', redirect_uri='https://localhost:8000/oauth2callback',
+def ensureOAuthCredentials(secrets_file='/opt/app/client_secrets.json', storage_file='/opt/app/a_credentials_file', redirect_uri='https://localhost:8000/oauth2callback',
         scope=['https://www.googleapis.com/auth/calendar', 'https://apps-apis.google.com/a/feeds/calendar/resource/']):
     """
     Returns credentials (creates a_credentials_file in current dir if absent).

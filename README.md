@@ -16,7 +16,7 @@ Before the build you have to add some files to the folder to include them in the
 
 Schedule can create pdf timetables of created schedules. Currently there is only one template, which is meant for introduction timetables for new employees. First create directory `pdf-generator/fonts`. Add two .otf font files there; bold.otf and font.otf. Then put the chosen background picture as pdf to `pdf-generator/intro_background.pdf`.
 
-Then log in to google app console with the google account you want to create the events in and create a new project for schedule. Once the project is created, give it rights to use the calendar API and download the client secrets file. Save it in the project root as `client_secrets.json`. 
+Then log in to google app console (https://console.developers.google.com/) with the google account you want to create the events in and create a new project for schedule. Once the project is created, give it rights to use the calendar API and download the client secrets file. Save it in the project root as `client_secrets.json`.
 
 In conclusion, make sure that the following files are in the folder before building the docker image:
 
@@ -56,8 +56,12 @@ docker run --rm -itp 8000:8000 \
  -e REMOTE_USER=me \
  -e SECRET_KEY=secret \
  --link schedule-postgres:schedule-postgres \
+ -v $(pwd):/opt/app/:rw \
  --name schedule schedule
 ```
+
+Note: To run tests add `-e TEST=true` to install additional browser support.
+
 [localhost:8000](localhost:8000)
 
 ### Running Tasks
@@ -76,13 +80,13 @@ docker exec schedule ./schedulesite/manage.py update_meeting_rooms
 Tests are currently not working. Google credentials are stored in the database, and new test databases are always created before running tests. Test databases don't have the credentials stored, so the tests fail. There should be some way to fix this. However, the command for running tests is
 
 ```
-docker exec schedule ./schedulesite/manage.py test futuschedule --settings=schedulesite.settings_test
+docker exec -e TRAVIS=true schedule xvfb-run ./schedulesite/manage.py test --failfast -v 3 futuschedule --settings=schedulesite.settings_test
 ```
 
 
 ## Authorizing the app
-The app needs to be authorized with google before events can be created, edited or removed. To authorize the app you need to have `client-secrets.json` file in the directory (can be found or created from google project page). To start the authorization you have to do some action that requires authorization. There is a run() function in create_credentials.py for this purpose. run() function uses the credentials but doesn't do anything permanent.
+The app needs to be authorized with google before events can be created, edited or removed. To authorize the app you need `client_secrets.json` and authorize against the google account (TEST_CALENDAR_ID) that will keep log of the schedules. To start the authorization you have to do some action that requires authorization. There is a run() function in create_credentials.py for this purpose. run() function uses the credentials but doesn't do anything permanent.
 
- The authorization link will be printed to the terminal. Copy that link to your browser and the app authorization page appears. Clicking accept leads to an error page but that is intended. Copy the code from the end of the url of that page and paste it to the terminal where you started the authorization.
+The authorization link will be printed to the terminal. Copy that link to your browser and the app authorization page appears. Clicking accept leads to an error page but that is intended. Copy the code from the end of the url of that page and paste it to the terminal where you started the authorization.
 
 This has to be done only once when the app is started for the first time. The credentials are stored in the database, so restarting the app doesn't require authorization if the database remains unchanged. 

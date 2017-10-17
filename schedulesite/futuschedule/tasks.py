@@ -334,9 +334,9 @@ def processGeneratePdf(modelId):
             failAction(sr.id, "Pdf cannot be generated for this scheduling request because some of the event templates are missing")
             return
 
-    directory = '/opt/app/pdf-generator/'
+    directory = '/opt/pdf-generator/'
     filename = 'intro_schedule'+str(sr.id)
-    pdfgenerator.generatePdf(schedule, directory, filename, "/opt/app/pdf-generator/intro_template.txt", "/opt/app/pdf-generator/intro_background.pdf")
+    pdfgenerator.generatePdf(schedule, directory, filename, "/opt/pdf-generator/intro_template.txt", "/opt/pdf-generator/intro_background.pdf")
 
     #copy final pdf to the downloads folder
     os.system("cp "+directory+filename+".pdf /opt/download/")
