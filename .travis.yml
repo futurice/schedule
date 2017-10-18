@@ -36,4 +36,4 @@ install:
   - mkdir static
   - schedulesite/manage.py collectstatic --clear --noinput
 
-script: xvfb-run schedulesite/manage.py test futuschedule --settings=schedulesite.settings_test
+script: xvfb-run schedulesite/manage.py test futuschedule

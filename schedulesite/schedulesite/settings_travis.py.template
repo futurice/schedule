@@ -14,7 +14,7 @@ OAUTH_DB_STORAGE = os.getenv('OAUTH_DB_STORAGE', 'false').lower() == 'true'
 
 TEMPLATE_DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
