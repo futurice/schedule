@@ -77,15 +77,13 @@ docker exec schedule ./schedulesite/manage.py update_meeting_rooms
 ```
 
 ### Run tests
-Tests are currently not working. Google credentials are stored in the database, and new test databases are always created before running tests. Test databases don't have the credentials stored, so the tests fail. There should be some way to fix this. However, the command for running tests is
 
 ```
 docker exec -e TRAVIS=true schedule xvfb-run ./schedulesite/manage.py test --failfast -v 3 futuschedule --settings=schedulesite.settings_test
 ```
 
-
 ## Authorizing the app
-The app needs to be authorized with google before events can be created, edited or removed. To authorize the app you need `client_secrets.json` and authorize against the google account (TEST_CALENDAR_ID) that will keep log of the schedules. To start the authorization you have to do some action that requires authorization. There is a run() function in create_credentials.py for this purpose. run() function uses the credentials but doesn't do anything permanent.
+The app needs to be authorized with google before events can be created, edited or removed. To authorize the app you need `client_secrets.json` and authorize against the google account (TEST_CALENDAR_ID) that will keep log of the schedules. Authorization can be done using `python -c 'from futuschedule.create_credentials import run; run();'`.
 
 The authorization link will be printed to the terminal. Copy that link to your browser and the app authorization page appears. Clicking accept leads to an error page but that is intended. Copy the code from the end of the url of that page and paste it to the terminal where you started the authorization.
 
