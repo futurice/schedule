@@ -20,9 +20,8 @@ install:
   - sudo tar -xzvf /tmp/geckodriver.tar -C /usr/bin/
   - sudo chmod +rx /usr/bin/geckodriver
 
-  - openssl aes-256-cbc -K $encrypted_aae51290c359_key -iv $encrypted_aae51290c359_iv -in travis-secrets.sh.enc -out travis-secrets.sh -d
-  - chmod u+x travis-secrets.sh
-  - ./travis-secrets.sh # write client_secrets.json and a_credentials_file
+  - openssl aes-256-cbc -K $encrypted_d69011779259_key -iv $encrypted_d69011779259_iv -in secrets.tar.enc -out secrets.tar -d
+  - tar xvf secrets.tar
   - cd schedulesite/schedulesite
   - cp settings_travis.py.template settings.py
   - cd -
