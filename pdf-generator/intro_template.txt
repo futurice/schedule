@@ -5,7 +5,7 @@
 \usepackage{setspace}
 \usepackage{color}
 
-\setmainfont[BoldFont=futuricebeta02bold]{futuricebeta02monospaced}
+\setmainfont[BoldFont=bold]{font}
 
 %omit indentation
 \setlength{\parindent}{0cm}

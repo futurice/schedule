@@ -1,6 +1,8 @@
 from django.conf import settings
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 from django.db import models
+from oauth2client.contrib.django_util.models import CredentialsField
+
 
 
 class FutuUserManager(BaseUserManager):
@@ -258,3 +260,8 @@ class LastApiCall(models.Model):
     Google Calendar API call.
     """
     dt = models.DateTimeField(auto_now=True)
+
+
+class CredentialsModel(models.Model):
+  credentials_id = models.IntegerField()
+  credential = CredentialsField()
