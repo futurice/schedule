@@ -2,6 +2,7 @@ from django.core.management.base import BaseCommand
 from django.conf import settings
 from django.contrib.auth import get_user_model
 
+import os
 import json
 import requests
 
@@ -10,7 +11,7 @@ class Command(BaseCommand):
 
     def get_users(self):
         data = requests.get(os.getenv('USERS_URL'))
-        users = json.loads(data)
+        users = json.loads(data.text)
         return users
 
     def get_email(self, user):
