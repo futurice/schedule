@@ -118,9 +118,9 @@ FAKE_LOGIN = os.getenv('FAKE_LOGIN', 'false').lower() == 'true'
 # Database
 # https://docs.djangoproject.com/en/1.6/ref/settings/#databases
 
-# Sentry token. Defaults to sentry.io
+# Sentry token.
 RAVEN_CONFIG = {
-    'dsn': os.getenv('SENTRY_DSN', 'https://12ee185e2b684119b3cbbc3bd8cc33fd:03e687a763e04027bb8d132a3d12d26a@sentry.io/294359'),
+    'dsn': os.getenv('SENTRY_DSN', 'http://localhost'),
 }
 
 if (os.getenv('ENABLE_RAVEN', 'false').lower() == 'true'):
