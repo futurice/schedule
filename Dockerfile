@@ -24,15 +24,15 @@ RUN apt-get update && apt-get install -y \
 RUN curl -sL https://deb.nodesource.com/setup_6.x | bash -
 RUN apt-get install -y nodejs
 
-COPY req.txt /opt/req.txt
-RUN pip install -r /opt/req.txt
-
 COPY package.json /opt/package.json
 RUN npm install
 
 COPY .bowerrc /opt/app/.bowerrc
 COPY bower.json /opt/app/bower.json
 RUN /opt/node_modules/bower/bin/bower install --allow-root
+
+COPY req.txt /opt/req.txt
+RUN pip install -r /opt/req.txt
 
 RUN groupadd -r schedule_group && useradd -r -g schedule_group schedule_user
 RUN chown schedule_user /opt/app

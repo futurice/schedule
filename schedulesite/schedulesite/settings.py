@@ -118,6 +118,16 @@ FAKE_LOGIN = os.getenv('FAKE_LOGIN', 'false').lower() == 'true'
 # Database
 # https://docs.djangoproject.com/en/1.6/ref/settings/#databases
 
+# Sentry token.
+RAVEN_CONFIG = {
+    'dsn': os.getenv('SENTRY_DSN', 'http://localhost'),
+}
+
+if (os.getenv('ENABLE_RAVEN', 'false').lower() == 'true'):
+    INSTALLED_APPS = INSTALLED_APPS + (
+        'raven.contrib.django.raven_compat',
+    )
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
