@@ -1,4 +1,15 @@
 #!/usr/bin/bash
+
+replaceinfile() {
+    find $1 -type f -exec sed -i "s~$2~$3~g" {} \;
+}
+export TAG="$(cat /dev/urandom | tr -dc 'a-z' | fold -w 32 | head -n 1)"
+# cache assets in production
+if [[ -z "$DEBUG" || "$DEBUG" == "true" ]]; then
+replaceinfile '/etc/nginx/nginx.conf' 'location /static {' "location /static/$TAG {"
+echo "$TAG">/opt/tag
+fi
+
 ./schedulesite/manage.py migrate --noinput
 ../node_modules/react-tools/bin/jsx schedulesite/futuschedule/static/futuschedule/js/src/ /opt/static/futuschedule/js/build
 
