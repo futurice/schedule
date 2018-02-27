@@ -26,7 +26,7 @@ var NewSchedule;
             getRestLoaderMixin(apiRoot + 'scheduletemplates/?ordering=name',
                 'sTempl', 'sTemplLoaded', 'sTemplErr'),
             getRestLoaderMixin(
-                apiRoot + 'users/?ordering=first_name,last_name',
+                apiRoot + 'users/?ordering=name',
                 'users', 'usersLoaded', 'usersErr',
                 function() {
                     var usersById = {};
@@ -36,8 +36,7 @@ var NewSchedule;
 
                     var userTextById = {};
                     this.state.users.forEach(function(u) {
-                        userTextById[u.id] = u.first_name + ' ' + u.last_name
-                                + ' (' + u.email + ')';
+                        userTextById[u.id] = u.name + ' (' + u.email + ')';
                     });
 
                     var alphabeticalUserIds = Object.keys(userTextById);
@@ -327,7 +326,7 @@ var NewSchedule;
 
                         var usersSentence = enumSentence(
                             forUsers.map(function(u) {
-                                return u.first_name + ' ' + u.last_name;
+                                return u.name;
                             })
                         );
                         result.summary += ' – ' + usersSentence;
@@ -598,7 +597,7 @@ var NewSchedule;
                 <section id="new-schedule-events">
                 {this.state.evTempl.map((function(et, idx) {
                     function getFullName(user) {
-                        return user.first_name + ' ' + user.last_name;
+                        return user.name;
                     }
 
                     var eventsBox;

@@ -1,6 +1,4 @@
 from apiclient.discovery import build
-from gdata.calendar_resource.client import CalendarResourceClient
-from gdata.gauth import OAuth2TokenFromCredentials
 from oauth2client.client import flow_from_clientsecrets
 from oauth2client.client import OAuth2WebServerFlow
 from oauth2client.file import Storage
@@ -16,13 +14,14 @@ import httplib2
 import json
 import datetime
 
-def get_oauth_storage(storage_file=None):
+def get_oauth_storage(storage_file=None, storage_id=0):
     if settings.OAUTH_DB_STORAGE:
-        return django_storage.DjangoORMStorage(CredentialsModel, 'credentials_id', 0, 'credential')
+        return django_storage.DjangoORMStorage(CredentialsModel, 'credentials_id', storage_id, 'credential')
     return Storage(storage_file)
 
 def ensureOAuthCredentials(secrets_file='client_secrets.json', storage_file='a_credentials_file', redirect_uri='https://localhost:8000/oauth2callback',
-        scope=['https://www.googleapis.com/auth/calendar', 'https://apps-apis.google.com/a/feeds/calendar/resource/']):
+        scope=['https://www.googleapis.com/auth/calendar', 'https://apps-apis.google.com/a/feeds/calendar/resource/', 'https://www.googleapis.com/auth/admin.directory.resource.calendar.readonly',
+        'https://www.googleapis.com/auth/admin.directory.resource.calendar'], storage_id=0):
     """
     Returns credentials (creates a_credentials_file in current dir if absent).
 
@@ -32,7 +31,7 @@ def ensureOAuthCredentials(secrets_file='client_secrets.json', storage_file='a_c
     """
     secrets_file = os.path.join(os.path.dirname(settings.BASE_DIR), secrets_file)
     storage_file = os.path.join(os.path.dirname(settings.BASE_DIR), storage_file)
-    storage = get_oauth_storage(storage_file=storage_file)
+    storage = get_oauth_storage(storage_file=storage_file, storage_id=storage_id)
     credentials = storage.get()
     if not credentials:
         flow = flow_from_clientsecrets(filename=secrets_file,
@@ -49,42 +48,32 @@ def ensureOAuthCredentials(secrets_file='client_secrets.json', storage_file='a_c
         storage.put(credentials)
     return credentials
 
-def buildCalendarSvc():
+def authorize():
     credentials = ensureOAuthCredentials()
     http = httplib2.Http()
-    http = credentials.authorize(http)
-    return build(serviceName='calendar', version='v3', http=http)
+    return credentials.authorize(http)
 
-def calendar_resource():
-    client = CalendarResourceClient(domain=settings.CALENDAR_DOMAIN)
-    token = OAuth2TokenFromCredentials(ensureOAuthCredentials())
-    return token.authorize(client)
+def buildCalendarSvc():
+    return build(serviceName='calendar', version='v3', http=authorize())
+
+def buildAdmin():
+    return build(serviceName='admin', version='directory_v1', http=authorize())
 
 def updateMeetingRooms():
-    # TODO: pagination
-    # In May 2014 only getting a single page of results and can't figure out
-    # how to request few (e.g. 5) results per page to test pagination.
-    calendar_resources = calendar_resource().GetResourceFeed()
-
-    # current resource (meeting room) ids in Google Calendar
+    calres = buildAdmin().resources().calendars().list(customer='my_customer').execute()
     crt_res_ids = set()
-    for r in calendar_resources.get_elements():
-        if r.tag == 'entry':
-            res_id = r.GetResourceId()
-            crt_res_ids.add(res_id)
-            try:
-                obj = CalendarResource.objects.get(resourceId=res_id)
-            except CalendarResource.DoesNotExist as e:
-                obj = CalendarResource(resourceId=res_id)
-            obj.email=r.GetResourceEmail()
-            obj.resourceType=r.GetResourceType() or ''
-            obj.name=r.GetResourceCommonName()
-
-            descr_max_len = (CalendarResource._meta.get_field('description')
-                    .max_length)
-            obj.description=(r.GetResourceDescription() or '')[:descr_max_len]
-
-            obj.save()
+    for r in calres['items']:
+        res_id = r['resourceId']
+        crt_res_ids.add(res_id)
+        try:
+            obj = CalendarResource.objects.get(resourceId=res_id)
+        except CalendarResource.DoesNotExist as e:
+            obj = CalendarResource(resourceId=res_id)
+        obj.email=r['resourceEmail']
+        obj.resourceType=r.get('resourceType') or ''
+        obj.name=r['generatedResourceName'] # or ResourceName?
+        obj.description=r.get('resourceDescription', '')[:190] or ''
+        obj.save()
 
     for r in CalendarResource.objects.filter():
         if r.resourceId not in crt_res_ids:

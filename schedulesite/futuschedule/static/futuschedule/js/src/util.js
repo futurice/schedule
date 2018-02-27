@@ -570,7 +570,7 @@ function enumSentence(items) {
 function getUserName(userId, usersById) {
     var user = usersById[userId];
     if (user) {
-        return user.first_name + ' ' + user.last_name;
+        return user.name;
     } else {
         return 'Unknown User';
     }
@@ -588,8 +588,7 @@ function getUserEmail(userId, usersById) {
 function getUserNameAndEmail(userId, usersById) {
     var user = usersById[userId];
     if (user) {
-        return user.first_name + ' ' + user.last_name + ' (' +
-                user.email + ')';
+        return user.name + ' (' + user.email + ')';
     } else {
         return 'Unknown User';
     }

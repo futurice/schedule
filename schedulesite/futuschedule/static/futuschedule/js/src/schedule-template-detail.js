@@ -7,7 +7,7 @@ var ScheduleTemplateDetail = React.createClass({
             'tzLoaded', 'tzErr'),
         getRestLoaderMixin(apiRoot + 'calendars/?ordering=email', 'calendars',
             'calLoaded', 'calErr'),
-        getRestLoaderMixin(apiRoot + 'users/?ordering=first_name,last_name',
+        getRestLoaderMixin(apiRoot + 'users/?ordering=name',
             'users', 'usersLoaded', 'usersErr',
             function() {
                 var usersById = {};
@@ -17,8 +17,7 @@ var ScheduleTemplateDetail = React.createClass({
 
                 var userTextById = {};
                 this.state.users.forEach(function(u) {
-                    userTextById[u.id] = u.first_name + ' ' + u.last_name
-                            + ' (' + u.email + ')';
+                    userTextById[u.id] = u.name + ' (' + u.email + ')';
                 });
 
                 var alphabeticalUserIds = Object.keys(userTextById);

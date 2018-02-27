@@ -207,7 +207,7 @@ def processAddUsersRequest(sr_id, userIdsToAdd):
         else:
             for user in usersToAdd:
                 newEvent = EventTask.objects.create(
-                    summary=event.template.summary + " - " + user.first_name + " " + user.last_name,
+                    summary=event.template.summary + " - " + user.name,
                     startDt=util.getNaive(dateutil.parser.parse(eventData['start']['dateTime'])),
                     endDt=util.getNaive(dateutil.parser.parse(eventData['end']['dateTime'])),
                     template=event.template)
@@ -231,7 +231,7 @@ def processAddUsersRequest(sr_id, userIdsToAdd):
     markSchedReqSuccess.delay(schedReq.id)
 
 def createSummary(title, users):
-    userNames = map(lambda u: u.first_name + " "+ u.last_name, users)
+    userNames = map(lambda u: u.name, users)
     if len(userNames) > 1:
         return title + " - " + ', '.join(userNames[:(len(userNames)-1)]) + " and " + userNames[len(userNames)-1]
     else:

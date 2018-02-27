@@ -21,7 +21,7 @@ var SchedulingRequestsList = React.createClass({
                     scheduleTemplById: scheduleTemplById
                 });
             }),
-        getRestLoaderMixin(apiRoot + 'users/?ordering=first_name,last_name',
+        getRestLoaderMixin(apiRoot + 'users/?ordering=name',
             'users', 'usersLoaded', 'usersErr', function() {
                     var usersById = {};
                     this.state.users.forEach(function(u) {
@@ -30,8 +30,7 @@ var SchedulingRequestsList = React.createClass({
 
                     var userTextById = {};
                     this.state.users.forEach(function(u) {
-                        userTextById[u.id] = u.first_name + ' ' + u.last_name
-                                + ' (' + u.email + ')';
+                        userTextById[u.id] = u.name + ' (' + u.email + ')';
                     });
 
                     var alphabeticalUserIds = Object.keys(userTextById);
