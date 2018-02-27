@@ -143,16 +143,15 @@ class ForeignKeyDeleteTest(TestCase):
         UM = get_user_model()
 
         # one way to create & save objects
-        fry = UM(username='fry', email='fry@futu', first_name='Phillip J.',
-                last_name='Fry')
+        fry = UM(username='fry', email='fry@futu', name='Phillip J. Fry')
         fry.save()
 
         # alternative way to create & save objects
         leela = UM.objects.create(username='leela', email='leela@futu',
-                first_name='Leela', last_name='Turanga')
+                name='Leela Turanga')
 
         prof = UM(username='farnsworth', email='farnsworth@futu',
-                first_name='Hubert J.', last_name='Farnsworth')
+                name='Hubert J. Farnsworth')
         prof.save()
 
         # one way to add foreign key (directly)

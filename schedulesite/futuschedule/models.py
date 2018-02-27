@@ -6,18 +6,14 @@ from oauth2client.contrib.django_util.models import CredentialsField
 
 
 class FutuUserManager(BaseUserManager):
-    def create_user(self, username, email, first_name, last_name,
-            password=None):
-        user = self.model(username=username, email=email,
-                first_name=first_name, last_name=last_name)
+    def create_user(self, username, email, name, password=None):
+        user = self.model(username=username, email=email, name=name)
         user.set_password(password)
         user.save()
         return user
 
-    def create_superuser(self, username, email, first_name, last_name,
-            password):
-        user = self.create_user(username, email, first_name, last_name,
-                password)
+    def create_superuser(self, username, email, name, password):
+        user = self.create_user(username, email, name, password)
         user.is_admin = True
         user.save()
         return user
@@ -27,6 +23,7 @@ class FutuUser(AbstractBaseUser):
     email = models.CharField(max_length=100, unique=True)
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
+    name = models.CharField(max_length=255, null=True)
     is_active = models.BooleanField(default=True)
     is_admin = models.BooleanField(default=False)
     supervisor = models.ForeignKey(settings.AUTH_USER_MODEL, null=True,
@@ -37,11 +34,8 @@ class FutuUser(AbstractBaseUser):
     USERNAME_FIELD = 'username'
     REQUIRED_FIELDS = ['email']
 
-    def get_short_name(self):
-        return self.first_name
-
     def get_full_name(self):
-        return self.first_name + ' ' + self.last_name
+        return self.name or 'Missing name for %s'%(self.email)
 
     @property
     def is_staff(self):
@@ -59,9 +53,7 @@ class FutuUser(AbstractBaseUser):
         return self.get_full_name() + ' (' + self.username + ')'
 
     class Meta:
-        # TODO: this doesn't seem to work (by default)
-        # in the Django REST Framework API
-        ordering = ('first_name', 'last_name')
+        ordering = ('name',)
 
 
 class CalendarResource(models.Model):

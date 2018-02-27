@@ -6,17 +6,16 @@ from futuschedule import models
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = get_user_model()
-        fields = ('id', 'username', 'email', 'first_name', 'last_name',
-                'supervisor')
+        fields = ('id', 'username', 'email', 'name', 'supervisor')
 
 class UserViewSet(viewsets.ModelViewSet):
     serializer_class = UserSerializer
     queryset = get_user_model().objects.all()
     filter_fields = ('username',)   # ?username=jim
-    search_fields = ('username', 'first_name', 'last_name') # ?search=jim
-    ordering_fields = ('username', 'first_name', 'last_name')
+    search_fields = ('username', 'name',) # ?search=jim
+    ordering_fields = ('username', 'name',)
     # or ordering_fields = '__all__'
-    # ?ordering=last_name ?ordering=-last_name ?ordering=first_name,-last_name
+    # ?ordering=name ?ordering=-last_name ?ordering=name
 
 
 class TimeZoneSerializer(serializers.ModelSerializer):
