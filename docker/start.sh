@@ -5,7 +5,7 @@ replaceinfile() {
 }
 export TAG="$(cat /dev/urandom | tr -dc 'a-z' | fold -w 32 | head -n 1)"
 # cache assets in production
-if [[ -z "$DEBUG" || "$DEBUG" == "true" ]]; then
+if [[ -z "$DEBUG" || "$DEBUG" == "false" ]]; then
 replaceinfile '/etc/nginx/nginx.conf' 'location /static {' "location /static/$TAG {"
 echo "$TAG">/opt/tag
 fi
