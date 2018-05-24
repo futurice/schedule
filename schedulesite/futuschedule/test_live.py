@@ -10,6 +10,8 @@ from selenium.webdriver.chrome.options import Options
 
 
 class BasicFirefox(StaticLiveServerTestCase):
+    # react-tools bundles assets, nginx serves
+    live_server_url = 'http://localhost:8000'
     """
     Define the unit tests and use Firefox.
 

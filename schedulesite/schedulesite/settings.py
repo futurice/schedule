@@ -83,10 +83,11 @@ USE_TZ = True
 
 def asset_tag():
     try:
-        return open('/opt/tag').read()
+        return open('/opt/tag').read() + '/'
     except Exception as e:
         print(e)
-STATIC_URL = '/static/%s/'%(asset_tag())
+    return ''
+STATIC_URL = '/static/%s'%(asset_tag())
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, "static"),
     '/opt/static/',
