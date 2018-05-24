@@ -47,7 +47,9 @@ class BasicFirefox(StaticLiveServerTestCase):
         self.assertEqual('Schedule', self.driver.title)
 
     def test_javascript_unit_tests(self):
-        self.driver.get(self.url(reverse('test')))
+# TODO: find out why liveserver is not working
+#        self.driver.get(self.url(reverse('test')))
+        self.driver.get('http://localhost:8000/test/')
         selector = 'h2#qunit-banner.qunit-fail, h2#qunit-banner.qunit-pass'
         elem = WebDriverWait(self.driver, 10).until(
                 EC.presence_of_element_located((By.CSS_SELECTOR, selector)))

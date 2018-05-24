@@ -32,11 +32,11 @@ if [[ "$TEST" == "true" ]]; then
     apt-get update -y
     apt-get install -y google-chrome-stable
 
-    curl -L https://github.com/mozilla/geckodriver/releases/download/v0.19.0/geckodriver-v0.19.0-linux64.tar.gz -o /tmp/geckodriver.tar
+    curl -L https://github.com/mozilla/geckodriver/releases/download/v0.20.1/geckodriver-v0.20.1-linux64.tar.gz -o /tmp/geckodriver.tar
     tar -xzvf /tmp/geckodriver.tar -C /usr/bin/
     chmod +rx /usr/bin/geckodriver
 
-    curl -L https://chromedriver.storage.googleapis.com/2.33/chromedriver_linux64.zip -o /tmp/chromedriver.zip
+    curl -L https://chromedriver.storage.googleapis.com/2.38/chromedriver_linux64.zip -o /tmp/chromedriver.zip
     unzip /tmp/chromedriver.zip -d /usr/bin/
     chmod +rx /usr/bin/chromedriver
 fi
