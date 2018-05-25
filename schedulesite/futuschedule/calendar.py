@@ -39,13 +39,25 @@ def createEvent(calendarId, sendNotifications, summary, description, location,
     return calSvc.events().insert(calendarId=calendarId,
             sendNotifications=sendNotifications, body=event).execute()
 
+def deleteUsersFromEvent(calendarId, eventId, users, sendNotifications=False):
+    calSvc = util.buildCalendarSvc()
+    eventJson = calSvc.events().get(calendarId=calendarId, eventId=eventId).execute()
+    deleteUserEmails = map(lambda x: x.email, users)
+    eventJson['attendees'] = filter(lambda x: x['email'] not in deleteUserEmails, eventJson['attendees'])
+
+    #Create list of all human attendees as users (filter calendarResources like rooms out)
+    attendeesList = filter(lambda a: not(a.has_key('resource') and a['resource']), eventJson['attendees'])
+    attendees = map(lambda user: get_user_model().objects.get(email=user['email']), attendeesList)
+
+    return calSvc.events().update(calendarId=calendarId, eventId=eventId, body=eventJson, sendNotifications=sendNotifications).execute()
+
 def addUsersToEvent(calendarId, eventId, users, newSummary, sendNotifications=False):
     calSvc = util.buildCalendarSvc()
     eventJson = calSvc.events().get(calendarId=calendarId, eventId=eventId).execute()
     userDicts = map(lambda x: {'email': x.email}, users)
     eventJson['attendees'] += userDicts
     eventJson['summary'] = newSummary
-    
+
     #Create list of all human attendees as users (filter calendarResources like rooms out)
     attendeesList = filter(lambda a: not(a.has_key('resource') and a['resource']), eventJson['attendees'])
     attendees = map(lambda user: get_user_model().objects.get(email=user['email']), attendeesList)
@@ -70,7 +82,7 @@ def isOccupied(calendarId, timeStart, timeEnd, timeZoneName):
 
     calSvc = util.buildCalendarSvc()
     events = calSvc.events().list(calendarId=calendarId, timeMin=timeStart.isoformat(), timeMax=timeEnd.isoformat(), timeZone=timeZoneName).execute()
-    
+
     if events['items'] == []:
         return False
     return True

@@ -141,6 +141,7 @@ var SchedulingRequestsList = React.createClass({
                     <th>By</th>
                     <th>Created</th>
                     <th>Add Users</th>
+                    <th>Remove Users</th>
                     <th>Generate pdf</th>
                     <th>Status</th>
                     <th>Delete</th>
@@ -190,7 +191,8 @@ var SchedulingRequest = React.createClass({
             showException: false,
             ajaxInFlight: '',
             ajaxErr: '',
-            selectedUsers: []
+            selectedUsers: [],
+            selectedDeleteUsers: []
         };
     },
     delete: function() {
@@ -295,6 +297,50 @@ var SchedulingRequest = React.createClass({
         this.setState(state);
     },
 
+    removeDeleteUser: function(id) {
+        var selectedDeleteUsers = this.state.selectedDeleteUsers.filter(function(x) {
+            return x.id != id;
+        });
+        var state = this.state;
+        state.selectedDeleteUsers = selectedDeleteUsers;
+        this.setState(state);
+
+    },
+    addDeleteUser: function(id) {
+        var user = this.props.usersById[id];
+        if (!user) {
+            console.error('User with id', id, 'not found');
+            return;
+        }
+
+        var selectedDeleteUsers = this.state.selectedDeleteUsers.filter(function(x) {
+            return x.id != id;
+        });
+        selectedDeleteUsers.push(user);
+
+        var state = this.state;
+        state.selectedDeleteUsers = selectedDeleteUsers;
+        this.setState(state);
+    },
+    sendDeleteUsers: function(){
+        $.ajax({
+            url: '/remove-users-from-schedule/' + this.props.model.id +'/',
+            type: 'POST',
+            contentType: 'application/json; charset=UTF-8',
+            headers: {'X-CSRFToken': $.cookie('csrftoken')},
+            data: JSON.stringify({'users': this.state.selectedDeleteUsers}),
+            success: (function(data) {
+               this.setState({
+                     ajaxErr: '',
+                     selectedDeleteUsers: []
+                    });
+           }).bind(this),
+           error: (function(xhr, txtStatus, saveErr) {
+                    this.setState({ajaxErr: getAjaxErr.apply(this, arguments)});
+           }).bind(this)
+        })
+    },
+
     sendUsers: function(){
         $.ajax({
             url: '/add-users-to-schedule/' + this.props.model.id +'/',
@@ -355,7 +401,7 @@ var SchedulingRequest = React.createClass({
             </div>;
         }
 
-        var addUsersBox = 
+        var addUsersBox =
             <div>
                  <MultiSelect
                     itemTextById={this.props.userTextById}
@@ -369,7 +415,22 @@ var SchedulingRequest = React.createClass({
                     />
                     <button type="button" onClick={this.sendUsers} disabled={this.state.selectedUsers.length == 0}>Add users</button>
             </div>
-        var  generatePdfBox = 
+        var deleteUsersBox =
+            <div>
+                 <MultiSelect
+                    itemTextById={this.props.userTextById}
+                    sortedIds={this.props.alphabeticalUserIds}
+                    selectedIds={this.state.selectedDeleteUsers.map(
+                        function(u) { return u.id; }
+                    )}
+                    onRemove={this.removeDeleteUser}
+                    onAdd={this.addDeleteUser}
+                    disabled={false}
+                    />
+                    <button type="button" onClick={this.sendDeleteUsers} disabled={this.state.selectedDeleteUsers.length == 0}>Remove users</button>
+            </div>
+
+        var  generatePdfBox =
             <div>
                 <button type="button" onClick={this.generatePdf}>generate</button>
                 <br/>
@@ -442,6 +503,7 @@ var SchedulingRequest = React.createClass({
             <td>{userName}</td>
             <td>{dateElem}</td>
             <td>{addUsersBox}</td>
+            <td>{deleteUsersBox}</td>
             <td>{generatePdfBox}</td>
             <td className="sched-req-status">{statusElem}</td>
             <td>{deleteBox}</td>

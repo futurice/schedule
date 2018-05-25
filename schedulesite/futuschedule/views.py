@@ -6,7 +6,7 @@ from django.conf import settings
 import json
 from django.contrib.auth import get_user_model
 from futuschedule import calendar, models
-from futuschedule.tasks import processSchedulingRequest, processDeletionTask, processAddUsersRequest, processGeneratePdf
+from futuschedule.tasks import processSchedulingRequest, processDeletionTask, processAddUsersRequest, processGeneratePdf, processDeleteUsersRequest
 
 
 def scheduleTemplates(request):
@@ -74,7 +74,7 @@ def createSchedules(request):
     data = json.loads(request.body)
     timezone = models.ScheduleTemplate.objects.get(id=str(data['scheduleTemplate'])).timezone.name
     errors = []
-    
+
     for event in data['events']:
         for location in event['data']['locations']:
             room = models.CalendarResource.objects.get(id = str(location))
@@ -82,7 +82,7 @@ def createSchedules(request):
             end = parsedate(event['data']['date'], event['data']['endTime'])
             if(calendar.isOccupied(room.email, start, end, timezone)):
                 errors += [room.name + " is not available on "+ event['data']['date'] + " at " + event['data']['startTime'] + "-" + event['data']['endTime']]
-    
+
     if errors != []:
         return HttpResponse(json.dumps({'error': ', '.join(errors)}),
         content_type="application/json", status=400)
@@ -119,7 +119,7 @@ def schedulingRequestDetail(request, sr_id):
             ' not allowed.'}), content_type="application/json", status=405)
 
 def addUsersToSchedule(request, sr_id):
-    
+
     data = json.loads(request.body)
     sr = models.SchedulingRequest.objects.get(id=sr_id)
     usersToAdd = map(lambda user: user['id'], data['users'])
@@ -127,7 +127,16 @@ def addUsersToSchedule(request, sr_id):
     sr.save()
     processAddUsersRequest.delay(sr_id, usersToAdd)
     return HttpResponse('', status=200)
-    
+
+def deleteUsersFromSchedule(request, sr_id):
+
+    data = json.loads(request.body)
+    sr = models.SchedulingRequest.objects.get(id=sr_id)
+    usersToDelete = map(lambda user: user['id'], data['users'])
+    sr.status = models.SchedulingRequest.IN_PROGRESS
+    sr.save()
+    processDeleteUsersRequest.delay(sr_id, usersToDelete)
+    return HttpResponse('', status=200)
 
 def schedules(request):
     return render(request, 'futuschedule/schedules.html')
