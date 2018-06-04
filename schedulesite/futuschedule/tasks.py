@@ -154,7 +154,7 @@ def processAddUsersRequest(sr_id, userIdsToAdd):
     """
     AddUsersTask model contains users to add and the scheduling request in question. These users are added to the collective events and new copies of non-collective events are created for each user. Each non-collective event is created by adding an event creation task to the queue. After all tasks are completed succesfully, state of the scheduling request is returned to 'SUCCESS'
     """
-    
+
     schedReq = SchedulingRequest.objects.get(id=sr_id)
     usersToAdd = map(lambda user_id: get_user_model().objects.get(id=user_id), userIdsToAdd)
 
@@ -184,7 +184,7 @@ def processAddUsersRequest(sr_id, userIdsToAdd):
         #In the collective event case, all users are added to the existing event
         if event.template.isCollective:
             users = list(usersToAdd)
-            
+
             if event.template.inviteSupervisors:
                 supervisors = []
                 for user in users:
@@ -196,13 +196,13 @@ def processAddUsersRequest(sr_id, userIdsToAdd):
             schedules = Schedule.objects.filter(schedulingRequest=schedReq)
             users = map(lambda s: s.forUser, schedules)
             summary = createSummary(event.template.summary, users)
-        
+
             updated_event = calendar.addUsersToEvent(schedule.template.calendar.email, eventData['id'], users, summary, sendNotifications=False)
             event.json = json.dumps(updated_event)
             event.save()
             for user in usersToAdd:
                 event.schedules.add(Schedule.objects.get(forUser=user, schedulingRequest=schedReq))
-        
+
         #On a non-collective event, a copy of the event is created for all users
         else:
             for user in usersToAdd:
@@ -221,10 +221,46 @@ def processAddUsersRequest(sr_id, userIdsToAdd):
                     newEvent.attendees.add(user.supervisor)
                 newEvent.save()
                 processEventTask.delay(newEvent.id)
-    
+
     #Add new users to scheduling request json
     schedReqJson = json.loads(schedReq.json)
     schedReqJson['users'] += map(lambda user: user.id, usersToAdd)
+    schedReq.json = json.dumps(schedReqJson)
+    schedReq.save()
+
+    markSchedReqSuccess.delay(schedReq.id)
+
+@app.task
+def processDeleteUsersRequest(sr_id, userIdsToDelete):
+    """
+    DeleteUsersTask constain users to delete and the scheduling request in question. There users are removent from events and state of the scheduling request is returned to 'SUCCESS'
+    """
+
+    schedReq = SchedulingRequest.objects.get(id=sr_id)
+    usersToDelete = map(lambda user_id: get_user_model().objects.get(id=user_id), userIdsToDelete)
+
+    #choose the first of the schedules in the schReq to be the base for new schedules
+    schedule = Schedule.objects.filter(schedulingRequest=schedReq)[0]
+    if not schedule.template:
+        failAction(schedReq.id, "Schedule template has been removed. This scheduling request cannot be updated.")
+        return
+    #all event templates have to exist
+    for event in Event.objects.filter(schedules=schedule):
+        if not event.template:
+            failAction(sr.id, "This scheduling request cannot be updated because some of the event templates are missing")
+            return
+
+    for event in Event.objects.filter(schedules=schedule):
+        eventData = json.loads(event.json)
+        updated_event = calendar.deleteUsersFromEvent(schedule.template.calendar.email, eventData['id'], list(usersToDelete), sendNotifications=False)
+        event.json = json.dumps(updated_event)
+        event.save()
+
+    Schedule.objects.filter(schedulingRequest=schedReq).filter(forUser__in=usersToDelete).delete()
+
+    #Remove users from scheduling request
+    schedReqJson = json.loads(schedReq.json)
+    schedReqJson['users'] = filter(lambda user: user not in userIdsToDelete, schedReqJson['users'])
     schedReq.json = json.dumps(schedReqJson)
     schedReq.save()
 
