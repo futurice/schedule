@@ -35,9 +35,10 @@ class Command(BaseCommand):
             try:
                 if 'login' in u and u['login']:
                     newUser = UM.objects.get(Q(username=u['login']) | Q(personio_id=u['employeeId']))
+                    newUser.username = u['login']
                 else:
                     newUser = UM.objects.get(personio_id=u['employeeId'])
-                newUser.login = u['login']
+                    newUser.username = u['employeeId']
                 newUser.email = u['email']
                 newUser.name = u['name']
                 newUser.personio_id = u['employeeId']
