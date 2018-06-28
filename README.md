@@ -87,4 +87,16 @@ The app needs to be authorized with google before events can be created, edited 
 
 The authorization link will be printed to the terminal. Copy that link to your browser and the app authorization page appears. Clicking accept leads to an error page but that is intended. Copy the code from the end of the url of that page and paste it to the terminal where you started the authorization.
 
-This has to be done only once when the app is started for the first time. The credentials are stored in the database, so restarting the app doesn't require authorization if the database remains unchanged. 
+This has to be done only once when the app is started for the first time. The credentials are stored in the database, so restarting the app doesn't require authorization if the database remains unchanged.
+
+Deployment
+----------
+
+Install appswarm CLI from [appswarm](https://app.futurice.com), then build and deploy:
+
+```bash
+TAG=$(git rev-parse --short HEAD)
+docker build --rm --tag futurice/schedule:$TAG .
+appswarm image:push -i futurice/schedule -t $TAG
+appswarm app:deploy -n schedule -i futurice/schedule -t $TAG
+```
