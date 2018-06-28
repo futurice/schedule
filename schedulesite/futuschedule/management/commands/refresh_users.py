@@ -27,7 +27,7 @@ class Command(BaseCommand):
         usersIdList = [str(u['employeeId']) for u in users]
         oldUsers = UM.objects.all().values_list('username', flat=True)
         for username in oldUsers:
-            if username not in usersNameList or username not in usersIdList:
+            if username not in usersNameList and username not in usersIdList:
                 UM.objects.filter(username=username).delete()
 
         #update existing users and add new ones
