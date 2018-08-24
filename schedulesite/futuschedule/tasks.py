@@ -166,7 +166,7 @@ def processAddUsersRequest(sr_id, userIdsToAdd):
     #all event templates have to exist
     for event in Event.objects.filter(schedules=schedule):
         if not event.template:
-            failAction(sr.id, "This scheduling request cannot be updated because some of the event templates are missing")
+            failAction(schedReq.id, "This scheduling request cannot be updated because some of the event templates are missing")
             return
 
     #remove users who already have schedules in the request
@@ -247,7 +247,7 @@ def processDeleteUsersRequest(sr_id, userIdsToDelete):
     #all event templates have to exist
     for event in Event.objects.filter(schedules=schedule):
         if not event.template:
-            failAction(sr.id, "This scheduling request cannot be updated because some of the event templates are missing")
+            failAction(schedReq.id, "This scheduling request cannot be updated because some of the event templates are missing")
             return
 
     for event in Event.objects.filter(schedules=schedule):
