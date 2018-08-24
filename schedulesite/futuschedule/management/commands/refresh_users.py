@@ -55,7 +55,10 @@ class Command(BaseCommand):
         #save supervisors for users
         for u in users:
             if u.get('supervisorLogin', None):
-                a = UM.objects.get(username=u['login'])
+                if 'login' in u and u['login']:
+                    a = UM.objects.get(Q(username=u['login']) | Q(personio_id=u['employeeId']))
+                else:
+                    a = UM.objects.get(personio_id=u['employeeId'])
                 try:
                     a.supervisor = UM.objects.get(username=u['supervisorLogin'])
                 except Exception as e:
