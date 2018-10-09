@@ -117,6 +117,7 @@ class EventTemplate(models.Model):
     # which calendar day the event is on. 0 is the employee's starting day,
     # 1 is her second day, -7 is 1 week before the starting day.
     dayOffset = models.SmallIntegerField()
+    monthOffset = models.SmallIntegerField()
     startTime = models.TimeField()
     endTime = models.TimeField()
 
@@ -142,7 +143,7 @@ class EventTemplate(models.Model):
         return self.summary
 
     class Meta:
-        ordering = ('dayOffset', 'startTime')
+        ordering = ('monthOffset','dayOffset', 'startTime')
 
 
 class SchedulingRequest(models.Model):

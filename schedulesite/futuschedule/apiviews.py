@@ -53,7 +53,7 @@ class EventTemplateViewSet(viewsets.ModelViewSet):
     serializer_class = EventTemplateSerializer
     queryset = models.EventTemplate.objects.all()
     filter_fields = ('scheduleTemplate',)
-    ordering_fields = ('dayOffset', 'startTime')
+    ordering_fields = ('monthOffset','dayOffset', 'startTime')
 
 
 class CalendarResourcesSerializer(serializers.ModelSerializer):

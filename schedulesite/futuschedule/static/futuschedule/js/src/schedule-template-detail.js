@@ -53,7 +53,7 @@ var ScheduleTemplateDetail = React.createClass({
         compFetchRest.bind(this)(
             apiRoot + 'eventtemplates/' +
             '?scheduleTemplate=' + this.props.id +
-            '&ordering=dayOffset,startTime',
+            '&ordering=monthOffset,dayOffset,startTime',
             'evTempl', 'etLoaded', 'etErr',
             function() {
                 // drop seconds. 11:00:00 → 11:00, 08:00:00 → 8:00
@@ -171,6 +171,7 @@ var ScheduleTemplateDetail = React.createClass({
                 summary: this.state.newEventSummary,
                 // some sensible values for the remaining required fields
                 dayOffset: 0,
+                monthOffset: 0,
                 startTime: '10:00',
                 endTime: '11:00',
 
@@ -559,18 +560,22 @@ var ScheduleTemplateDetail = React.createClass({
                             lastDayOffset = et.dayOffset;
                             result.push(<h2 key={'daychange-'+et.id}
                                     className="no-margin">
-                                {(function() {
-                                    var dayOff = parseInt(et.dayOffset, 10) || 0,
-                                        norm = normalizeWeekdayIndex(
-                                            dayOff + this.state.startingWeekday),
-                                        result = weekdayLongNames[norm],
-                                        wOff = weekOffset(dayOff);
-                                    if (wOff != 0) {
-                                        var unit = Math.abs(wOff) == 1 ? 'week' : 'weeks';
-                                        result += ', ' + (wOff > 0 ? '+' : '') + wOff + ' ' + unit;
-                                    }
-                                    return result;
-                                }).bind(this)()}
+                                        {(function() {
+                                            if(et.monthOffset > 0) {
+                                                var unit = Math.abs(et.monthOffset) == 1 ? 'month' : 'months';
+                                                return ((et.monthOffset > 0 ? '+' : '') + et.monthOffset + ' ' + unit);
+                                            } else {
+                                                var dayOff = parseInt(et.dayOffset, 10) || 0,
+                                                    norm = normalizeWeekdayIndex(dayOff + this.state.startingWeekday),
+                                                    result = weekdayLongNames[norm],
+                                                    wOff = weekOffset(dayOff);
+                                                if (wOff != 0) {
+                                                    var unit = Math.abs(wOff) == 1 ? 'week' : 'weeks';
+                                                    result += ', ' + (wOff > 0 ? '+' : '') + wOff + ' ' + unit;
+                                                }
+                                                return result;
+                                            }
+                                        }).bind(this)()}
                             </h2>);
                         }
                         result.push(<EventTemplate
@@ -865,10 +870,32 @@ var EventTemplate = React.createClass({
                         // strings) on blur
                         onBlur={this.handleIntBlur.bind(this, 'dayOffset')}
                         />
-                    {' '} {weekdayLongNames[normalizeWeekdayIndex(
+                    {' '} { this.props.model.monthOffset == 0 && weekdayLongNames[normalizeWeekdayIndex(
                         this.props.zeroWeekday +
                         (parseInt(this.props.model.dayOffset, 10) || 0)
-                    )]}
+                    )] }
+                </td>
+            </tr>
+
+            <tr>
+                <td>
+                    <abbr title={'How many calendar months ' +
+                        'to add or subtract from the start month.'}>
+                        Month offset
+                    </abbr>:
+                </td>
+                <td>
+                    <input type="number"
+                        disabled={this.props.disabled}
+                        value={this.props.model.monthOffset}
+                        onChange={this.handleChange.bind(
+                                this, 'monthOffset', false)}
+                        // If the user types 'hello' or '-' for '-3'
+                        // only convert it to a number (0 for invalid
+                        // strings) on blur
+                        onBlur={this.handleIntBlur.bind(this, 'monthOffset')}
+                        />
+                    {' '}
                 </td>
             </tr>
 
