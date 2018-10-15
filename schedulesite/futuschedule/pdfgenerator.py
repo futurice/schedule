@@ -18,7 +18,8 @@ def formatEvents(schedule):
         newEvent = {
             'name' : event.template.summary,
             'dateTime' : dateutil.parser.parse(eventJson['start']['dateTime']),
-            'dayOffset' : event.template.dayOffset
+            'dayOffset' : event.template.dayOffset,
+            'monthOffset' : event.template.monthOffset
         }
         if eventJson.has_key('location'):
             newEvent['location'] = eventJson['location']
@@ -35,11 +36,11 @@ def formatDate(date):
 
 def formatEvent(event):
     return formatTime(event['dateTime']) + " " +handleSpecialCharacters(event['name']) +" "+ colorize(handleSpecialCharacters(event['location']), 'futugreen')
-    
+
 def generateEventsText(schedule):
     events = formatEvents(schedule)
     #include events in first three days only
-    events = filter(lambda event: event['dayOffset'] in set([0, 1, 2]), events)
+    events = filter(lambda event: event['dayOffset'] in set([0, 1, 2]) and event['monthOffset'] == 0, events)
     events.sort(key=lambda event: event['dateTime'])
     output = ""
     lastDate = None

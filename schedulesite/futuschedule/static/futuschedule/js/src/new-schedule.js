@@ -21,6 +21,20 @@ var NewSchedule;
             (d < 10 ? '0' : '') + d;
     }
 
+    //when adding months make sure the date doesn't "overflow" to next
+    //month. Instead cap the date to end of new month
+    function getNewMonth(date, monthToAdd) {
+        var tempDate = new Date(date);
+        tempDate.setDate(1);
+        tempDate.setMonth(tempDate.getMonth() + monthToAdd);
+        var lastDayOfMonth = new Date(tempDate.getFullYear(), tempDate.getMonth() + 1, 0).getDate();
+        if (lastDayOfMonth < date.getDate()) {
+            return new Date(date.getFullYear(), date.getMonth() + monthToAdd, lastDayOfMonth, date.getHours(), date.getMinutes(), date.getSeconds(), date.getMilliseconds());
+        } else {
+            return new Date(date.getFullYear(), date.getMonth() + monthToAdd, date.getDate(), date.getHours(), date.getMinutes(), date.getSeconds(), date.getMilliseconds());
+        }
+    }
+
     NewSchedule = React.createClass({
         mixins: [
             getRestLoaderMixin(apiRoot + 'scheduletemplates/?ordering=name',
@@ -334,9 +348,11 @@ var NewSchedule;
                         result.eventTemplate = result.id;
                         delete result.id;
 
-                        result.date = fmtUTCDate(new Date(
-                                startDate.valueOf() + result.dayOffset*dayMillis));
+                        var newDate = getNewMonth(new Date(startDate.valueOf() + result.dayOffset*dayMillis), result.monthOffset);
+
+                        result.date = fmtUTCDate(newDate);
                         delete result.dayOffset;
+                        delete result.monthOffset;
 
                         ['startTime', 'endTime'].forEach(function(fName) {
                             result[fName] = dropSeconds(result[fName]);

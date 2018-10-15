@@ -202,7 +202,7 @@ class ForeignKeyDeleteTest(TestCase):
         schedTempl = models.ScheduleTemplate.objects.create(name='My SchedT',
                 timezone=tz, calendar=cal)
         nowT = datetime.datetime.now().time()
-        et = models.EventTemplate.objects.create(dayOffset=0,
+        et = models.EventTemplate.objects.create(dayOffset=0, monthOffset=0,
                 startTime=nowT, endTime=nowT, scheduleTemplate=schedTempl)
         etId = et.id
         self.assertIs(models.EventTemplate.objects.filter(id=etId).count(), 1)
@@ -216,7 +216,7 @@ class ForeignKeyDeleteTest(TestCase):
                 timezone=tz, calendar=cal)
         room = models.CalendarResource.objects.create(name='basement')
         nowT = datetime.datetime.now().time()
-        et = models.EventTemplate.objects.create(dayOffset=0,
+        et = models.EventTemplate.objects.create(dayOffset=0, monthOffset=0,
                 startTime=nowT, endTime=nowT, scheduleTemplate=schedTempl)
         et.locations.add(room)
         self.assertIs(len(et.locations.all()), 1)
@@ -229,7 +229,7 @@ class ForeignKeyDeleteTest(TestCase):
         schedTempl = models.ScheduleTemplate.objects.create(name='My SchedT',
                 timezone=tz, calendar=cal)
         nowT = datetime.datetime.now().time()
-        et = models.EventTemplate.objects.create(dayOffset=0,
+        et = models.EventTemplate.objects.create(dayOffset=0, monthOffset=0,
                 startTime=nowT, endTime=nowT, scheduleTemplate=schedTempl)
 
         UM = get_user_model()
