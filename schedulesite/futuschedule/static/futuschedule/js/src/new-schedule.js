@@ -332,6 +332,7 @@ var NewSchedule;
                     // format 'YYYY-MM-DD' guarantees midnight in UTC timezone.
                     var startDate = new Date(this.props.startDate);
                     var dayMillis = 1000*60*60*24;
+                    var hourMillis = 1000*60*60;
 
                     var eventFromTemplate = (function (et, forUsers) {
                         var result = clone(et);
@@ -348,7 +349,13 @@ var NewSchedule;
                         result.eventTemplate = result.id;
                         delete result.id;
 
-                        var newDate = getNewMonth(new Date(startDate.valueOf() + result.dayOffset*dayMillis), result.monthOffset);
+                        var hoursInMillis = 0;
+                        var hoursFromString = getHoursFromString(result.startTime);
+                        if(hoursFromString) {
+                            hoursInMillis = hoursFromString * hourMillis;
+                        }
+
+                        var newDate = getNewMonth(new Date(startDate.valueOf() + result.dayOffset*dayMillis + hoursInMillis), result.monthOffset);
 
                         result.date = fmtUTCDate(newDate);
                         delete result.dayOffset;

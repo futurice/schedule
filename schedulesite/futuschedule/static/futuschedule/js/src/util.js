@@ -237,6 +237,14 @@ function dropSeconds(s) {
     return s;
 }
 
+function getHoursFromString(s) {
+    var re = /\d\d\:\d\d\:\d\d/;
+    if (s.match(re)) {
+        return parseInt(s.slice(0, 2));
+    }
+    return null;
+}
+
 
 /*
  * Get the value from the event's target, with special cases for "null" etc.
