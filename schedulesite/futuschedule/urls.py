@@ -27,4 +27,5 @@ urlpatterns = [
     url(r'^remove-users-from-schedule/(?P<sr_id>\d+)/$', views.deleteUsersFromSchedule, name='remove-users-from-schedule'),
     url(r'^generate-pdf/(?P<sr_id>\d+)/$', views.generatePdf, name='generate-pdf'),
     url(r'^test/', views.test, name='test'),
+    url(r'^copy-schedule-template/(?P<st_id>\d+)/$', views.copyScheduleTemplate, name='copy-schedule-template'),
 ]

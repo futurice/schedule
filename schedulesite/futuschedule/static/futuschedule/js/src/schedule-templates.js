@@ -256,6 +256,31 @@ var ScheduleTemplateSummary = React.createClass({
             }).bind(this)
         });
     },
+    copy: function() {
+        this.setState({
+            ajaxInFlight: 'Copying…'
+        });
+
+        $.ajax({
+            url: '/copy-schedule-template/' + this.props.model.id + '/',
+            type: 'GET',
+            headers: {
+                'X-CSRFToken': $.cookie('csrftoken')
+            },
+            complete: (function(data) {
+                this.isMounted() && this.setState({
+                    ajaxInFlight: ''
+                });
+            }).bind(this),
+            success: (function(data) {
+                //Let's use easy way for now
+                location.reload();
+            }).bind(this),
+            error: (function(xhr, txtStatus, delErr) {
+                this.setState({ajaxErr: getAjaxErr.apply(this, arguments)});
+            }).bind(this)
+        });
+    },
 
     render: function() {
         var statusBox;
@@ -310,6 +335,12 @@ var ScheduleTemplateSummary = React.createClass({
                         onClick={this.edit}
                         disabled={this.state.ajaxInFlight}>
                         Edit
+                    </button>
+                    {' '}
+                    <button type="button"
+                        onClick={this.copy}
+                        disabled={this.state.ajaxInFlight}>
+                        Copy
                     </button>
                     {' '}
                     <button type="button"
