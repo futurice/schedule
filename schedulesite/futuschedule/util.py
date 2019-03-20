@@ -8,6 +8,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.utils.timezone import utc
 from futuschedule.models import CalendarResource, CredentialsModel
+from models import ScheduleTemplate, EventTemplate
 
 import os
 import httplib2
@@ -93,3 +94,24 @@ def getNaive(dt):
     """Return a naive datetime object for a possibly tz-aware one."""
     return datetime.datetime(dt.year, dt.month, dt.day, dt.hour, dt.minute)
     
+def copyScheduleTemplate(templateId, newTemplateName):
+    oldScheduleTemplate = ScheduleTemplate.objects.get(id=templateId)
+    copiedScheduleTemplate = ScheduleTemplate(name = newTemplateName,
+                                              calendar = oldScheduleTemplate.calendar,
+                                              timezone = oldScheduleTemplate.timezone)
+    copiedScheduleTemplate.save()
+    oldEventTemplates = EventTemplate.objects.filter(scheduleTemplate = oldScheduleTemplate)
+    for oldEventTemplate in oldEventTemplates:
+        copiedEventTemplate = EventTemplate(summary = oldEventTemplate.summary,
+                                            description = oldEventTemplate.description,
+                                            dayOffset = oldEventTemplate.dayOffset,
+                                            monthOffset = oldEventTemplate.monthOffset,
+                                            startTime = oldEventTemplate.startTime,
+                                            endTime = oldEventTemplate.endTime,
+                                            inviteEmployees = oldEventTemplate.inviteEmployees,
+                                            inviteSupervisors = oldEventTemplate.inviteSupervisors,
+                                            isCollective = oldEventTemplate.isCollective,
+                                            scheduleTemplate = copiedScheduleTemplate)
+        copiedEventTemplate.save()
+        copiedEventTemplate.locations = oldEventTemplate.locations.all()
+        copiedEventTemplate.otherInvitees = oldEventTemplate.otherInvitees.all()

@@ -5,7 +5,7 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 from django.conf import settings
 import json
 from django.contrib.auth import get_user_model
-from futuschedule import calendar, models
+from futuschedule import calendar, models, util
 from futuschedule.tasks import processSchedulingRequest, processDeletionTask, processAddUsersRequest, processGeneratePdf, processDeleteUsersRequest
 
 
@@ -151,3 +151,9 @@ def generatePdf(request, sr_id):
 
 def test(request):
     return render(request, 'futuschedule/test/')
+
+def copyScheduleTemplate(request, st_id):
+    scheduleTemplate = models.ScheduleTemplate.objects.get(id=st_id)
+    newName = scheduleTemplate.name + ' (COPY)'
+    util.copyScheduleTemplate(st_id, newName)
+    return HttpResponse('', status=200)
