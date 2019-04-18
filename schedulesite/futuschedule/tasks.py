@@ -250,11 +250,26 @@ def processDeleteUsersRequest(sr_id, userIdsToDelete):
             failAction(schedReq.id, "This scheduling request cannot be updated because some of the event templates are missing")
             return
 
+    #remove users from collective events
     for event in Event.objects.filter(schedules=schedule):
-        eventData = json.loads(event.json)
-        updated_event = calendar.deleteUsersFromEvent(schedule.template.calendar.email, eventData['id'], list(usersToDelete), sendNotifications=False)
-        event.json = json.dumps(updated_event)
-        event.save()
+        if event.template.isCollective:
+            eventData = json.loads(event.json)
+            schedules = Schedule.objects.filter(schedulingRequest=schedReq)
+            users = map(lambda s: s.forUser, schedules)
+            users = filter(lambda u: u not in usersToDelete, users)
+            summary = createSummary(event.template.summary, users)
+            updated_event = calendar.deleteUsersFromEvent(schedule.template.calendar.email, eventData['id'], list(usersToDelete), summary, sendNotifications=False)
+            event.json = json.dumps(updated_event)
+            event.save()
+
+    #Delete non-collective events
+    for user in usersToDelete:
+        for schedule in Schedule.objects.filter(schedulingRequest=schedReq, forUser=user):
+            for event in Event.objects.filter(schedules=schedule):
+                if not event.template.isCollective:
+                    eventData = json.loads(event.json)
+                    calendar.deleteEvent(eventData['organizer']['email'], eventData['id'])
+                    event.delete()
 
     Schedule.objects.filter(schedulingRequest=schedReq).filter(forUser__in=usersToDelete).delete()
 

@@ -39,11 +39,12 @@ def createEvent(calendarId, sendNotifications, summary, description, location,
     return calSvc.events().insert(calendarId=calendarId,
             sendNotifications=sendNotifications, body=event).execute()
 
-def deleteUsersFromEvent(calendarId, eventId, users, sendNotifications=False):
+def deleteUsersFromEvent(calendarId, eventId, users, newSummary, sendNotifications=False):
     calSvc = util.buildCalendarSvc()
     eventJson = calSvc.events().get(calendarId=calendarId, eventId=eventId).execute()
     deleteUserEmails = map(lambda x: x.email, users)
     eventJson['attendees'] = filter(lambda x: x['email'] not in deleteUserEmails, eventJson['attendees'])
+    eventJson['summary'] = newSummary
 
     #Create list of all human attendees as users (filter calendarResources like rooms out)
     attendeesList = filter(lambda a: not(a.has_key('resource') and a['resource']), eventJson['attendees'])
