@@ -32,10 +32,10 @@ def formatTime(date):
     return date.strftime('%H:%M')
 
 def formatDate(date):
-    return colorize(bold(date.strftime('%A %d.%m.%Y').upper()), 'futugreen')
+    return colorize(bold(date.strftime('%A %d.%m.%Y').upper()), 'futublue')
 
 def formatEvent(event):
-    return formatTime(event['dateTime']) + " " +handleSpecialCharacters(event['name']) +" "+ colorize(handleSpecialCharacters(event['location']), 'futugreen')
+    return formatTime(event['dateTime']) + " " +handleSpecialCharacters(event['name']) +" "+ colorize(handleSpecialCharacters(event['location']), 'futublue')
 
 def generateEventsText(schedule):
     events = formatEvents(schedule)
