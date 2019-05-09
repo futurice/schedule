@@ -110,6 +110,7 @@ def copyScheduleTemplate(templateId, newTemplateName):
                                             endTime = oldEventTemplate.endTime,
                                             inviteEmployees = oldEventTemplate.inviteEmployees,
                                             inviteSupervisors = oldEventTemplate.inviteSupervisors,
+                                            inviteFutubuddies = oldEventTemplate.inviteFutubuddies,
                                             isCollective = oldEventTemplate.isCollective,
                                             scheduleTemplate = copiedScheduleTemplate)
         copiedEventTemplate.save()

@@ -4,9 +4,18 @@ from futuschedule import models
 
 
 class UserSerializer(serializers.ModelSerializer):
+    futubuddy = serializers.SerializerMethodField(read_only=True)
+
     class Meta:
         model = get_user_model()
-        fields = ('id', 'username', 'email', 'name', 'supervisor')
+        fields = ('id', 'username', 'email', 'name', 'supervisor', 'futubuddy')
+
+    def get_futubuddy(self, user):
+        try:
+            fb = get_user_model().objects.get(email=user.futubuddy_email)
+            return fb.id
+        except:
+            return None
 
 class UserViewSet(viewsets.ModelViewSet):
     serializer_class = UserSerializer

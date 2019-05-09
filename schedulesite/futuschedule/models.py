@@ -29,6 +29,7 @@ class FutuUser(AbstractBaseUser):
     supervisor = models.ForeignKey(settings.AUTH_USER_MODEL, null=True,
             related_name='supervisor_of', on_delete=models.SET_NULL)
     personio_id = models.IntegerField(unique=True, null=True, blank=True)
+    futubuddy_email = models.EmailField(max_length=200, null=True, blank=True)
 
     objects = FutuUserManager()
 
@@ -127,6 +128,7 @@ class EventTemplate(models.Model):
     inviteEmployees = models.BooleanField(default=True)
 
     inviteSupervisors = models.BooleanField(default=False)
+    inviteFutubuddies = models.BooleanField(default=False)
     otherInvitees = models.ManyToManyField(settings.AUTH_USER_MODEL,
             blank=True)
 

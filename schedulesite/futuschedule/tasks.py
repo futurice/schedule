@@ -192,6 +192,15 @@ def processAddUsersRequest(sr_id, userIdsToAdd):
                         supervisors += [user.supervisor]
                 users += supervisors
 
+            if event.template.inviteFutubuddies:
+                futubuddies = []
+                for user in users:
+                    if user.futubuddy_email:
+                        futubuddy = get_user_model().objects.get(email=user.futubuddy_email)
+                        if futubuddy:
+                            futubuddies += [futubuddy]
+                users += futubuddies
+                
             #Create new summary for the event:
             schedules = Schedule.objects.filter(schedulingRequest=schedReq)
             users = map(lambda s: s.forUser, schedules)
@@ -219,6 +228,10 @@ def processAddUsersRequest(sr_id, userIdsToAdd):
                 newEvent.attendees.add(user)
                 if event.template.inviteSupervisors and user.supervisor:
                     newEvent.attendees.add(user.supervisor)
+                if event.template.inviteFutubuddies and user.futubuddy_email:
+                    futubuddy = get_user_model().objects.get(email=user.futubuddy_email)
+                    if futubuddy:
+                        newEvent.attendees.add(futubuddy)
                 newEvent.save()
                 processEventTask.delay(newEvent.id)
 

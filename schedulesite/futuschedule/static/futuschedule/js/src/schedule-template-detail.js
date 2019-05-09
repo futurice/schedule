@@ -766,6 +766,9 @@ var EventTemplate = React.createClass({
                     if (this.props.model.inviteSupervisors) {
                         p.push('supervisors');
                     }
+                    if (this.props.model.inviteFutubuddies) {
+                        p.push('futubuddies');
+                    }
                     this.props.model.otherInvitees.forEach((function(i) {
                         p.push(getUserName(i, this.props.usersById));
                     }).bind(this));
@@ -943,7 +946,19 @@ var EventTemplate = React.createClass({
                             's' : ''}
                 </td>
             </tr>
-
+            <tr>
+                <td></td>
+                <td>
+                    <input type="checkbox"
+                        disabled={this.props.disabled}
+                        checked={this.props.model.inviteFutubuddies}
+                        onChange={this.handleChange.bind(this,
+                                'inviteFutubuddies', false)}
+                        />
+                        Invite {this.props.model.isCollective ?
+                            'futubuddies' : 'futubuddy'}
+                </td>
+            </tr>
             <tr>
                 <td><label>Other participants:</label></td>
                 <td>
