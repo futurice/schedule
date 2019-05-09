@@ -414,6 +414,37 @@ var NewSchedule;
                                         }, this)) + '.';
                         }
 
+                        var userIdsWithoutFutubuddy = [];
+                        if (result.inviteFutubuddies) {
+                            forUsers.forEach(function(u) {
+                                var f_id = u.futubuddy;
+                                if (f_id) {
+                                    var existing = false;
+                                    result.invitees.forEach(function(id) {
+                                        if (id == f_id) {
+                                            existing = true;
+                                        }
+                                    });
+                                    if (!existing) {
+                                        result.invitees.push(f_id);
+                                    }
+                                } else {
+                                    userIdsWithoutFutubuddy.push(u.id);
+                                }
+                            });
+                        }
+                        delete result.inviteFutubuddies;
+
+                        result.futubuddyWarning = '';
+                        if (userIdsWithoutFutubuddy.length) {
+                            result.supervisorWarning = 'The template invites ' +
+                                'futubuddies, but there\'s no futubuddy for ' +
+                                enumSentence(
+                                        userIdsWithoutFutubuddy.map(function(uid) {
+                                            return getUserName(uid, this.props.usersById);
+                                        }, this)) + '.';
+                        }
+
                         delete result.isCollective;
 
                         return result;

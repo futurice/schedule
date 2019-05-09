@@ -42,6 +42,8 @@ class Command(BaseCommand):
                 newUser.email = u['email']
                 newUser.name = u['name']
                 newUser.personio_id = u['employeeId']
+                if 'futubuddy' in u and u['futubuddy']:
+                    newUser.futubuddy_email = u['futubuddy']
                 newUser.save()
             except UM.DoesNotExist as e:
                 if 'login' not in u or not u['login']:
@@ -50,6 +52,8 @@ class Command(BaseCommand):
                             u['email'],
                             u['name'],)
                 newUser.personio_id = u['employeeId']
+                if 'futubuddy' in u and u['futubuddy']:
+                    newUser.futubuddy_email = u['futubuddy']
                 newUser.save()
 
         #save supervisors for users
@@ -62,5 +66,7 @@ class Command(BaseCommand):
                 try:
                     a.supervisor = UM.objects.get(username=u['supervisorLogin'])
                 except Exception as e:
+                    print(a.name)
+                    print(u['supervisorLogin'])
                     print(e)
                 a.save()
