@@ -92,7 +92,7 @@ This has to be done only once when the app is started for the first time. The cr
 Deployment
 ----------
 
-Install appswarm CLI from [appswarm](https://app.futurice.com), then build and deploy:
+Install appswarm CLI from [appswarm](https://app.futurice.com), then build and deploy :
 
 ```bash
 TAG=$(git rev-parse --short HEAD)
