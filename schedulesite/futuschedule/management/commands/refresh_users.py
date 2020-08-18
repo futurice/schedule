@@ -6,6 +6,7 @@ from django.db.models import Q
 import os
 import json
 import requests
+import sys
 
 class Command(BaseCommand):
     help = 'Fetch users, add new, update old and remove gone users from the database'
@@ -55,6 +56,10 @@ class Command(BaseCommand):
                 if 'futubuddy' in u and u['futubuddy']:
                     newUser.futubuddy_email = u['futubuddy']
                 newUser.save()
+            except:
+                print("Got exception while updating user %s" % u['name'].encode('utf-8'))
+                print(sys.exc_info())
+                pass #continue updating other employees even if we had error
 
         #save supervisors for users
         for u in users:
