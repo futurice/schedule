@@ -56,7 +56,7 @@ def generateEventsText(schedule):
     return output
 
 def handleSpecialCharacters(text):
-    specials = ["&", "#", "$", "%", "^", "_", "{", "}", "~", "+"]
+    specials = ["&", "#", "$", "%", "^", "_", "{", "}", "~"]
     for s in specials:
         text = text.replace(s, '\\'+s)
     return text
