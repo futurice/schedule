@@ -6,7 +6,7 @@ This file explains how to set up and run the project by hand.
 
 For licensing (BSD 3-clause), see `COPYING`.
 
-## Running locally on Docker 
+## Running locally on Docker
 
 Schedule runs in a [Docker](https://www.docker.com/) container, with database separated from the app. In local setting, it is easiest to run database also as a docker container. In production setting you might want to have the database in more stable environment. This guide is intended for running schedule locally.
 
