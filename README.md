@@ -2,7 +2,7 @@
 
 # Create schedule templates and make Google Calendar Events from them
 
-This file explains how to set up and run the project by hand. 
+This file explains how to set up and run the project by hand.
 
 For licensing (BSD 3-clause), see `COPYING`.
 
