@@ -14,7 +14,7 @@ Schedule runs in a [Docker](https://www.docker.com/) container, with database se
 
 Before the build you have to add some files to the folder to include them in the docker image. For privacy reasons we cannot store them in the public Github repository.
 
-Schedule can create pdf timetables of created schedules. Currently there is only one template, which is meant for introduction timetables for new employees. First create directory `pdf-generator/fonts`. Add two .otf font files there; bold.otf and font.otf. Then put the chosen background picture as pdf to `pdf-generator/intro_background.pdf`.
+Schedule can create pdf timetables of created schedules. Currently there is only one template, which is meant for introduction timetables for new employees. First create directory `pdf-generator/fonts`. Add two .otf font files there; bold.otf and font.otf (`Futurice Bold.otf` and `Futurice Monospaced.otf` fonts which can be found from internal Google Drive). Then put the chosen background picture as pdf to `pdf-generator/intro_background.pdf`.
 
 Then log in to google app console (https://console.developers.google.com/) with the google account you want to create the events in and create a new project for schedule. Once the project is created, give it rights to use the calendar API and download the client secrets file. Save it in the project root as `client_secrets.json`.
 
