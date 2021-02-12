@@ -8,7 +8,7 @@ env:
     - TRAVIS_DB=postgresql
 
 addons:
-  postgresql: "9.3"
+  postgresql: "9.6"
 
 install:
   # Jan 2015: travis-ci runs Ubuntu 12.04 64bit which doesn't have chromedriver

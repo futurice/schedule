@@ -2,7 +2,7 @@ import datetime
 from futuschedule import util
 from django.contrib.auth import get_user_model
 import pytz
-
+import uuid
 
 def createEvent(calendarId, sendNotifications, summary, description, location,
         startDt, endDt, tzName, attendingEmails):
@@ -34,10 +34,20 @@ def createEvent(calendarId, sendNotifications, summary, description, location,
                 'timeZone': tzName,
             },
             'attendees': map(lambda x: {'email': x}, attendingEmails),
+            'conferenceData': {
+                'createRequest': {
+                    'requestId': str(uuid.uuid4()),
+                    'conferenceSolutionKey': {
+                        'type': 'hangoutsMeet'
+                    }
+                }
+            },
     }
     calSvc = util.buildCalendarSvc()
     return calSvc.events().insert(calendarId=calendarId,
-            sendNotifications=sendNotifications, body=event).execute()
+                                  sendNotifications=sendNotifications,
+                                  body=event,
+                                  conferenceDataVersion=1).execute()
 
 def deleteUsersFromEvent(calendarId, eventId, users, newSummary, sendNotifications=False):
     calSvc = util.buildCalendarSvc()
@@ -50,7 +60,13 @@ def deleteUsersFromEvent(calendarId, eventId, users, newSummary, sendNotificatio
     attendeesList = filter(lambda a: not(a.has_key('resource') and a['resource']), eventJson['attendees'])
     attendees = map(lambda user: get_user_model().objects.get(email=user['email']), attendeesList)
 
-    return calSvc.events().update(calendarId=calendarId, eventId=eventId, body=eventJson, sendNotifications=sendNotifications).execute()
+    sendUpdates = "all" if sendNotifications else "none"
+
+    return calSvc.events().update(calendarId=calendarId,
+                                  eventId=eventId,
+                                  body=eventJson,
+                                  sendNotifications=sendNotifications,
+                                  sendUpdates=sendUpdates).execute()
 
 def addUsersToEvent(calendarId, eventId, users, newSummary, sendNotifications=False):
     calSvc = util.buildCalendarSvc()
