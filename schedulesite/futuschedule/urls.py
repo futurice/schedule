@@ -26,6 +26,7 @@ urlpatterns = [
     url(r'^add-users-to-schedule/(?P<sr_id>\d+)/$', views.addUsersToSchedule, name='add-users-to-schedule'),
     url(r'^remove-users-from-schedule/(?P<sr_id>\d+)/$', views.deleteUsersFromSchedule, name='remove-users-from-schedule'),
     url(r'^generate-pdf/(?P<sr_id>\d+)/$', views.generatePdf, name='generate-pdf'),
+    url(r'^get-pdf/(?P<personio_id>\d+)/$', views.getPdf, name="get-pdf"),
     url(r'^test/', views.test, name='test'),
     url(r'^copy-schedule-template/(?P<st_id>\d+)/$', views.copyScheduleTemplate, name='copy-schedule-template'),
 ]

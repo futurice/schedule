@@ -145,6 +145,20 @@ def scheduleDetail(request, s_id):
     context = {'s_id': s_id}
     return render(request, 'futuschedule/schedule-detail.html', context)
 
+def getPdf(request, personio_id):
+    persons = models.FutuUser.objects.filter(personio_id=personio_id)
+    if (len(persons)) > 0:
+        schedules = models.Schedule.objects.filter(forUser=persons[0]).order_by('-updatedAt')
+        if len(schedules) > 0:
+            processGeneratePdf(schedules[0].schedulingRequest_id)
+            schedulingRequest = models.SchedulingRequest.objects.get(id=schedules[0].schedulingRequest_id)
+            pdf = open('/opt' + schedulingRequest.pdfUrl, "r")
+            return HttpResponse(pdf, content_type="application/pdf", status=200)
+        else:
+            return HttpResponse("Couldn't find schedule associated to user", status=400)
+    else:
+        return HttpResponse("Couldn't find person", status=400)
+
 def generatePdf(request, sr_id):
     processGeneratePdf.delay(sr_id)
     return HttpResponse('', status=200)
