@@ -15,6 +15,8 @@ BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
 GOOGLE_OAUTH2_CLIENT_SECRETS_JSON = '/opt/app/client_secrets.json'
 OAUTH_DB_STORAGE = os.getenv('OAUTH_DB_STORAGE', 'false').lower() == 'true'
+# production is https, x-forwarded-proto:http ...
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'http')
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.6/howto/deployment/checklist/
